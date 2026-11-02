@@ -1,0 +1,630 @@
+import { useState, useRef } from "react";
+import { useStore } from "../core/store";
+import { MTGDivider } from "./ui/Divider";
+import { Modal } from "./ui/Modal";
+import { useToast } from "./ui/Toast";
+import { confirmar } from "./ui/Confirm";
+import { DialogoTorneio } from "./DialogoTorneio";
+import { BannerArte } from "./BannerArte";
+import type { Torneio } from "../core/types";
+import { exportarTudo, importarTudo } from "../core/backup";
+import { useAuth } from "../core/auth";
+import { AuthChip } from "./AuthChip";
+import { calcularMetricas, metricasRecentes } from "../core/metricas";
+import { BANNER_IMAGE } from "../banner-image";
+
+const CORES_MTG = [
+  { hex: "#f9f5e3", nome: "PLAINS", simbolo: "☀" },
+  { hex: "#5b9bd5", nome: "ISLAND", simbolo: "◈" },
+  { hex: "#6d5e7d", nome: "SWAMP", simbolo: "☠" },
+  { hex: "#e15b5b", nome: "MOUNTAIN", simbolo: "♨" },
+  { hex: "#7bc47f", nome: "FOREST", simbolo: "❦" },
+];
+
+export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: () => void; onVincularNome?: () => void } = {}) {
+  const torneiosAll = useStore((s) => s.torneios);
+  const modoView = useStore((s) => s.modoView);
+  const abrirTorneio = useStore((s) => s.abrirTorneio);
+  const removerTorneio = useStore((s) => s.removerTorneio);
+  const importarTorneio = useStore((s) => s.importarTorneio);
+  const criarTorneioTeste = useStore((s) => s.criarTorneioTeste);
+  const auth = useAuth();
+  // Edição liberada só pra admin em modo admin (ou organizador em modo organizador)
+  const podeEditar = (auth.isAdmin && modoView === "admin") || modoView === "organizador";
+
+  // Filtra torneios conforme modo de visualização atual
+  const torneios = (() => {
+    if (!auth.session) return torneiosAll;
+    const uid = auth.session.user.id;
+    if (modoView === "admin" && auth.isAdmin) return torneiosAll;
+    if (modoView === "organizador") {
+      return torneiosAll.filter((t: any) => t.criadoPor === uid || !t.criadoPor);
+    }
+    if (modoView === "jogador") {
+      const meusNomes = new Set(auth.nomesJogador.map((n) => n.toLowerCase()));
+      return torneiosAll.filter((t) =>
+        t.jogadores.some((j: any) => meusNomes.has(j.nome.toLowerCase()))
+      );
+    }
+    return torneiosAll;
+  })();
+  // Torneio atualmente "em andamento" (rodada > 0, não finalizado) — mais recente
+  const torneioEmAndamento = torneios
+    .filter((t) => !t.finalizado && t.rodadaAtual > 0)
+    .sort((a, b) => (b.dataCriacao || "").localeCompare(a.dataCriacao || ""))[0];
+  const metricas = calcularMetricas(torneios);
+  const ult30 = metricasRecentes(torneios, 30);
+  const ultimoCampeao = (() => {
+    const finalizados = torneios
+      .filter((t) => t.finalizado)
+      .sort((a, b) => (b.dataCriacao || "").localeCompare(a.dataCriacao || ""));
+    if (finalizados.length === 0) return null;
+    const t = finalizados[0];
+    const r = metricas.rankingJogadores;
+    return r.length > 0 ? { nome: r[0].nome, torneio: t.nome } : null;
+  })();
+  const irPara = useStore((s) => s.irPara);
+  const { toast } = useToast();
+  const [selecionadoId, setSelecionadoId] = useState<string | null>(null);
+  const [dialogoAberto, setDialogoAberto] = useState<null | "novo" | "editar">(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const backupRef = useRef<HTMLInputElement>(null);
+  const recarregar = useStore((s) => s.recarregar);
+  const [menuImp, setMenuImp] = useState(false);
+  const [menuExp, setMenuExp] = useState(false);
+
+  const torneioSelecionado = torneios.find((t) => t.id === selecionadoId) || null;
+
+  const abrirSelecionado = () => {
+    if (!selecionadoId) return toast("Selecione um torneio primeiro", "aviso");
+    abrirTorneio(selecionadoId);
+  };
+
+  const excluirSelecionado = async () => {
+    if (!torneioSelecionado) return toast("Selecione um torneio primeiro", "aviso");
+    const ok = await confirmar({
+      titulo: "Confirmar exclusão",
+      mensagem: `Excluir permanentemente o torneio "${torneioSelecionado.nome}"?`,
+      perigo: true,
+      textoOk: "Excluir",
+    });
+    if (ok) {
+      removerTorneio(torneioSelecionado.id);
+      setSelecionadoId(null);
+      toast("Torneio excluído", "sucesso");
+    }
+  };
+
+  const importar = () => fileRef.current?.click();
+
+  const onFileImportar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    try {
+      const texto = await f.text();
+      const t = JSON.parse(texto) as Torneio;
+      if (!t.id || !t.nome) throw new Error("JSON inválido");
+      importarTorneio(t);
+      toast(`Importado: ${t.nome}`, "sucesso");
+    } catch (err: any) {
+      toast(`Erro: ${err.message}`, "erro");
+    }
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  return (
+    <div
+      className="min-h-screen text-fg relative"
+      style={{
+        // Overlay bem leve: dragões continuam visíveis em todo lugar
+        backgroundImage: `linear-gradient(to bottom,
+          rgba(10,9,22,0.25) 0%,
+          rgba(10,9,22,0.45) 60%,
+          rgba(10,9,22,0.55) 100%), url(${BANNER_IMAGE})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+        backgroundAttachment: "fixed",
+      }}
+    >
+      {/* Topbar fixa estilo navbar */}
+      <div className="sticky top-0 z-30 px-4 md:px-6 py-3"
+        style={{
+          background: "linear-gradient(to bottom, rgba(10,9,22,0.85) 0%, rgba(10,9,22,0.0) 100%)",
+        }}
+      >
+        <div
+          className="flex flex-wrap gap-2 items-center rounded-full pl-2 pr-3 py-2 border"
+          style={{
+            background: "rgba(15,28,48,0.72)",
+            borderColor: "rgba(139,115,255,0.18)",
+            backdropFilter: "blur(20px) saturate(160%)",
+            WebkitBackdropFilter: "blur(20px) saturate(160%)",
+            boxShadow: "0 20px 60px -20px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.08)",
+          }}
+        >
+          {/* CTA principal — só admin vê */}
+          {podeEditar && (
+            <>
+              <button
+                className="rounded-full px-5 py-2 font-semibold text-sm transition active:scale-95 text-white flex items-center gap-2"
+                style={{
+                  background: "var(--sig-d)",
+                  boxShadow: "0 6px 24px -4px rgba(201,166,72,0.55), inset 0 1px 0 rgba(255,255,255,0.2)"
+                }}
+                onClick={() => setDialogoAberto("novo")}
+              >
+                <span className="text-base leading-none">+</span>
+                <span>Novo torneio</span>
+              </button>
+              <div className="w-px h-6 mx-1" style={{ background: "rgba(255,255,255,0.1)" }} />
+            </>
+          )}
+
+          {/* Ações sobre o torneio selecionado */}
+          <button
+            className="rounded-full px-4 py-2 font-medium text-sm transition hover:bg-white/5 active:scale-95"
+            style={{ color: "var(--text-strong)" }}
+            onClick={abrirSelecionado}
+          >Abrir</button>
+          {podeEditar && (
+            <>
+              <button
+                className="rounded-full px-4 py-2 font-medium text-sm transition hover:bg-white/5 active:scale-95"
+                style={{ color: "var(--text-strong)" }}
+                onClick={() => {
+                  if (!torneioSelecionado) return toast("Selecione um torneio primeiro", "aviso");
+                  setDialogoAberto("editar");
+                }}
+              >Editar</button>
+              <button
+                className="rounded-full px-4 py-2 font-medium text-sm transition active:scale-95 hover:bg-red-500/10"
+                style={{ color: "var(--critical)" }}
+                onClick={excluirSelecionado}
+              >Excluir</button>
+            </>
+          )}
+
+          <div className="w-px h-6 mx-1" style={{ background: "rgba(255,255,255,0.1)" }} />
+
+          {/* Analytics — destaque sutil */}
+          <button
+            className="rounded-full px-4 py-2 font-semibold text-sm transition active:scale-95 flex items-center gap-1.5"
+            style={{
+              background: "rgba(56,189,248,0.12)",
+              color: "var(--action)",
+              border: "1px solid rgba(56,189,248,0.25)"
+            }}
+            onClick={() => irPara("analytics")}
+          >
+            <span>📊</span>
+            <span>Analytics</span>
+          </button>
+
+        {/* Importar (dropdown) — só edição liberada */}
+        {podeEditar && (<div className="relative">
+          <button
+            className="rounded-full px-4 py-2 font-medium text-sm transition hover:bg-white/5 active:scale-95 flex items-center gap-1.5"
+            style={{ color: "var(--text-strong)" }}
+            onClick={() => { setMenuImp((v) => !v); setMenuExp(false); }}
+          >
+            <span>📂</span><span>Importar</span><span className="text-xs opacity-60">▾</span>
+          </button>
+          {menuImp && (
+            <div className="absolute top-full left-0 mt-1 bg-bg-card border border-bg-cardalt rounded-lg shadow-2xl z-20 w-full overflow-hidden">
+              <button
+                className="block w-full text-left px-3 py-2 hover:bg-bg-panel text-sm"
+                onClick={() => { setMenuImp(false); importar(); }}
+              >📄 Torneio (JSON)</button>
+              <button
+                className="block w-full text-left px-3 py-2 hover:bg-bg-panel text-sm"
+                onClick={() => { setMenuImp(false); backupRef.current?.click(); }}
+              >📦 Backup completo</button>
+              <div className="border-t border-bg-cardalt" />
+              <button
+                className="block w-full text-left px-3 py-2 hover:bg-bg-panel text-sm"
+                onClick={() => {
+                  setMenuImp(false);
+                  const t = criarTorneioTeste();
+                  toast(`Torneio teste criado: 29 jogadores`, "sucesso");
+                  abrirTorneio(t.id);
+                }}
+              >🎲 Torneio de teste</button>
+            </div>
+          )}
+        </div>)}
+        {/* Exportar (dropdown) — só edição liberada */}
+        {podeEditar && (<div className="relative">
+          <button
+            className="rounded-full px-4 py-2 font-medium text-sm transition hover:bg-white/5 active:scale-95 flex items-center gap-1.5"
+            style={{ color: "var(--text-strong)" }}
+            onClick={() => { setMenuExp((v) => !v); setMenuImp(false); }}
+          >
+            <span>📦</span><span>Exportar</span><span className="text-xs opacity-60">▾</span>
+          </button>
+          {menuExp && (
+            <div className="absolute top-full left-0 mt-1 bg-bg-card border border-bg-cardalt rounded-lg shadow-2xl z-20 w-full overflow-hidden">
+              <button
+                className="block w-full text-left px-3 py-2 hover:bg-bg-panel text-sm disabled:opacity-40"
+                disabled={!torneioSelecionado}
+                onClick={() => {
+                  setMenuExp(false);
+                  if (!torneioSelecionado) return;
+                  const json = JSON.stringify(torneioSelecionado, null, 2);
+                  const blob = new Blob([json], { type: "application/json" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `${torneioSelecionado.id}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  toast("Torneio exportado", "sucesso");
+                }}
+              >📄 Torneio selecionado (JSON)</button>
+              <button
+                className="block w-full text-left px-3 py-2 hover:bg-bg-panel text-sm"
+                onClick={() => {
+                  setMenuExp(false);
+                  exportarTudo();
+                  toast("Backup baixado", "sucesso");
+                }}
+              >📦 Backup completo</button>
+            </div>
+          )}
+        </div>)}
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".json"
+          className="hidden"
+          onChange={onFileImportar}
+        />
+        <input
+          ref={backupRef}
+          type="file"
+          accept=".json"
+          className="hidden"
+          onChange={async (e) => {
+            const f = e.target.files?.[0];
+            if (!f) return;
+            try {
+              const texto = await f.text();
+              const res = await importarTudo(texto);
+              recarregar();
+              if (res.errosNuvem.length > 0) {
+                toast(`Restaurado local: ${res.torneios} torneios. Erro nuvem: ${res.errosNuvem[0]}`, "aviso");
+              } else {
+                toast(`Restaurado: ${res.torneios} torneios · ${res.nomes} nomes · sincronizado na nuvem`, "sucesso");
+              }
+            } catch (err: any) {
+              toast(`Erro: ${err.message}`, "erro");
+            }
+            if (backupRef.current) backupRef.current.value = "";
+          }}
+        />
+
+        <div className="w-px h-6 mx-1" style={{ background: "rgba(255,255,255,0.1)" }} />
+        <AuthChip auth={auth} onLoginClick={onPedirLogin} onVincularNome={onVincularNome} />
+        </div>
+      </div>
+
+      {/* Faixa "Em andamento" + KPIs rápidos — colados abaixo do menu */}
+      <div className="px-6 md:px-10 space-y-4 mb-4 mt-2">
+        {torneioEmAndamento && (
+          <div
+            className="flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition hover:brightness-110"
+            style={{
+              background: "linear-gradient(90deg, rgba(252,211,77,0.12), rgba(252,211,77,0.03))",
+              borderColor: "rgba(252,211,77,0.35)",
+              backdropFilter: "blur(14px)",
+              WebkitBackdropFilter: "blur(14px)",
+              boxShadow: "0 10px 40px -20px rgba(252,211,77,0.4)",
+            }}
+            onClick={() => abrirTorneio(torneioEmAndamento.id)}
+          >
+            <div
+              className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl flex-shrink-0"
+              style={{
+                background: "linear-gradient(135deg, rgba(252,211,77,0.35), rgba(252,211,77,0.1))",
+                color: "var(--warn)",
+                border: "1px solid rgba(252,211,77,0.35)",
+                animation: "pulseAtivo 2s ease-in-out infinite",
+              }}
+            >⚡</div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[11px] font-bold tracking-widest uppercase" style={{ color: "var(--warn)" }}>
+                EM ANDAMENTO
+              </div>
+              <div className="text-base md:text-lg font-semibold truncate" style={{ color: "var(--text-strong)" }}>
+                {torneioEmAndamento.nome} · Rodada {torneioEmAndamento.rodadaAtual} de {torneioEmAndamento.qtdRodadas}
+              </div>
+              <div className="text-xs mt-0.5" style={{ color: "var(--text-2)" }}>
+                {torneioEmAndamento.mesas.length} mesas · {torneioEmAndamento.jogadores.length} jogadores
+              </div>
+            </div>
+            <button
+              className="rounded-xl px-5 py-2.5 font-bold text-sm transition active:scale-95 flex-shrink-0"
+              style={{
+                background: "var(--warn)",
+                color: "#0a1220",
+                boxShadow: "0 4px 16px -4px rgba(252,211,77,0.5)",
+              }}
+              onClick={(e) => { e.stopPropagation(); abrirTorneio(torneioEmAndamento.id); }}
+            >▶ Continuar</button>
+          </div>
+        )}
+
+        {/* Mini KPIs */}
+        {torneios.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <MiniKpi
+              corFundo="rgba(30,205,161,0.1)"
+              corBorda="rgba(30,205,161,0.25)"
+              corLabel="#1ECDA1"
+              label="Torneios"
+              valor={String(torneios.length)}
+              sub={`${ult30.qtd} nos últimos 30 dias`}
+            />
+            <MiniKpi
+              corFundo="rgba(139,115,255,0.1)"
+              corBorda="rgba(139,115,255,0.25)"
+              corLabel="#8B73FF"
+              label="Jogadores únicos"
+              valor={String(metricas.totalJogadoresUnicos)}
+              sub={`média ${metricas.mediaJogadoresPorTorneio.toFixed(1)} por torneio`}
+            />
+            <MiniKpi
+              corFundo="rgba(56,189,248,0.1)"
+              corBorda="rgba(56,189,248,0.25)"
+              corLabel="#38bdf8"
+              label="Partidas"
+              valor={String(metricas.totalPartidas)}
+              sub="no histórico"
+            />
+            <MiniKpi
+              corFundo="rgba(252,211,77,0.1)"
+              corBorda="rgba(252,211,77,0.25)"
+              corLabel="#fcd34d"
+              label="Último campeão"
+              valor={ultimoCampeao ? `🏆 ${ultimoCampeao.nome}` : "—"}
+              sub={ultimoCampeao ? ultimoCampeao.torneio : "nenhum torneio finalizado"}
+              valorPequeno
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Grid de cards — ocupa toda a tela */}
+      <main className="px-6 md:px-10 pb-12">
+        {torneios.length === 0 ? (
+          <div
+            className="text-center py-16 px-8 rounded-2xl border max-w-xl mx-auto"
+            style={{
+              background: "rgba(15,15,15,0.6)",
+              borderColor: "rgba(201,166,72,0.2)",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
+            }}
+          >
+            <div className="text-5xl mb-4">🏆</div>
+            <div className="text-xl font-bold mb-2" style={{ color: "var(--text-strong)" }}>
+              {auth.isAdmin ? "Nenhum torneio ainda" : "Sem torneios públicos no momento"}
+            </div>
+            <div className="text-sm mb-6" style={{ color: "var(--text-2)" }}>
+              {auth.isAdmin
+                ? "Clique em + Novo torneio ou 📂 Importar para começar."
+                : auth.session && auth.nomesJogador.length > 0
+                  ? <>Você está vinculado como <b style={{color: "#7bc47f"}}>{auth.nomesJogador.join(", ")}</b>.<br/>Peça pro admin adicionar você em algum torneio.</>
+                  : auth.session
+                    ? "Volte mais tarde — você ainda não está vinculado a um nome."
+                    : "Entre ou crie uma conta para começar."}
+            </div>
+            {!auth.session && (
+              <button
+                onClick={() => window.location.reload()}
+                className="text-xs px-4 py-2 rounded-full border transition hover:bg-white/5"
+                style={{ color: "#c9a648", borderColor: "rgba(201,166,72,0.3)" }}
+              >
+                ↻ Atualizar
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+            {torneios.map((t, i) => (
+              <CardTorneio
+                key={t.id}
+                torneio={t}
+                cor={CORES_MTG[i % CORES_MTG.length]}
+                selecionado={t.id === selecionadoId}
+                onSelect={() => setSelecionadoId(t.id)}
+                onDblClick={() => { setSelecionadoId(t.id); abrirTorneio(t.id); }}
+              />
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* Dialogos */}
+      <Modal
+        open={dialogoAberto !== null}
+        onClose={() => setDialogoAberto(null)}
+        title={dialogoAberto === "novo" ? "Novo Torneio" : "Editar Torneio"}
+        maxW="max-w-lg"
+      >
+        <DialogoTorneio
+          torneioExistente={dialogoAberto === "editar" ? torneioSelecionado : null}
+          onFechar={() => setDialogoAberto(null)}
+        />
+      </Modal>
+    </div>
+  );
+}
+
+function CardTorneio({
+  torneio,
+  cor,
+  selecionado,
+  onSelect,
+  onDblClick,
+}: {
+  torneio: Torneio;
+  cor: typeof CORES_MTG[0];
+  selecionado: boolean;
+  onSelect: () => void;
+  onDblClick: () => void;
+}) {
+  const data = torneio.dataCriacao
+    ? new Date(torneio.dataCriacao).toLocaleString("pt-BR", {
+        day: "2-digit", month: "2-digit", year: "numeric",
+        hour: "2-digit", minute: "2-digit",
+      })
+    : "-";
+
+  const statusInfo = torneio.finalizado
+    ? { txt: "FINALIZADO", cor: "bg-sucesso" }
+    : torneio.rodadaAtual > 0
+    ? { txt: `RODADA ${torneio.rodadaAtual}`, cor: "bg-atencao" }
+    : { txt: "ABERTO", cor: "bg-info" };
+
+  // Converte hex em rgba para efeitos
+  const corRgba = (a: number) => {
+    const h = cor.hex.replace("#", "");
+    const r = parseInt(h.slice(0,2), 16);
+    const g = parseInt(h.slice(2,4), 16);
+    const b = parseInt(h.slice(4,6), 16);
+    return `rgba(${r},${g},${b},${a})`;
+  };
+
+  return (
+    <div
+      onClick={onSelect}
+      onDoubleClick={onDblClick}
+      className="group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1.5 border"
+      style={{
+        background: `linear-gradient(135deg, ${corRgba(0.22)} 0%, rgba(26,45,71,0.65) 55%, rgba(15,28,48,0.75) 100%)`,
+        backdropFilter: "blur(16px) saturate(140%)",
+        WebkitBackdropFilter: "blur(16px) saturate(140%)",
+        borderColor: selecionado ? cor.hex : "rgba(255,255,255,0.1)",
+        boxShadow: selecionado
+          ? `0 0 0 2px ${cor.hex}, 0 25px 50px -12px ${corRgba(0.5)}`
+          : `0 15px 35px -12px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)`,
+      }}
+    >
+      {/* Glow colorido no fundo (visível no hover) */}
+      <div
+        className="absolute -top-16 -right-16 w-40 h-40 rounded-full opacity-20 group-hover:opacity-40 transition-opacity blur-2xl pointer-events-none"
+        style={{ background: cor.hex }}
+      />
+
+      {/* Barra colorida gradient no topo */}
+      <div className="h-1" style={{ background: `linear-gradient(90deg, ${cor.hex}, ${corRgba(0.4)})` }} />
+
+      <div className="relative p-4">
+        {/* Header: símbolo grande + status pill */}
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <div
+            className="w-12 h-12 rounded-xl flex items-center justify-center text-3xl font-bold transition-transform group-hover:scale-110"
+            style={{
+              background: `linear-gradient(135deg, ${corRgba(0.3)}, ${corRgba(0.1)})`,
+              color: cor.hex,
+              border: `1px solid ${corRgba(0.3)}`,
+              boxShadow: `0 4px 12px -2px ${corRgba(0.3)}, inset 0 1px 0 rgba(255,255,255,0.1)`,
+            }}
+          >
+            {cor.simbolo}
+          </div>
+          <span
+            className="text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-full border"
+            style={{
+              background: torneio.finalizado
+                ? "rgba(110,231,183,0.15)"
+                : torneio.rodadaAtual > 0
+                ? "rgba(252,211,77,0.18)"
+                : "rgba(139,115,255,0.18)",
+              color: torneio.finalizado
+                ? "var(--good)"
+                : torneio.rodadaAtual > 0
+                ? "var(--warn)"
+                : "var(--brand-link)",
+              borderColor: torneio.finalizado
+                ? "rgba(110,231,183,0.3)"
+                : torneio.rodadaAtual > 0
+                ? "rgba(252,211,77,0.3)"
+                : "rgba(139,115,255,0.3)",
+            }}
+          >
+            ● {statusInfo.txt}
+          </span>
+        </div>
+
+        {/* Nome do torneio */}
+        <h3 className="font-semibold text-base leading-snug break-words min-h-[3rem] tracking-tight"
+            style={{ color: "var(--text-strong)" }}>
+          {torneio.nome}
+        </h3>
+
+        {/* Data */}
+        <div className="text-xs mt-1.5 flex items-center gap-1.5" style={{ color: "var(--text-2)" }}>
+          <span>◷</span> {data}
+        </div>
+
+        {/* Divisor com gradiente */}
+        <div className="h-px my-3"
+             style={{ background: `linear-gradient(90deg, transparent, ${corRgba(0.3)}, transparent)` }} />
+
+        {/* Stats grid 2x2 */}
+        <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+          <Stat label="JOGADORES" valor={String(torneio.jogadores.length)} cor={cor.hex} />
+          <Stat label="RODADAS" valor={String(torneio.qtdRodadas)} cor={cor.hex} />
+          <Stat label="TEMPO" valor={`${torneio.tempoRodadaMin}min`} cor={cor.hex} />
+          <Stat label="TAXA" valor={`R$ ${torneio.taxaInscricao.toFixed(0)}`} cor={cor.hex} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Stat({ label, valor, cor }: { label: string; valor: string; cor: string }) {
+  return (
+    <div>
+      <div className="text-[9px] font-bold tracking-widest" style={{ color: cor, opacity: 0.85 }}>
+        {label}
+      </div>
+      <div className="text-lg font-bold tabular-nums" style={{ color: "var(--text-strong)" }}>
+        {valor}
+      </div>
+    </div>
+  );
+}
+
+function MiniKpi({ corFundo, corBorda, corLabel, label, valor, sub, valorPequeno }: {
+  corFundo: string; corBorda: string; corLabel: string;
+  label: string; valor: string; sub?: string; valorPequeno?: boolean;
+}) {
+  return (
+    <div
+      className="p-3 md:p-4 rounded-2xl border"
+      style={{
+        background: corFundo,
+        borderColor: corBorda,
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+      }}
+    >
+      <div className="text-[10px] font-bold tracking-widest uppercase" style={{ color: corLabel }}>
+        {label}
+      </div>
+      <div
+        className={`${valorPequeno ? "text-base" : "text-2xl md:text-3xl"} font-bold tabular-nums mt-1 truncate`}
+        style={{ color: "var(--text-strong)" }}
+      >
+        {valor}
+      </div>
+      {sub && (
+        <div className="text-[11px] mt-0.5 truncate" style={{ color: "var(--text-2)" }}>
+          {sub}
+        </div>
+      )}
+    </div>
+  );
+}
