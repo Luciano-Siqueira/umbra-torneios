@@ -47,7 +47,8 @@ export function TelaLogin({ aberta, onFechar, onSucesso }: Props) {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)" }}
-      onClick={onFechar}
+      // Só fecha se o clique começou fora da caixa (arrastar de dentro pra fora não fecha)
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onFechar(); }}
     >
       <div
         className="w-full max-w-sm rounded-2xl p-8"
@@ -56,7 +57,6 @@ export function TelaLogin({ aberta, onFechar, onSucesso }: Props) {
           border: "1px solid rgba(201,166,72,0.3)",
           boxShadow: "0 30px 80px -20px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.05)",
         }}
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Abas */}
         <div className="flex gap-2 mb-6 p-1 rounded-lg" style={{ background: "#0a0a0a" }}>
