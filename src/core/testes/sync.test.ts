@@ -105,6 +105,38 @@ describe("envio ao servidor", () => {
   });
 });
 
+describe("donos e exclusão", () => {
+  beforeEach(() => {
+    modo = "ok";
+    s().setUsuarioId("u1");
+  });
+
+  it("torneio criado ou importado sem dono fica com quem está logado", () => {
+    expect(s().criarTorneio("Novo", 10, 3, 75, 15).criadoPor).toBe("u1");
+
+    const importado = { ...s().criarTorneio("Base", 10, 3, 75, 15), id: "imp", criadoPor: undefined };
+    s().importarTorneio(importado);
+    expect(local().find((t: any) => t.id === "imp").criadoPor).toBe("u1");
+  });
+
+  it("importar mantém o dono que já existe", () => {
+    const importado = { ...s().criarTorneio("Base", 10, 3, 75, 15), id: "imp2", criadoPor: "u2" };
+    s().importarTorneio(importado);
+    expect(local().find((t: any) => t.id === "imp2").criadoPor).toBe("u2");
+  });
+
+  it("excluir apaga a linha ao vivo antes do torneio e cancela o envio", async () => {
+    await esperar(900);
+    pedidos = [];
+    const t = s().criarTorneio("Apagar", 10, 3, 75, 15);
+    s().removerTorneio(t.id);
+    await esperar(1000);
+    const apagados = pedidos.filter((p) => p.metodo === "DELETE").map((p) => p.url.includes("torneio_ao_vivo"));
+    expect(apagados).toEqual([true, false]);
+    expect(envios().filter((p) => p.corpo.id === t.id)).toHaveLength(0);
+  });
+});
+
 describe("ao vivo", () => {
   beforeEach(async () => {
     modo = "ok";

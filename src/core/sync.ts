@@ -174,7 +174,7 @@ export async function puxarTorneio(id: string): Promise<boolean> {
   return true;
 }
 
-export async function removerTorneio(id: string) {
+export function cancelarEnvio(id: string) {
   if (timeouts.has(id)) {
     window.clearTimeout(timeouts.get(id)!);
     timeouts.delete(id);
@@ -182,6 +182,10 @@ export async function removerTorneio(id: string) {
   falhas.delete(id);
   pendentes.delete(id);
   salvarPendentes();
+}
+
+export async function removerTorneio(id: string) {
+  cancelarEnvio(id);
   const { error } = await supabase.from("torneios").delete().eq("id", id);
   if (error) {
     console.error("Erro ao excluir torneio", error);

@@ -155,12 +155,15 @@ export const useStore = create<State>((set, get) => ({
 
   removerTorneio: (id) => {
     storage.removerTorneio(id);
-    sync.removerTorneio(id);
-    removerAoVivo(id);
+    sync.cancelarEnvio(id);
+    // Nessa ordem: o RLS confere o dono da linha ao vivo pelo torneio
+    removerAoVivo(id).then(() => sync.removerTorneio(id));
     set({ torneios: storage.listarTorneios() });
   },
 
   importarTorneio: (t) => {
+    // Sem criador o RLS recusa: quem importa passa a ser o dono
+    t.criadoPor = t.criadoPor ?? get().usuarioId ?? undefined;
     storage.upsertTorneio(t);
     sync.enviarTorneio(t);
     set({ torneios: storage.listarTorneios() });

@@ -4,7 +4,7 @@ Sistema web de gerenciamento de torneios de MTG multiplayer. Parte da marca **Um
 
 - **Produção**: https://umbra-torneios.vercel.app
 - **Repo**: https://github.com/Luciano-Siqueira/umbra-torneios
-- **Owner**: Luciano Siqueira (HerrSiqueira)
+- **Owner**: HerrSiqueira
 
 ---
 
@@ -109,6 +109,8 @@ VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
 
 O prefixo `VITE_` é obrigatório e coloca o valor no JavaScript enviado ao navegador. Por isso, use só a chave publishable e nunca `sb_secret` ou `service_role`. Depois de mudar uma variável na Vercel, é preciso fazer um novo deploy.
+
+**Acesso aos torneios (RLS)**: admin vê e altera todos; organizador vê e altera os que criou (`dados.criadoPor`); jogador só lê aqueles em que participa. Regras em `supabase/ajustes_rls.sql`; para revisar, rode `supabase/auditoria_rls.sql`.
 
 **Tabelas**:
 - `admins (user_id uuid PK)`
