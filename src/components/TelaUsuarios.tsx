@@ -18,6 +18,7 @@ interface Props {
 export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
   const voltar = useStore((s) => s.voltarParaLista);
   const torneios = useStore((s) => s.torneios);
+  const modoView = useStore((s) => s.modoView);
   const auth = useAuth();
   const { toast } = useToast();
   const [usuarios, setUsuarios] = useState<UsuarioInfo[]>([]);
@@ -40,9 +41,9 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
   };
 
   useEffect(() => {
-    if (auth.isAdmin && !auth.loading) carregar();
+    if (auth.isAdmin && modoView === "admin" && !auth.loading) carregar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.isAdmin, auth.loading]);
+  }, [auth.isAdmin, modoView, auth.loading]);
 
   const filtrados = useMemo(() => {
     const q = busca.trim().toLowerCase();
@@ -121,7 +122,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
     }
   };
 
-  if (auth.perfilErro || (auth.perfilCarregado && !auth.isAdmin)) {
+  if (auth.perfilErro || (auth.perfilCarregado && (!auth.isAdmin || modoView !== "admin"))) {
     return (
       <div className="min-h-screen flex items-center justify-center text-fg p-6">
         <div className="text-center">
