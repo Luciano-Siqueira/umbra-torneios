@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "../core/store";
-import { useAuth } from "../core/auth";
+import { useAuth, entrar } from "../core/auth";
 import {
   listarUsuarios, definirPapel, deletarUsuario, enviarResetSenha,
   renomearJogador, adicionarNome, removerNomeDoUsuario,
@@ -24,6 +24,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
   const [busca, setBusca] = useState("");
   const [salvando, setSalvando] = useState<string | null>(null);
   const [editando, setEditando] = useState<UsuarioInfo | null>(null);
+  const [confirmandoAdmin, setConfirmandoAdmin] = useState<UsuarioInfo | null>(null);
 
   const carregar = async () => {
     setCarregando(true);
@@ -56,6 +57,15 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
       toast("Você não pode remover o próprio acesso admin", "aviso");
       return;
     }
+    // Mudar admin exige confirmar a senha de quem está logado
+    if (campo === "admin") {
+      setConfirmandoAdmin(u);
+      return;
+    }
+    await salvarPapel(u, campo);
+  };
+
+  const salvarPapel = async (u: UsuarioInfo, campo: "admin" | "organizador") => {
     setSalvando(u.user_id);
     try {
       const novo = {
@@ -130,8 +140,6 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
         backgroundAttachment: "fixed",
       }}
     >
-      <header className="relative h-32 md:h-40 pointer-events-none" />
-
       <div className="px-6 md:px-10 py-4 flex items-center gap-3 flex-wrap">
         <button className="btn-ghost" onClick={voltar}>← Voltar</button>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: "var(--text-strong)" }}>
@@ -175,9 +183,9 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                 <thead>
                   <tr style={{ color: "#8a8a8a", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
                     <th className="text-left py-3 px-4 text-[10px] font-bold tracking-widest uppercase">EMAIL</th>
-                    <th className="text-left py-3 px-4 text-[10px] font-bold tracking-widest uppercase">NOMES VINCULADOS</th>
-                    <th className="text-center py-3 px-2 text-[10px] font-bold tracking-widest uppercase">👑</th>
-                    <th className="text-center py-3 px-2 text-[10px] font-bold tracking-widest uppercase">🎯</th>
+                    <th className="text-left py-3 px-4 text-[10px] font-bold tracking-widest uppercase whitespace-nowrap">👤 JOGADOR</th>
+                    <th className="text-center py-3 px-2 text-[10px] font-bold tracking-widest uppercase whitespace-nowrap">👑 ADMIN</th>
+                    <th className="text-center py-3 px-2 text-[10px] font-bold tracking-widest uppercase whitespace-nowrap">🎯 ORGANIZADOR</th>
                     <th className="text-right py-3 px-4 text-[10px] font-bold tracking-widest uppercase">AÇÕES</th>
                   </tr>
                 </thead>
@@ -207,12 +215,15 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                         )}
                       </td>
                       <td className="py-2 px-2 text-center">
-                        <ToggleButton
-                          ativo={u.eh_admin}
-                          corAtivo="#c9a648"
-                          disabled={salvando === u.user_id}
-                          onClick={() => togglePapel(u, "admin")}
-                        />
+                        <div className="flex items-center justify-center gap-1.5" title="Exige sua senha">
+                          <span className="text-xs">🔒</span>
+                          <ToggleButton
+                            ativo={u.eh_admin}
+                            corAtivo="#c9a648"
+                            disabled={salvando === u.user_id}
+                            onClick={() => togglePapel(u, "admin")}
+                          />
+                        </div>
                       </td>
                       <td className="py-2 px-2 text-center">
                         <ToggleButton
@@ -267,6 +278,95 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
           toast={toast}
         />
       )}
+
+      {/* Modal de confirmação de senha para mudar admin */}
+      {confirmandoAdmin && (
+        <ModalSenhaAdmin
+          usuario={confirmandoAdmin}
+          emailLogado={auth.session?.user?.email || ""}
+          onFechar={() => setConfirmandoAdmin(null)}
+          onConfirmado={async () => {
+            const u = confirmandoAdmin;
+            setConfirmandoAdmin(null);
+            await salvarPapel(u, "admin");
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ModalSenhaAdmin({ usuario, emailLogado, onFechar, onConfirmado }: {
+  usuario: UsuarioInfo;
+  emailLogado: string;
+  onFechar: () => void;
+  onConfirmado: () => Promise<void>;
+}) {
+  const [senha, setSenha] = useState("");
+  const [erro, setErro] = useState("");
+  const [carregando, setCarregando] = useState(false);
+
+  const confirmarSenha = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErro("");
+    setCarregando(true);
+    try {
+      await entrar(emailLogado, senha);
+    } catch (e: any) {
+      setErro(e.code === "invalid_credentials" ? "Senha incorreta" : e.message || "Erro");
+      setCarregando(false);
+      return;
+    }
+    await onConfirmado();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)" }}
+      onClick={onFechar}
+    >
+      <form
+        className="w-full max-w-sm rounded-2xl p-6"
+        style={{ background: "#1a1a1a", border: "1px solid rgba(201,166,72,0.3)" }}
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={confirmarSenha}
+      >
+        <div className="text-[10px] font-bold tracking-[0.3em]" style={{ color: "#c9a648" }}>
+          🔒 {usuario.eh_admin ? "REMOVER ADMIN" : "TORNAR ADMIN"}
+        </div>
+        <div className="text-sm mt-1 mb-4 truncate" style={{ color: "#c4c4c4" }}>
+          {usuario.email}
+        </div>
+
+        <input
+          type="password"
+          value={senha}
+          onChange={(e) => { setSenha(e.target.value); setErro(""); }}
+          placeholder="Digite sua senha"
+          autoComplete="current-password"
+          autoFocus
+          className="input w-full !py-2 text-sm"
+        />
+
+        {erro && (
+          <div className="text-xs mt-2" style={{ color: "#f87171" }}>{erro}</div>
+        )}
+
+        <button
+          type="submit"
+          disabled={carregando || !senha}
+          className="btn-primary w-full mt-4 text-sm disabled:opacity-40"
+        >
+          {carregando ? "Confirmando..." : "Confirmar"}
+        </button>
+        <button
+          type="button"
+          onClick={onFechar}
+          className="w-full mt-2 py-2 text-xs transition hover:text-white"
+          style={{ color: "#8a8a8a" }}
+        >Cancelar</button>
+      </form>
     </div>
   );
 }
