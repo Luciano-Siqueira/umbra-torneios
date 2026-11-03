@@ -38,6 +38,13 @@ export interface PremioCadastrado {
 
 export type PremiacaoModo = "top" | "premio";
 
+export interface TimerRodada {
+  iniciadoEm: string;
+  pausadoEm: string | null;
+  segundosPausados: number;
+  parado: boolean; // parado pelo botão ■, diferente de pausado
+}
+
 export interface Torneio {
   id: string;
   nome: string;
@@ -56,6 +63,7 @@ export interface Torneio {
   premiosCadastrados: PremioCadastrado[];
   dataRodadaAtual: string;
   criadoPor?: string; // user_id de quem criou (torneios antigos não têm)
+  timer?: TimerRodada | null; // null até iniciar o tempo da rodada
 }
 
 // ============================================================

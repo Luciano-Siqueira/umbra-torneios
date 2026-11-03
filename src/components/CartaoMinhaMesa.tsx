@@ -1,0 +1,104 @@
+import { useMemo } from "react";
+import { useAuth } from "../core/auth";
+import { encontrarMinhaMesa } from "../core/minhaMesa";
+import { useStore } from "../core/store";
+import { useAoVivo } from "../core/useAoVivo";
+import { formatarTempo, useContagem } from "../core/useTimer";
+import type { Torneio } from "../core/types";
+
+function RelogioRodada({ torneio }: { torneio: Torneio }) {
+  const c = useContagem(torneio.tempoRodadaMin, torneio.tempoExtraMin, torneio.timer);
+  const fase = !c.iniciado
+    ? "Aguardando o início do tempo"
+    : c.restante === 0
+      ? "Tempo esgotado"
+      : c.pausado || !c.rodando
+        ? "Tempo pausado"
+        : c.emExtra
+          ? "Tempo extra"
+          : "Tempo normal";
+  return (
+    <div className="text-center flex-shrink-0">
+      <div
+        className="text-4xl md:text-5xl font-mono font-bold tabular-nums"
+        style={{ color: c.emExtra ? "var(--warn)" : "var(--brand-1)" }}
+      >
+        {formatarTempo(c.restante)}
+      </div>
+      <div className="text-xs mt-1" style={{ color: "var(--text-2)" }}>{fase}</div>
+    </div>
+  );
+}
+
+export function CartaoMinhaMesa() {
+  const torneios = useStore((s) => s.torneios);
+  const abrirTorneio = useStore((s) => s.abrirTorneio);
+  const { nomesJogador } = useAuth();
+
+  const minha = useMemo(() => encontrarMinhaMesa(torneios, nomesJogador), [torneios, nomesJogador]);
+  useAoVivo(minha?.torneio.id ?? null);
+
+  // Só aparece depois que a primeira rodada começa
+  if (!minha || minha.torneio.rodadaAtual === 0) return null;
+  const { torneio, jogador, mesa, colocacao, venceu } = minha;
+
+  const nomeDe = (id: number) => torneio.jogadores.find((j) => j.id === id)?.nome ?? "?";
+  const status = !mesa
+    ? "Aguardando o sorteio das mesas"
+    : venceu
+      ? "🏆 Você venceu esta mesa!"
+      : mesa.empateTopoIds.includes(jogador.id)
+        ? "🤝 Sua mesa terminou em empate por tempo"
+        : colocacao !== null
+          ? `Você terminou esta mesa em ${colocacao}º lugar`
+          : mesa.finalizada
+            ? "Mesa finalizada"
+            : "Você está jogando";
+
+  return (
+    <button
+      type="button"
+      onClick={() => abrirTorneio(torneio.id)}
+      className="w-full text-left rounded-2xl border p-4 md:p-5 transition hover:brightness-110"
+      style={{
+        background: "linear-gradient(90deg, rgba(201,166,72,0.18), rgba(15,15,15,0.75))",
+        borderColor: "rgba(201,166,72,0.45)",
+        backdropFilter: "blur(14px)",
+        WebkitBackdropFilter: "blur(14px)",
+      }}
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="text-[11px] font-bold tracking-widest uppercase" style={{ color: "var(--brand-1)" }}>
+            ⚔️ Seu torneio em andamento
+          </div>
+          <div className="text-base md:text-lg font-semibold truncate" style={{ color: "var(--text-strong)" }}>
+            {torneio.nome} · Rodada {torneio.rodadaAtual} de {torneio.qtdRodadas}
+          </div>
+          {mesa && (
+            <>
+              <div className="text-2xl font-black mt-2" style={{ color: "var(--text-strong)" }}>
+                Mesa {mesa.numero}
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                {mesa.jogadoresIds.map((id) => (
+                  <span
+                    key={id}
+                    className="text-xs px-2 py-0.5 rounded-full"
+                    style={id === jogador.id
+                      ? { background: "var(--brand-1)", color: "#0a1220", fontWeight: 700 }
+                      : { background: "rgba(255,255,255,0.08)", color: "var(--app-text)" }}
+                  >
+                    {id === jogador.id ? "Você" : nomeDe(id)}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+          <div className="text-sm mt-2" style={{ color: "var(--text-2)" }}>{status}</div>
+        </div>
+        <RelogioRodada torneio={torneio} />
+      </div>
+    </button>
+  );
+}

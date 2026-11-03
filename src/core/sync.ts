@@ -67,6 +67,31 @@ export function enviarTorneio(t: Torneio) {
   timeouts.set(chave, to);
 }
 
+// Envia na hora, cancelando o envio agendado: usado antes de avisar quem acompanha ao vivo
+export async function enviarTorneioAgora(t: Torneio): Promise<void> {
+  const chave = `torneio-${t.id}`;
+  if (timeouts.has(chave)) {
+    window.clearTimeout(timeouts.get(chave)!);
+    timeouts.delete(chave);
+  }
+  const { error } = await supabase.from("torneios").upsert({
+    id: t.id,
+    nome: t.nome,
+    dados: t,
+    publico: true,
+  });
+  if (error) console.error("Erro ao enviar torneio", error.message);
+}
+
+// Baixa um único torneio para o localStorage
+export async function puxarTorneio(id: string): Promise<boolean> {
+  if (timeouts.size > 0) return false;
+  const { data, error } = await supabase.from("torneios").select("dados").eq("id", id).maybeSingle();
+  if (error || !data) return false;
+  storage.upsertTorneio(data.dados as Torneio);
+  return true;
+}
+
 export async function removerTorneio(id: string) {
   try { await supabase.from("torneios").delete().eq("id", id); } catch {}
 }

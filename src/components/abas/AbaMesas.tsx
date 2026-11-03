@@ -1,21 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Torneio, Mesa } from "../../core/types";
 import { useStore } from "../../core/store";
-import { ranking } from "../../core/resultados";
+import { calcularColocacoes, ranking } from "../../core/resultados";
 import { useToast } from "../ui/Toast";
 import { confirmar } from "../ui/Confirm";
 import { Modal } from "../ui/Modal";
 import { DialogoResultado } from "../DialogoResultado";
 import { useTimer, formatarTempo } from "../../core/useTimer";
 
-export function AbaMesas({ torneio }: { torneio: Torneio }) {
+export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar: boolean }) {
   const iniciarRodada = useStore((s) => s.iniciarRodada);
   const resortearMesas = useStore((s) => s.resortearMesas);
   const finalizarTorneio = useStore((s) => s.finalizarTorneio);
   const { toast } = useToast();
 
   const [mesaSel, setMesaSel] = useState<{ mesa: Mesa; idx: number } | null>(null);
-  const timer = useTimer(torneio.tempoRodadaMin, torneio.tempoExtraMin);
+  const timer = useTimer(torneio.tempoRodadaMin, torneio.tempoExtraMin, torneio.timer, podeEditar);
 
   useEffect(() => {
     timer.setOnFimNormal(() => toast("⏰ Tempo normal acabou! Iniciando tempo extra.", "aviso"));
@@ -229,10 +229,16 @@ export function AbaMesas({ torneio }: { torneio: Torneio }) {
         ) : torneio.rodadaAtual >= torneio.qtdRodadas ? (
           <div className="max-w-lg mx-auto text-center py-6 space-y-4">
             <div className="text-xl font-semibold">Todas as {torneio.qtdRodadas} rodadas foram jogadas</div>
-            <div className="text-fg-dim text-sm">Finalize o torneio quando quiser.</div>
-            <button className="btn-gold text-lg font-black" onClick={finalizar}>
-              ♛ FINALIZAR TORNEIO ♛
-            </button>
+            {podeEditar ? (
+              <>
+                <div className="text-fg-dim text-sm">Finalize o torneio quando quiser.</div>
+                <button className="btn-gold text-lg font-black" onClick={finalizar}>
+                  ♛ FINALIZAR TORNEIO ♛
+                </button>
+              </>
+            ) : (
+              <div className="text-fg-dim text-sm">Aguardando o organizador finalizar o torneio.</div>
+            )}
           </div>
         ) : (
           <div className="max-w-lg mx-auto text-center py-6 space-y-4">
@@ -242,14 +248,18 @@ export function AbaMesas({ torneio }: { torneio: Torneio }) {
             <div className="text-fg-dim">
               {ativos} jogadores ativos · {torneio.tempoRodadaMin}min + {torneio.tempoExtraMin}min extra
             </div>
-            <button
-              className="btn-success text-lg font-black w-full max-w-sm mx-auto"
-              onClick={iniciar}
-              disabled={!podeIniciar}
-            >
-              ▶ INICIAR RODADA {torneio.rodadaAtual + 1}
-            </button>
-            {ativos < 3 && (
+            {podeEditar ? (
+              <button
+                className="btn-success text-lg font-black w-full max-w-sm mx-auto"
+                onClick={iniciar}
+                disabled={!podeIniciar}
+              >
+                ▶ INICIAR RODADA {torneio.rodadaAtual + 1}
+              </button>
+            ) : (
+              <div className="text-fg-dim text-sm">Aguardando o organizador iniciar a rodada.</div>
+            )}
+            {podeEditar && ativos < 3 && (
               <div className="text-perigo text-sm">Adicione pelo menos 3 jogadores ativos.</div>
             )}
           </div>
@@ -272,21 +282,23 @@ export function AbaMesas({ torneio }: { torneio: Torneio }) {
             {timer.emExtra ? "TEMPO EXTRA" : "Tempo normal"} · fase: {formatarTempo(timer.restanteFase)}
           </div>
         </div>
-        <div className="flex flex-wrap gap-2 justify-center">
-          {!timer.rodando ? (
-            <button className="btn-success" onClick={timer.iniciar}>▶ Iniciar</button>
-          ) : timer.pausado ? (
-            <button className="btn-warning" onClick={timer.iniciar}>▶ Retomar</button>
-          ) : (
-            <button className="btn-warning" onClick={timer.pausar}>❚❚ Pausar</button>
-          )}
-          <button className="btn-danger" onClick={timer.parar}>■ Parar</button>
-          <button className="btn-ghost" onClick={timer.resetar}>↺ Reset</button>
-        </div>
+        {podeEditar && (
+          <div className="flex flex-wrap gap-2 justify-center">
+            {!timer.rodando ? (
+              <button className="btn-success" onClick={timer.iniciar}>▶ Iniciar</button>
+            ) : timer.pausado ? (
+              <button className="btn-warning" onClick={timer.iniciar}>▶ Retomar</button>
+            ) : (
+              <button className="btn-warning" onClick={timer.pausar}>❚❚ Pausar</button>
+            )}
+            <button className="btn-danger" onClick={timer.parar}>■ Parar</button>
+            <button className="btn-ghost" onClick={timer.resetar}>↺ Reset</button>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2 justify-end">
-        {nenhumaFinalizada && (
+        {podeEditar && nenhumaFinalizada && (
           <button className="btn-warning" onClick={resortear} title="Refaz o pareamento desta rodada">
             🔀 Resortear mesas
           </button>
@@ -294,12 +306,12 @@ export function AbaMesas({ torneio }: { torneio: Torneio }) {
         <button className="btn-info" onClick={copiarWhatsApp}>
           📋 Copiar (WhatsApp)
         </button>
-        {rodadaConcluida && torneio.rodadaAtual < torneio.qtdRodadas && (
+        {podeEditar && rodadaConcluida && torneio.rodadaAtual < torneio.qtdRodadas && (
           <button className="btn-success" onClick={iniciar} disabled={!podeIniciar}>
             ▶ NOVA RODADA ({torneio.rodadaAtual + 1}/{torneio.qtdRodadas})
           </button>
         )}
-        {podeFinalizar && (
+        {podeEditar && podeFinalizar && (
           <button className="btn-gold font-black" onClick={finalizar}>
             ♛ FINALIZAR TORNEIO
           </button>
@@ -315,7 +327,7 @@ export function AbaMesas({ torneio }: { torneio: Torneio }) {
                 key={`p${i}`}
                 mesa={m}
                 jogadoresPorId={jogadoresPorId}
-                onClick={() => setMesaSel({ mesa: m, idx: i })}
+                onClick={podeEditar ? () => setMesaSel({ mesa: m, idx: i }) : undefined}
               />
             ))}
           </div>
@@ -331,7 +343,7 @@ export function AbaMesas({ torneio }: { torneio: Torneio }) {
                 key={`f${i}`}
                 mesa={m}
                 jogadoresPorId={jogadoresPorId}
-                onClick={() => setMesaSel({ mesa: m, idx: i })}
+                onClick={podeEditar ? () => setMesaSel({ mesa: m, idx: i }) : undefined}
               />
             ))}
           </div>
@@ -365,7 +377,7 @@ function CardMesa({
 }: {
   mesa: Mesa;
   jogadoresPorId: Map<number, string>;
-  onClick: () => void;
+  onClick?: () => void;
 }) {
   const finalizada = mesa.finalizada;
   const parcial = !finalizada && (mesa.eliminacoes.length > 0 || mesa.empateTopoIds.length > 0);
@@ -377,6 +389,7 @@ function CardMesa({
   return (
     <button
       onClick={onClick}
+      disabled={!onClick}
       className={`text-left rounded-xl p-4 border-2 transition
                   ${finalizada
                     ? "border-sucesso/40 bg-sucesso/5 hover:bg-sucesso/10"
@@ -420,26 +433,6 @@ function CardMesa({
       </div>
     </button>
   );
-}
-
-// Calcula colocação real de cada jogador (respeitando empates por grupo e empate no topo)
-function calcularColocacoes(mesa: Mesa): Map<number, number> {
-  const total = mesa.jogadoresIds.length;
-  const col = new Map<number, number>();
-  let colAtual = total;
-  let ultimaColGrupo: number | null = null;
-  for (const g of mesa.eliminacoes) {
-    for (const id of g) col.set(id, colAtual);
-    ultimaColGrupo = colAtual;
-    colAtual -= g.length;
-  }
-  if (mesa.empateTopoIds.length) {
-    const colEmpate = ultimaColGrupo !== null ? ultimaColGrupo - 1 : total;
-    for (const id of mesa.empateTopoIds) col.set(id, colEmpate);
-  } else if (mesa.vencedorId !== null) {
-    col.set(mesa.vencedorId, 1);
-  }
-  return col;
 }
 
 function construirOrdem(mesa: Mesa): number[] {

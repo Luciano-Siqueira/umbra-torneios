@@ -66,6 +66,26 @@ export function desfazerResultado(torneio: Torneio, mesa: Mesa): void {
   mesa.finalizada = false;
 }
 
+// Colocação de cada jogador (respeita empates por grupo e empate no topo)
+export function calcularColocacoes(mesa: Mesa): Map<number, number> {
+  const total = mesa.jogadoresIds.length;
+  const col = new Map<number, number>();
+  let colAtual = total;
+  let ultimaColGrupo: number | null = null;
+  for (const g of mesa.eliminacoes) {
+    for (const id of g) col.set(id, colAtual);
+    ultimaColGrupo = colAtual;
+    colAtual -= g.length;
+  }
+  if (mesa.empateTopoIds.length) {
+    const colEmpate = ultimaColGrupo !== null ? ultimaColGrupo - 1 : total;
+    for (const id of mesa.empateTopoIds) col.set(id, colEmpate);
+  } else if (mesa.vencedorId !== null) {
+    col.set(mesa.vencedorId, 1);
+  }
+  return col;
+}
+
 function aplicarColocacoes(torneio: Torneio, mesa: Mesa, total: number): void {
   let colocacaoAtual = total;
   const colocacoes = new Map<number, number>();

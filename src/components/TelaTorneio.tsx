@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from "react";
 import { useStore } from "../core/store";
 import { useAuth } from "../core/auth";
+import { useAoVivo } from "../core/useAoVivo";
 import { confirmar } from "./ui/Confirm";
 import { useToast } from "./ui/Toast";
 import { AuthChip } from "./AuthChip";
@@ -47,6 +48,9 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
   const reabrir = useStore((s) => s.reabrirTorneio);
   const finalizar = useStore((s) => s.finalizarTorneio);
   const [aba, setAba] = useState<Aba>("jogadores");
+
+  // Quem organiza é a fonte dos dados; quem só acompanha recebe ao vivo
+  useAoVivo(!podeEditar && torneio ? torneio.id : null);
 
   if (!torneio) {
     return (
@@ -193,7 +197,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
 
       <main className="flex-1 px-4 md:px-8 py-4 overflow-y-auto">
         {aba === "jogadores" && <AbaJogadores torneio={torneio} />}
-        {aba === "mesas" && <AbaMesas torneio={torneio} />}
+        {aba === "mesas" && <AbaMesas torneio={torneio} podeEditar={podeEditar} />}
         {aba === "ranking" && <AbaRanking torneio={torneio} />}
         {aba === "financeiro" && <AbaFinanceiro torneio={torneio} />}
         {aba === "premiacao" && <AbaPremiacao torneio={torneio} />}

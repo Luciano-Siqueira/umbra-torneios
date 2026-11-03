@@ -10,6 +10,8 @@ import * as storage from "./storage";
 import * as sync from "./sync";
 import { parearRodada } from "./pareamento";
 import { registrarResultado, desfazerResultado } from "./resultados";
+import { publicarAoVivo, removerAoVivo, type LinhaAoVivo } from "./aoVivo";
+import { alternarPausaTimer, iniciarTimer, pararTimer } from "./timer";
 
 export type Tela = "splash" | "torneios" | "torneio" | "analytics" | "usuarios";
 export type ModoView = "admin" | "organizador" | "jogador";
@@ -43,6 +45,14 @@ interface State {
   // Mutacoes no torneio ativo
   torneioAtivo: () => Torneio | null;
   atualizarTorneio: (fn: (t: Torneio) => void) => void;
+  // Também avisa quem acompanha; enviarAntes grava o torneio completo primeiro
+  atualizarEPublicar: (fn: (t: Torneio) => void, enviarAntes?: boolean) => void;
+  aplicarAoVivo: (linha: LinhaAoVivo) => void;
+
+  iniciarTimer: () => void;
+  pausarTimer: () => void;
+  pararTimer: () => void;
+  resetarTimer: () => void;
 
   addJogador: (nome: string, deck: string, pago: boolean) => void;
   removerJogador: (id: number) => void;
@@ -146,6 +156,7 @@ export const useStore = create<State>((set, get) => ({
   removerTorneio: (id) => {
     storage.removerTorneio(id);
     sync.removerTorneio(id);
+    removerAoVivo(id);
     set({ torneios: storage.listarTorneios() });
   },
 
@@ -177,6 +188,40 @@ export const useStore = create<State>((set, get) => ({
       sync.enviarTorneio(atualizado);
     }
     set({ torneios });
+  },
+
+  atualizarEPublicar: (fn, enviarAntes = false) => {
+    get().atualizarTorneio(fn);
+    const t = get().torneioAtivo();
+    if (t) publicarAoVivo(t, enviarAntes);
+  },
+
+  // Só atualiza o local: quem recebe não envia nada de volta
+  aplicarAoVivo: (linha) => {
+    const t = storage.listarTorneios().find((x) => x.id === linha.torneio_id);
+    if (!t) return;
+    t.rodadaAtual = linha.rodada;
+    t.finalizado = linha.finalizado;
+    t.mesas = linha.mesas;
+    t.timer = linha.timer;
+    storage.upsertTorneio(t);
+    set({ torneios: storage.listarTorneios() });
+  },
+
+  iniciarTimer: () => {
+    get().atualizarEPublicar((t) => { t.timer = iniciarTimer(t.timer); });
+  },
+
+  pausarTimer: () => {
+    get().atualizarEPublicar((t) => { t.timer = alternarPausaTimer(t.timer); });
+  },
+
+  pararTimer: () => {
+    get().atualizarEPublicar((t) => { t.timer = pararTimer(t.timer); });
+  },
+
+  resetarTimer: () => {
+    get().atualizarEPublicar((t) => { t.timer = null; });
   },
 
   addJogador: (nome, deck, pago) => {
@@ -211,7 +256,7 @@ export const useStore = create<State>((set, get) => ({
   },
 
   iniciarRodada: () => {
-    get().atualizarTorneio((t) => {
+    get().atualizarEPublicar((t) => {
       if (t.finalizado) return;
       if (t.rodadaAtual >= t.qtdRodadas) return;
       if (t.jogadores.filter((j) => j.ativo).length < 3) return;
@@ -230,11 +275,12 @@ export const useStore = create<State>((set, get) => ({
       t.rodadaAtual += 1;
       t.dataRodadaAtual = new Date().toISOString();
       t.mesas = parearRodada(t.jogadores, t.rodadaAtual);
-    });
+      t.timer = null;
+    }, true);
   },
 
   resortearMesas: () => {
-    get().atualizarTorneio((t) => {
+    get().atualizarEPublicar((t) => {
       // Só refaz se NINGUÉM ainda finalizou nenhuma mesa da rodada
       if (!t.mesas.length) return;
       if (t.mesas.some((m: Mesa) => m.finalizada || m.eliminacoes.length > 0 || m.empateTopoIds.length > 0)) return;
@@ -244,7 +290,7 @@ export const useStore = create<State>((set, get) => ({
 
   // Guarda quem já saiu sem finalizar a mesa: pontos só contam ao confirmar o resultado
   salvarParcialMesa: (mesaIdx, ordem, empateTopo) => {
-    get().atualizarTorneio((t) => {
+    get().atualizarEPublicar((t) => {
       const mesa = t.mesas[mesaIdx];
       if (!mesa || mesa.finalizada) return;
       mesa.eliminacoes = ordem;
@@ -253,7 +299,7 @@ export const useStore = create<State>((set, get) => ({
   },
 
   finalizarMesa: (mesaIdx, ordem, empateTopo) => {
-    get().atualizarTorneio((t) => {
+    get().atualizarEPublicar((t) => {
       const mesa = t.mesas[mesaIdx];
       if (!mesa) return;
       registrarResultado(t, mesa, ordem, empateTopo);
@@ -261,7 +307,7 @@ export const useStore = create<State>((set, get) => ({
   },
 
   editarMesa: (mesaIdx) => {
-    get().atualizarTorneio((t) => {
+    get().atualizarEPublicar((t) => {
       const mesa = t.mesas[mesaIdx];
       if (!mesa) return;
       desfazerResultado(t, mesa);
@@ -269,7 +315,7 @@ export const useStore = create<State>((set, get) => ({
   },
 
   finalizarTorneio: () => {
-    get().atualizarTorneio((t) => {
+    get().atualizarEPublicar((t) => {
       if (t.finalizado) return;
       if (t.mesas.length) {
         t.rodadasFinalizadas.push({
@@ -281,11 +327,12 @@ export const useStore = create<State>((set, get) => ({
         t.mesas = [];
       }
       t.finalizado = true;
-    });
+      t.timer = null;
+    }, true);
   },
 
   reabrirTorneio: () => {
-    get().atualizarTorneio((t) => {
+    get().atualizarEPublicar((t) => {
       if (!t.finalizado) return;
       t.finalizado = false;
       // Puxa a última rodada arquivada de volta para mesas ativas
@@ -295,6 +342,6 @@ export const useStore = create<State>((set, get) => ({
         t.mesas = ult.mesas;
         t.dataRodadaAtual = ult.dataInicio;
       }
-    });
+    }, true);
   },
 }));

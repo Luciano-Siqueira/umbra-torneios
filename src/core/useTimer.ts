@@ -2,96 +2,28 @@
 // Timer com fases (normal + extra) e 3 avisos sonoros
 // ============================================================
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { beepCurto, beepLongo, beepFinal } from "./audio";
+import { useStore } from "./store";
+import { agoraMs, segundosRestantes, sincronizarRelogio } from "./timer";
+import type { TimerRodada } from "./types";
 
-export interface TimerState {
-  restante: number;      // segundos totais restantes
-  emExtra: boolean;      // true quando esta na fase extra
-  rodando: boolean;
-  pausado: boolean;
-}
-
-export function useTimer(tempoNormalMin: number, tempoExtraMin: number) {
-  const normalSeg = tempoNormalMin * 60;
+// Só exibe o tempo: usado por quem acompanha a rodada
+export function useContagem(
+  tempoNormalMin: number,
+  tempoExtraMin: number,
+  timer: TimerRodada | null | undefined,
+) {
   const extraSeg = tempoExtraMin * 60;
-  const totalSeg = normalSeg + extraSeg;
-
-  const [restante, setRestante] = useState(totalSeg);
-  const [rodando, setRodando] = useState(false);
-  const [pausado, setPausado] = useState(false);
-  const restanteRef = useRef(totalSeg);
-  const rodandoRef = useRef(false);
-  const pausadoRef = useRef(false);
-  const avisou10 = useRef(false);
-  const avisouNormal = useRef(false);
-  const onFimNormalRef = useRef<(() => void) | null>(null);
-  const onFimTotalRef = useRef<(() => void) | null>(null);
+  const totalSeg = tempoNormalMin * 60 + extraSeg;
+  const [agora, setAgora] = useState(agoraMs);
 
   useEffect(() => {
-    restanteRef.current = restante;
-  }, [restante]);
-  useEffect(() => { rodandoRef.current = rodando; }, [rodando]);
-  useEffect(() => { pausadoRef.current = pausado; }, [pausado]);
-
-  // Reseta quando muda configuracao
-  useEffect(() => {
-    setRestante(totalSeg);
-    avisou10.current = false;
-    avisouNormal.current = false;
-    setRodando(false);
-    setPausado(false);
-  }, [totalSeg]);
-
-  // Loop principal 1s
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      if (!rodandoRef.current || pausadoRef.current) return;
-      const r = restanteRef.current - 1;
-      restanteRef.current = r;
-      setRestante(r);
-
-      // Aviso 10 min antes do fim normal
-      if (!avisou10.current && r === extraSeg + 10 * 60) {
-        avisou10.current = true;
-        beepCurto();
-      }
-      // Fim do tempo normal
-      if (!avisouNormal.current && r === extraSeg) {
-        avisouNormal.current = true;
-        beepLongo();
-        onFimNormalRef.current?.();
-      }
-      // Fim total
-      if (r <= 0) {
-        setRodando(false);
-        rodandoRef.current = false;
-        beepFinal();
-        onFimTotalRef.current?.();
-      }
-    }, 1000);
+    const id = window.setInterval(() => setAgora(agoraMs()), 500);
     return () => window.clearInterval(id);
-  }, [extraSeg]);
-
-  const iniciar = useCallback(() => {
-    if (rodandoRef.current) return;
-    setRodando(true);
-    setPausado(false);
   }, []);
-  const pausar = useCallback(() => setPausado((p) => !p), []);
-  const parar = useCallback(() => {
-    setRodando(false);
-    setPausado(false);
-  }, []);
-  const resetar = useCallback(() => {
-    setRestante(totalSeg);
-    restanteRef.current = totalSeg;
-    avisou10.current = false;
-    avisouNormal.current = false;
-    setRodando(false);
-    setPausado(false);
-  }, [totalSeg]);
 
+  const restante = segundosRestantes(timer, totalSeg, agora);
   const emExtra = restante <= extraSeg;
   const restanteFase = emExtra ? restante : restante - extraSeg;
 
@@ -99,8 +31,54 @@ export function useTimer(tempoNormalMin: number, tempoExtraMin: number) {
     restante,
     restanteFase,
     emExtra,
-    rodando,
-    pausado,
+    rodando: !!timer && !timer.parado && restante > 0,
+    pausado: !!timer?.pausadoEm && !timer.parado,
+    iniciado: !!timer,
+  };
+}
+
+// Controles e avisos sonoros: usado por quem organiza a rodada
+export function useTimer(
+  tempoNormalMin: number,
+  tempoExtraMin: number,
+  timer: TimerRodada | null | undefined,
+  comAvisos: boolean,
+) {
+  const extraSeg = tempoExtraMin * 60;
+  const contagem = useContagem(tempoNormalMin, tempoExtraMin, timer);
+  const { restante } = contagem;
+
+  const iniciar = useStore((s) => s.iniciarTimer);
+  const pausar = useStore((s) => s.pausarTimer);
+  const parar = useStore((s) => s.pararTimer);
+  const resetar = useStore((s) => s.resetarTimer);
+
+  const anteriorRef = useRef(restante);
+  const onFimNormalRef = useRef<(() => void) | null>(null);
+  const onFimTotalRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => { sincronizarRelogio(); }, []);
+
+  // Avisa ao cruzar cada marca, sem repetir quando a tela é reaberta depois dela
+  useEffect(() => {
+    const anterior = anteriorRef.current;
+    anteriorRef.current = restante;
+    if (!comAvisos || restante >= anterior) return;
+    const cruzou = (marca: number) => anterior > marca && restante <= marca;
+
+    if (cruzou(extraSeg + 10 * 60)) beepCurto();
+    if (cruzou(extraSeg)) {
+      beepLongo();
+      onFimNormalRef.current?.();
+    }
+    if (cruzou(0)) {
+      beepFinal();
+      onFimTotalRef.current?.();
+    }
+  }, [restante, extraSeg, comAvisos]);
+
+  return {
+    ...contagem,
     iniciar, pausar, parar, resetar,
     setOnFimNormal: (fn: () => void) => { onFimNormalRef.current = fn; },
     setOnFimTotal: (fn: () => void) => { onFimTotalRef.current = fn; },

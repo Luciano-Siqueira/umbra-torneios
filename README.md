@@ -92,6 +92,13 @@ Mesmo usuário pode ter todos os papéis. O `modoView` (admin/organizador/jogado
 - `enviarTorneio` tem debounce de 800ms
 - `sair()` limpa `mtg.torneios.v1`, `mtg.modoView` e `mtg.perfil.v1`
 
+### Ao vivo
+
+- O timer da rodada fica gravado no torneio (`Torneio.timer`), e cada aparelho calcula o tempo a partir da hora do servidor (`agora_servidor()`)
+- A tabela `torneio_ao_vivo` guarda só rodada, mesas e timer, para o Realtime não transmitir o torneio inteiro. O SQL está em `supabase/torneio_ao_vivo.sql`
+- Quem organiza publica (`publicarAoVivo`); quem acompanha escuta (`useAoVivo`) e baixa o torneio completo só quando a rodada muda
+- `CartaoMinhaMesa` mostra ao jogador a mesa e o tempo, comparando os nomes vinculados à conta com os do torneio
+
 ### Supabase
 
 Credenciais em variáveis de ambiente, lidas no build. Localmente ficam em `.env.local` e, em produção, na Vercel (Production e Preview):
