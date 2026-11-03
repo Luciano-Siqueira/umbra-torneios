@@ -1,35 +1,155 @@
-# Tournament System
+# Umbra Torneios
 
-Sistema de torneios Multiplayer Table Format (MTG, Commander, Precon).
+Sistema web de gerenciamento de torneios de MTG multiplayer. Parte da marca **Umbra** (latim pra "sombra"), que vai se expandir pra TCG retail, consultoria de dados e serviços de sommelier de cerveja artesanal.
+
+- **Produção**: https://umbra-torneios.vercel.app
+- **Repo**: https://github.com/Luciano-Siqueira/umbra-torneios
+- **Owner**: Luciano Siqueira (HerrSiqueira)
+
+---
 
 ## Stack
-- React 18 + Vite + TypeScript
-- TailwindCSS
-- Zustand (state)
-- Supabase (auth + banco)
-- PWA ready
 
-## Rodar local
+- **React 18 + Vite + TypeScript** (strict mode)
+- **TailwindCSS** com CSS tokens customizados (paleta noir + ouro antigo `#c9a648` + sangue `#8b0000`)
+- **Zustand** pra state (`src/core/store.ts`)
+- **Supabase** (auth email+senha + Postgres com RLS)
+- **PWA** via `vite-plugin-pwa`
+- **Standalone HTML build** via `vite-plugin-singlefile` (tudo embutido num `.html` offline)
+- Font: Sora (Google Fonts)
+- Canvas API pra roleta e corrida de patinhos (sorteios de mesas)
+- Web Audio API pros beeps do timer
+
+---
+
+## Comandos
+
 ```bash
 npm install
-npm run dev
+npm run dev              # dev server
+npm run build            # build normal pra Vercel
+npm run build:single     # gera mtg-tournament.html standalone (tudo inline)
 ```
-Abre em `http://localhost:5173`.
 
-## Build single-file (standalone HTML)
-```bash
-npm run build:single
+Deploy: push na `main` → Vercel autodeploys.
+
+---
+
+## Arquitetura
+
+### Estrutura de pastas
 ```
-Gera `dist-single/index.html` — um único arquivo que abre com duplo clique, sem servidor.
-
-## Build para web (deploy)
-```bash
-npm run build
+src/
+  App.tsx                       # root + roteamento interno via useStore
+  banner-image.ts               # imagem de banner base64
+  core/
+    supabaseClient.ts           # cliente Supabase (chave publishable, safe to commit)
+    auth.ts                     # useAuth hook + entrar/registrar/sair/vincularNome
+    admin.ts                    # funções admin: listar, deletar, resetar senha, renomear
+    store.ts                    # Zustand store + Tela + ModoView
+    sync.ts                     # sincronização bidirecional LS <-> Supabase (debounce 800ms)
+    storage.ts                  # wrappers de localStorage
+    types.ts                    # Torneio, Jogador, Mesa, etc
+    pareamento.ts               # algoritmo suíço
+    premiacao.ts                # cálculo de prêmios
+    resultados.ts               # standings + tiebreakers
+    metricas.ts                 # agregações pro analytics
+    backup.ts                   # export/import JSON
+    useTimer.ts                 # hook de timer com beeps
+    audio.ts                    # Web Audio helpers
+  components/
+    Splash.tsx                  # tela inicial
+    TelaLogin.tsx               # modal login/signup (abas)
+    TelaVincularNome.tsx        # modal pós-signup com autocomplete
+    AuthChip.tsx                # chip multi-role com seletor "Ver como"
+    TelaTorneios.tsx            # listagem de torneios
+    TelaTorneio.tsx             # torneio individual (rodadas, mesas)
+    TelaAnalytics.tsx           # KPIs e gráficos
+    TelaUsuarios.tsx            # painel admin (👑 ADMIN / 🎯 ORG / ✎🔑🗑)
+    DialogoTorneio.tsx          # criar/editar torneio
+    DialogoResultado.tsx        # registrar resultado de mesa
+    BannerArte.tsx              # arte do topo
+    abas/                       # AbaMesas, AbaJogadores, AbaStandings, etc
+    sorteios/                   # Roleta, CorridaPatinhos
+    ui/                         # Toast, confirmar, componentes base
 ```
-Gera `dist/` otimizado pra servir em CDN (Vercel/Netlify/GitHub Pages).
 
-## Config
-Credenciais do Supabase ficam em `src/core/supabaseClient.ts`. A publishable key é segura de commitar.
+### Papéis (multi-role)
 
-## Deploy
-Pronto pra Vercel. Importe o repo em https://vercel.com/new — detecta Vite automaticamente.
+Três perfis não exclusivos:
+- **👑 admin** — tabela `admins` — acesso total, página de gestão de usuários
+- **🎯 organizador** — tabela `organizadores` — pode criar e editar torneios
+- **👤 jogador** — tabela `usuarios_jogadores` (vincula user_id a `nome_jogador` único) — vê seus próprios resultados
+
+Mesmo usuário pode ter todos os papéis. O `modoView` (admin/organizador/jogador) é um seletor de visualização persistido em localStorage, validado contra permissões reais ao carregar o perfil (default = jogador).
+
+### Sincronização
+
+- **localStorage** como cache (chave `mtg.torneios.v1`), **Supabase** como fonte de verdade
+- `puxarDoServidor` **SUBSTITUI** o localStorage (não mescla — evita vazar torneios entre contas)
+- `enviarTorneio` tem debounce de 800ms
+- `sair()` limpa `mtg.torneios.v1` e `mtg.modoView`
+- Troca de user_id no App.tsx limpa cache também
+
+### Supabase
+
+Credenciais em `src/core/supabaseClient.ts` (chave publishable é segura em client-side):
+```ts
+SUPABASE_URL = "https://rfuiuujdelssjbjetnpy.supabase.co"
+SUPABASE_KEY = "sb_publishable_3hElTU2saGAAPXo-UFwOHw_6bSdEj3m"
+```
+
+**Tabelas**:
+- `admins (user_id uuid PK)`
+- `organizadores (user_id uuid PK)`
+- `usuarios_jogadores (user_id uuid, nome_jogador text UNIQUE)`
+- `torneios (id uuid PK, user_id uuid, nome text, dados jsonb, atualizado_em timestamptz)` — JSONB storage pattern
+
+**Função principal** `eh_admin()` — SECURITY DEFINER, usada em RLS policies.
+
+**RPCs**:
+- `listar_usuarios()` — retorna todos com flags eh_admin/eh_organizador + nomes vinculados
+- `definir_papel(user_id, eh_admin, eh_organizador)` — toggle de papéis
+- `admin_deletar_usuario(user_id)` — DELETE em `auth.users` (bloqueia auto-delete)
+
+**Reset de senha**: `supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })`
+
+### Autenticação — gotchas
+
+- **Email signups** precisam estar habilitados em Supabase → Authentication → Sign In/Providers (ON)
+- **Confirm email** está desligado (SMTP interno do Supabase Free tem limite de 2-4 emails/hora)
+- **Nunca criar usuários via INSERT direto em auth.users** — quebra o GoTrue. Usar o signup normal ou `crypt('senha', gen_salt('bf'))` + inserir também em `auth.identities`
+- Signup faz auto-login
+- Modal "Qual seu nome?" só abre com `auth.perfilCarregado === true` (evita falso-positivo durante fetch)
+
+---
+
+## Convenções
+
+- **Autocomplete**: usar `onMouseDown` (NÃO `onClick`) com `e.preventDefault()` + lógica de seleção DENTRO do mesmo handler — evita conflito com blur do input
+- **Importar backup**: 3 casos — ID novo adiciona; mesmo ID+nome sobrescreve; mesmo ID+nome diferente vira novo ID com sufixo `_imp_timestamp`
+- **Confirmações destrutivas**: usar helper `confirmar()` de `components/ui`
+- **Deletar admin**: bloquear auto-delete (`user_id === auth.session?.user?.id`)
+- **Idioma**: português brasileiro em labels, código e commits
+- **Emojis** nos papéis: 👑 admin, 🎯 organizador, 👤 jogador
+
+---
+
+## Problemas conhecidos resolvidos (referência)
+
+- Vercel build "✓ 2 modules transformed" → pasta `src/` não subiu no GitHub (arrastar a pasta inteira, não arquivos soltos)
+- Torneios de outros users vazavam → sync agora SUBSTITUI em vez de mesclar
+- "Database error querying schema" no login de usuários teste → tinham sido criados via INSERT direto. Recriar com `crypt()` + registro em `auth.identities`
+- Autocomplete não selecionava → onClick disparava depois de onMouseDown esvaziar sugestões. Fix: seleção dentro do onMouseDown
+
+---
+
+## Para continuar o trabalho
+
+Qualquer novo agente que pegar esse projeto:
+
+1. Lê esse README inteiro antes de abrir qualquer arquivo
+2. Confere as tabelas no Supabase (`admins`, `organizadores`, `usuarios_jogadores`, `torneios`) e a função `eh_admin()`
+3. `npm install && npm run dev` roda local em `http://localhost:5173`
+4. Mudanças em `src/` → `npm run build` → commit → push → Vercel autodeploys
+5. Pra testar offline: `npm run build:single` gera `mtg-tournament.html` que roda abrindo direto no browser
