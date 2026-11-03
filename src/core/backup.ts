@@ -33,30 +33,34 @@ export function exportarTudo(): void {
   URL.revokeObjectURL(url);
 }
 
-export async function importarTudo(json: string): Promise<{ torneios: number; nomes: number; errosNuvem: string[] }> {
+export async function importarTudo(json: string): Promise<{ torneios: number; nomes: number; copias: number; errosNuvem: string[] }> {
   const dados = JSON.parse(json) as BackupData;
   if (!dados.torneios || !Array.isArray(dados.torneios)) {
     throw new Error("Arquivo inválido (falta campo 'torneios')");
   }
 
   // 1) Mescla no localStorage — mantém local se foi renomeado
-  const existentes = new Map(
-    storage.listarTorneios().map((t: any) => [t.id, t])
-  );
+  const antes = new Map(storage.listarTorneios().map((t: any) => [t.id, t]));
+  const existentes = new Map(antes);
+  const importados: any[] = [];
   for (const t of dados.torneios) {
     const atual = existentes.get(t.id);
     if (!atual) {
       // Novo torneio: adiciona normalmente
       existentes.set(t.id, t);
+      importados.push(t);
     } else if (atual.nome === t.nome) {
       // Mesmo id + mesmo nome: sobrescreve (atualiza versão)
       existentes.set(t.id, t);
+      importados.push(t);
     } else {
       // Mesmo id mas nome diferente: usuário renomeou o local.
       // Cria um id novo pro torneio importado, preservando o local.
       let novoId = `${t.id}_imp_${Date.now()}`;
       while (existentes.has(novoId)) novoId = `${novoId}_${Math.floor(Math.random() * 1000)}`;
-      existentes.set(novoId, { ...t, id: novoId });
+      const renomeado = { ...t, id: novoId };
+      existentes.set(novoId, renomeado);
+      importados.push(renomeado);
     }
   }
   const arr = Array.from(existentes.values());
@@ -76,12 +80,30 @@ export async function importarTudo(json: string): Promise<{ torneios: number; no
   novosNomes.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
   localStorage.setItem("mtg.jogadores.v1", JSON.stringify(novosNomes));
 
-  // 2) Empurra TUDO pro Supabase (se logado como admin)
-  const resSync = await sync.empurrarTudo();
+  // 2) Envia só o que veio no backup, um a um: um torneio recusado não trava os outros
+  const errosNuvem: string[] = [];
+  let copias = 0;
+  for (const t of importados) {
+    const res = await sync.enviarImportado(t);
+    if (!res.torneio) {
+      errosNuvem.push(`${t.nome}: ${res.erro}`);
+      continue;
+    }
+    if (res.torneio.id !== t.id) {
+      copias += 1;
+      // O original é de outra conta: fica como estava antes do backup
+      if (antes.has(t.id)) storage.upsertTorneio(antes.get(t.id));
+      else storage.removerTorneio(t.id);
+    }
+    storage.upsertTorneio(res.torneio);
+  }
+  const erroNomes = await sync.enviarNomes(novosNomes);
+  if (erroNomes) errosNuvem.push(erroNomes);
 
   return {
     torneios: dados.torneios.length,
     nomes: adicionados,
-    errosNuvem: resSync.erros,
+    copias,
+    errosNuvem,
   };
 }

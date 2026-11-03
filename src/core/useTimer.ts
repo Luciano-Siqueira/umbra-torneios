@@ -50,7 +50,7 @@ export function useVibrarFimDaRodada(
   useEffect(() => {
     const anterior = anteriorRef.current;
     anteriorRef.current = restante;
-    if (anterior > 0 && restante === 0) navigator.vibrate?.([400, 200, 400, 200, 800]);
+    if (anterior > 0 && restante === 0) navigator.vibrate?.([1000, 300, 1000, 300, 2000]);
   }, [restante]);
 }
 

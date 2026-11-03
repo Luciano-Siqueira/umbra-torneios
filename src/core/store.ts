@@ -193,8 +193,16 @@ export const useStore = create<State>((set, get) => ({
     // Sem criador o RLS recusa: quem importa passa a ser o dono
     t.criadoPor = t.criadoPor ?? get().usuarioId ?? undefined;
     storage.upsertTorneio(t);
-    sync.enviarTorneio(t);
     set({ torneios: storage.listarTorneios() });
+    sync.enviarImportado(t, get().usuarioId).then((res) => {
+      if (!res.torneio) {
+        sync.avisarRecusado(t.nome, res.erro ?? "");
+      } else if (res.torneio.id !== t.id) {
+        storage.removerTorneio(t.id);
+        storage.upsertTorneio(res.torneio);
+        set({ torneios: storage.listarTorneios() });
+      }
+    });
   },
 
   torneioAtivo: () => {

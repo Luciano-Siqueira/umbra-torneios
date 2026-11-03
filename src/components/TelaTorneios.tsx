@@ -317,7 +317,8 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
               if (res.errosNuvem.length > 0) {
                 toast(`Restaurado local: ${res.torneios} torneios. Erro nuvem: ${res.errosNuvem[0]}`, "aviso");
               } else {
-                toast(`Restaurado: ${res.torneios} torneios · ${res.nomes} nomes · sincronizado na nuvem`, "sucesso");
+                const copias = res.copias > 0 ? ` · ${res.copias} de outra conta viraram cópia sua` : "";
+                toast(`Restaurado: ${res.torneios} torneios · ${res.nomes} nomes${copias} · sincronizado na nuvem`, "sucesso");
               }
             } catch (err: any) {
               toast(`Erro: ${err.message}`, "erro");

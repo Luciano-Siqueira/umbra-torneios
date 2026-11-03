@@ -29,6 +29,10 @@ export function definirAvisoEnvio(fn: (aviso: AvisoEnvio) => void) {
   avisar = fn;
 }
 
+export function avisarRecusado(nome: string, motivo: string) {
+  avisar({ tipo: "recusado", nome, motivo });
+}
+
 export function avisarFalhaAoVivo(motivo: string) {
   avisar({ tipo: "ao-vivo-falhou", motivo });
 }
@@ -331,25 +335,39 @@ export async function enviarNome(nome: string) {
   try { await supabase.from("nomes_cadastrados").upsert({ nome }); } catch {}
 }
 
-// Empurra o localStorage inteiro pro servidor (migração inicial)
-export async function empurrarTudo(): Promise<{ enviados: number; erros: string[] }> {
-  const erros: string[] = [];
-  const torneios = storage.listarTorneios();
-  const versoes = lerVersoes();
-  const payload = torneios.map((t) => ({
-    id: t.id, nome: t.nome, dados: { ...t, versao: (versoes[t.id] ?? 0) + 1 }, publico: true,
-  }));
-  if (payload.length > 0) {
-    const { error } = await supabase.from("torneios").upsert(payload);
-    if (error) erros.push(error.message);
-    else payload.forEach((p) => salvarVersao(p.id, p.dados.versao));
+// Envia um torneio importado. Se for de outra conta, o banco recusa: vira uma cópia de quem importou.
+export async function enviarImportado(
+  t: Torneio,
+  uid?: string | null,
+): Promise<{ torneio?: Torneio; erro?: string }> {
+  const dono = uid ?? (await supabase.auth.getSession()).data.session?.user?.id;
+  const enviarLinha = async (x: Torneio) => {
+    const versao = (lerVersoes()[x.id] ?? 0) + 1;
+    const { error } = await supabase.from("torneios").upsert({
+      id: x.id, nome: x.nome, dados: { ...x, versao }, publico: true,
+    });
+    if (!error) salvarVersao(x.id, versao);
+    return error;
+  };
+
+  const meu: Torneio = { ...t, criadoPor: t.criadoPor ?? dono ?? undefined };
+  const erro = await enviarLinha(meu);
+  if (!erro) return { torneio: meu };
+  if (erroDeConexao(erro)) {
+    storage.upsertTorneio(meu);
+    enviarTorneio(meu);
+    return { torneio: meu };
   }
-  const nomes = storage.carregarNomes();
-  if (nomes.length > 0) {
-    const { error } = await supabase
-      .from("nomes_cadastrados")
-      .upsert(nomes.map((n) => ({ nome: n })));
-    if (error) erros.push(error.message);
-  }
-  return { enviados: payload.length, erros };
+
+  const copia: Torneio = { ...meu, id: `${t.id}_imp_${Date.now()}`, criadoPor: dono ?? undefined };
+  const erroCopia = await enviarLinha(copia);
+  return erroCopia ? { erro: erroCopia.message } : { torneio: copia };
+}
+
+export async function enviarNomes(nomes: string[]): Promise<string | null> {
+  if (nomes.length === 0) return null;
+  const { error } = await supabase
+    .from("nomes_cadastrados")
+    .upsert(nomes.map((n) => ({ nome: n })));
+  return error ? error.message : null;
 }

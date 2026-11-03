@@ -228,6 +228,50 @@ describe("ao vivo", () => {
   });
 });
 
+describe("importar", () => {
+  const recusaDeOutro = (rede: any) => (url: string, init: RequestInit) => {
+    if (init.method === "POST" && url.includes("/torneios") && JSON.parse(init.body as string).dados.criadoPor === "u2") {
+      return json({ code: "42501", message: "violates row-level security", details: null, hint: null }, 403);
+    }
+    return rede(url, init);
+  };
+
+  it("torneio de outra conta vira cópia de quem importou, sem travar os outros", async () => {
+    modo = "ok";
+    s().setUsuarioId("u1");
+    const rede = (globalThis as any).__rede;
+    (globalThis as any).__rede = recusaDeOutro(rede);
+    const base = { ...s().criarTorneio("Base", 10, 3, 75, 15), nome: "Backup" };
+    const meu = await sync.enviarImportado({ ...base, id: "meu", criadoPor: "u1" }, "u1");
+    const semDono = await sync.enviarImportado({ ...base, id: "sem", criadoPor: undefined }, "u1");
+    const deOutro = await sync.enviarImportado({ ...base, id: "outro", criadoPor: "u2" }, "u1");
+    (globalThis as any).__rede = rede;
+
+    expect(meu.torneio?.id).toBe("meu");
+    expect(semDono.torneio?.criadoPor).toBe("u1");
+    expect(deOutro.torneio?.id).toMatch(/^outro_imp_/);
+    expect(deOutro.torneio?.criadoPor).toBe("u1");
+    expect(servidor.has("outro")).toBe(false);
+    expect(servidor.get(deOutro.torneio!.id).nome).toBe("Backup");
+    await esperar(900);
+  });
+
+  it("sem internet fica pendente e não vira cópia", async () => {
+    s().setUsuarioId("u1");
+    const base = { ...s().criarTorneio("Base 2", 10, 3, 75, 15) };
+    await esperar(900);
+    modo = "sem-internet";
+    const res = await sync.enviarImportado({ ...base, id: "off", criadoPor: "u1" }, "u1");
+    expect(res.torneio?.id).toBe("off");
+    expect(sync.temEnviosPendentes()).toBe(true);
+    modo = "ok";
+    sync.retomarEnvios();
+    await esperar(300);
+    expect(servidor.has("off")).toBe(true);
+    expect(sync.temEnviosPendentes()).toBe(false);
+  });
+});
+
 describe("conflito entre aparelhos", () => {
   // Outro aparelho grava direto no servidor, subindo a versão
   const outroAparelhoGrava = (id: string, nome: string) => {

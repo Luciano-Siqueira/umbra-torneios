@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../core/store";
 import { BANNER_IMAGE } from "../banner-image";
-import { LogoUmbra } from "./ui/LogoUmbra";
 import manaPathsData from "../mana-paths.json";
 import { useAuth } from "../core/auth";
 import { TelaLogin } from "./TelaLogin";
@@ -61,12 +60,6 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
         className="relative z-10 flex-1 flex flex-col items-center justify-start px-6 pb-8 text-center"
         style={{ paddingTop: "calc(max(34.4vh, 19.2vw) + 16px)" }}
       >
-        <div
-          className="mb-3 opacity-0"
-          style={{ animation: "fadeInUp 0.6s ease-out 0.2s forwards" }}
-        >
-          <LogoUmbra largura={240} />
-        </div>
         <div
           className="text-xs md:text-sm font-mono tracking-[0.5em] mb-4 md:mb-6 opacity-0"
           style={{
