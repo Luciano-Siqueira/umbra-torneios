@@ -15,6 +15,7 @@ export default defineConfig({
       manifest: {
         name: "Umbra Torneios",
         short_name: "Umbra Torneios",
+        lang: "pt-BR",
         description: "Gestão de torneios de MTG multiplayer",
         theme_color: "#0a0a0a",
         background_color: "#0a0a0a",
