@@ -9,6 +9,7 @@ import { novaMesa } from "./types";
 
 export function tamanhosMesas(n: number): number[] {
   if (n < 3) return [];
+  if (n === 5) return [5]; // 5 não divide em mesas de 3 e 4: joga todo mundo junto
   for (let b = 0; b <= Math.floor(n / 3); b++) {
     const resto = n - 3 * b;
     if (resto >= 0 && resto % 4 === 0) {

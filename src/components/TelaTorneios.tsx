@@ -1,18 +1,16 @@
 import { useState, useRef } from "react";
 import { useStore } from "../core/store";
-import { MTGDivider } from "./ui/Divider";
 import { Modal } from "./ui/Modal";
 import { useToast } from "./ui/Toast";
 import { confirmar } from "./ui/Confirm";
 import { DialogoTorneio } from "./DialogoTorneio";
-import { BannerArte } from "./BannerArte";
 import type { Torneio } from "../core/types";
 import { exportarTudo, importarTudo } from "../core/backup";
 import { useAuth } from "../core/auth";
 import { AuthChip } from "./AuthChip";
 import { CartaoMinhaMesa } from "./CartaoMinhaMesa";
 import { calcularMetricas, metricasRecentes } from "../core/metricas";
-import { torneiosVisiveis } from "../core/visibilidade";
+import { podeEditarTorneios, torneiosVisiveis } from "../core/visibilidade";
 import { BANNER_IMAGE } from "../banner-image";
 
 const CORES_MTG = [
@@ -47,7 +45,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
   const criarTorneioTeste = useStore((s) => s.criarTorneioTeste);
   const auth = useAuth();
   // Edição liberada só pra admin em modo admin (ou organizador em modo organizador)
-  const podeEditar = (auth.isAdmin && modoView === "admin") || modoView === "organizador";
+  const podeEditar = podeEditarTorneios(modoView, auth);
 
   // Filtra torneios conforme modo de visualização atual
   const torneios = torneiosVisiveis(torneiosAll, modoView, auth);
@@ -106,9 +104,12 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
     try {
       const texto = await f.text();
       const t = JSON.parse(texto) as Torneio;
-      if (!t.id || !t.nome) throw new Error("JSON inválido");
-      importarTorneio(t);
-      toast(`Importado: ${t.nome}`, "sucesso");
+      if (!t.id || !t.nome) {
+        toast("Erro: JSON inválido", "erro");
+      } else {
+        importarTorneio(t);
+        toast(`Importado: ${t.nome}`, "sucesso");
+      }
     } catch (err: any) {
       toast(`Erro: ${err.message}`, "erro");
     }

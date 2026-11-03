@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from "react";
 import { useStore } from "../core/store";
 import { useAuth } from "../core/auth";
 import { useAoVivo } from "../core/useAoVivo";
+import { podeEditarTorneios } from "../core/visibilidade";
 import { confirmar } from "./ui/Confirm";
 import { useToast } from "./ui/Toast";
 import { AuthChip } from "./AuthChip";
@@ -43,7 +44,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
   const voltar = useStore((s) => s.voltarParaLista);
   const auth = useAuth();
   const modoView = useStore((s) => s.modoView);
-  const podeEditar = (auth.isAdmin && modoView === "admin") || modoView === "organizador";
+  const podeEditar = podeEditarTorneios(modoView, auth);
   const { toast } = useToast();
   const reabrir = useStore((s) => s.reabrirTorneio);
   const finalizar = useStore((s) => s.finalizarTorneio);
@@ -139,7 +140,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
       {/* Tabs + ação (Reabrir/Finalizar) à direita */}
       <nav className="px-2 md:px-8 py-2 border-b border-bg-cardalt flex items-center gap-2 overflow-x-auto">
         <div className="flex gap-1 min-w-max flex-1">
-          {ABAS.map((a) => (
+          {ABAS.filter((a) => podeEditar || a.id !== "financeiro").map((a) => (
             <button
               key={a.id}
               onClick={() => setAba(a.id)}
@@ -196,10 +197,10 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
       </nav>
 
       <main className="flex-1 px-4 md:px-8 py-4 overflow-y-auto">
-        {aba === "jogadores" && <AbaJogadores torneio={torneio} />}
+        {aba === "jogadores" && <AbaJogadores torneio={torneio} podeEditar={podeEditar} />}
         {aba === "mesas" && <AbaMesas torneio={torneio} podeEditar={podeEditar} />}
         {aba === "ranking" && <AbaRanking torneio={torneio} />}
-        {aba === "financeiro" && <AbaFinanceiro torneio={torneio} />}
+        {aba === "financeiro" && podeEditar && <AbaFinanceiro torneio={torneio} />}
         {aba === "premiacao" && <AbaPremiacao torneio={torneio} />}
         {aba === "sorteios" && (
           <Suspense fallback={<div className="text-center py-12 text-fg-dim">Carregando...</div>}>

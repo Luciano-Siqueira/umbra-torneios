@@ -7,7 +7,7 @@ import { TelaTorneio } from "./components/TelaTorneio";
 import { TelaLogin } from "./components/TelaLogin";
 import { TelaVincularNome } from "./components/TelaVincularNome";
 import { useAuth } from "./core/auth";
-import { puxarDoServidor } from "./core/sync";
+import { definirAvisoEnvio, puxarDoServidor, retomarEnvios } from "./core/sync";
 
 // Telas carregadas só quando abertas
 const TelaAnalytics = lazy(() =>
@@ -37,6 +37,26 @@ function AppInner() {
   const { toast } = useToast();
   const [loginAberto, setLoginAberto] = useState(false);
   const [vincularAberto, setVincularAberto] = useState(false);
+  const [semConexao, setSemConexao] = useState(false);
+
+  useEffect(() => {
+    definirAvisoEnvio((aviso) => {
+      if (aviso.tipo === "sem-conexao") {
+        setSemConexao(true);
+        toast("Sem conexão. As alterações ficam guardadas neste aparelho até a internet voltar.", "aviso");
+      } else if (aviso.tipo === "recuperado") {
+        setSemConexao(false);
+        toast("Conexão de volta. Alterações enviadas.", "sucesso");
+      } else if (aviso.tipo === "recusado") {
+        toast(`O servidor recusou salvar "${aviso.nome}": ${aviso.motivo}`, "erro");
+      } else {
+        toast(`Não foi possível excluir o torneio: ${aviso.motivo}`, "erro");
+      }
+    });
+    window.addEventListener("online", retomarEnvios);
+    return () => window.removeEventListener("online", retomarEnvios);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (auth.perfilErro) toast("Não foi possível carregar seu perfil: " + auth.perfilErro, "erro");
@@ -59,6 +79,7 @@ function AppInner() {
       localStorage.removeItem("mtg.torneios.v1");
       localStorage.setItem(KEY_DONO_CACHE, dono);
     }
+    if (dono) retomarEnvios();
     recarregar();
     setSincronizando(true);
     (async () => {
@@ -88,7 +109,16 @@ function AppInner() {
 
   return (
     <>
-      {tela === "splash" && <Splash onPedirLogin={() => setLoginAberto(true)} />}
+      {semConexao && (
+        <div
+          className="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap"
+          style={{ background: "var(--warn)", color: "#0a1220" }}
+        >
+          ⏳ Alterações aguardando internet
+        </div>
+      )}
+
+      {tela === "splash" &&<Splash onPedirLogin={() => setLoginAberto(true)} />}
       {tela === "torneios" && <TelaTorneios onPedirLogin={() => setLoginAberto(true)} onVincularNome={() => setVincularAberto(true)} />}
       {tela === "torneio" && <TelaTorneio onPedirLogin={() => setLoginAberto(true)} onVincularNome={() => setVincularAberto(true)} />}
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-fg-dim">Carregando...</div>}>

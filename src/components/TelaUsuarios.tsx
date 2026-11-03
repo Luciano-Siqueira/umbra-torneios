@@ -17,6 +17,7 @@ interface Props {
 
 export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
   const voltar = useStore((s) => s.voltarParaLista);
+  const torneios = useStore((s) => s.torneios);
   const auth = useAuth();
   const { toast } = useToast();
   const [usuarios, setUsuarios] = useState<UsuarioInfo[]>([]);
@@ -51,6 +52,13 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
       u.nomes_jogador.some((n) => n.toLowerCase().includes(q))
     );
   }, [usuarios, busca]);
+
+  // A mesa e o desempenho do jogador dependem do nome ser igual ao do torneio
+  const nomesEmTorneios = useMemo(() => new Set(
+    torneios.flatMap((t) => t.jogadores.map((j) => j.nome.trim().toLowerCase()))
+  ), [torneios]);
+  const nomeNoTorneio = (n: string) => nomesEmTorneios.has(n.trim().toLowerCase());
+  const totSemTorneio = usuarios.filter((u) => u.nomes_jogador.some((n) => !nomeNoTorneio(n))).length;
 
   const togglePapel = async (u: UsuarioInfo, campo: "admin" | "organizador") => {
     if (u.user_id === auth.session?.user?.id && campo === "admin") {
@@ -168,6 +176,13 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
           <button className="btn-ghost text-sm" onClick={carregar}>↻ Atualizar</button>
         </div>
 
+        {totSemTorneio > 0 && (
+          <div className="text-xs" style={{ color: "var(--warn)" }}>
+            ⚠ {totSemTorneio} {totSemTorneio === 1 ? "usuário tem" : "usuários têm"} nome que não aparece em nenhum torneio.
+            Se a pessoa joga com outro nome, ela não verá a própria mesa nem o desempenho. Corrija no botão ✎.
+          </div>
+        )}
+
         {carregando ? (
           <div className="text-center py-12 text-fg-dim">Carregando usuários...</div>
         ) : filtrados.length === 0 ? (
@@ -207,8 +222,11 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                           <div className="flex flex-wrap gap-1">
                             {u.nomes_jogador.map((n) => (
                               <span key={n} className="text-[11px] px-2 py-0.5 rounded-full"
-                                    style={{ background: "rgba(123,196,127,0.1)", color: "#7bc47f", border: "1px solid rgba(123,196,127,0.25)" }}>
-                                {n}
+                                    title={nomeNoTorneio(n) ? undefined : "Não aparece em nenhum torneio"}
+                                    style={nomeNoTorneio(n)
+                                      ? { background: "rgba(123,196,127,0.1)", color: "#7bc47f", border: "1px solid rgba(123,196,127,0.25)" }
+                                      : { background: "rgba(252,211,77,0.1)", color: "#fcd34d", border: "1px solid rgba(252,211,77,0.3)" }}>
+                                {nomeNoTorneio(n) ? n : `⚠ ${n}`}
                               </span>
                             ))}
                           </div>

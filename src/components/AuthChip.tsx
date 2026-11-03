@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { sair, desvincularNome, type AuthState } from "../core/auth";
+import { temEnviosPendentes } from "../core/sync";
 import { useStore, type ModoView } from "../core/store";
 import { useToast } from "./ui/Toast";
 
@@ -167,6 +168,7 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
               <button
                 onClick={async () => {
                   setAbrindoMenu(false);
+                  if (temEnviosPendentes() && !confirm("Há alterações que ainda não foram enviadas e serão perdidas se você sair. Sair mesmo assim?")) return;
                   await sair();
                   toast("Você saiu da conta", "info");
                   onSair?.();

@@ -3,6 +3,12 @@ import type { AuthState } from "./auth";
 import type { ModoView } from "./store";
 import type { Torneio } from "./types";
 
+// Só controla a interface: quem protege os dados é o RLS
+export function podeEditarTorneios(modoView: ModoView, auth: AuthState): boolean {
+  if (modoView === "admin") return auth.isAdmin;
+  return modoView === "organizador" && (auth.isOrganizador || auth.isAdmin);
+}
+
 export function torneiosVisiveis(torneios: Torneio[], modoView: ModoView, auth: AuthState): Torneio[] {
   if (!auth.session) return torneios;
   if (modoView === "admin" && auth.isAdmin) return torneios;

@@ -89,7 +89,7 @@ Mesmo usuário pode ter todos os papéis. O `modoView` (admin/organizador/jogado
 - Ao abrir, o app mostra o cache e atualiza do servidor por trás; o cache só é descartado quando muda a conta (`mtg.torneios.dono`)
 - O perfil também fica em cache (`mtg.perfil.v1`) e é confirmado com o servidor a cada abertura
 - `puxarDoServidor` **SUBSTITUI** o localStorage (não mescla — evita vazar torneios entre contas), exceto com envio pendente
-- `enviarTorneio` tem debounce de 800ms
+- `enviarTorneio` tem debounce de 800ms. Sem conexão, o envio fica em `mtg.envios.pendentes` e é repetido, inclusive depois de recarregar; recusa do servidor (como RLS) avisa e não repete
 - `sair()` limpa `mtg.torneios.v1`, `mtg.modoView` e `mtg.perfil.v1`
 
 ### Ao vivo
