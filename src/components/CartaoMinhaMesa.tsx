@@ -1,8 +1,4 @@
-import { useMemo } from "react";
-import { useAuth } from "../core/auth";
-import { encontrarMinhaMesa } from "../core/minhaMesa";
-import { useStore } from "../core/store";
-import { useAoVivo } from "../core/useAoVivo";
+import type { MinhaMesa } from "../core/minhaMesa";
 import { formatarTempo, useContagem } from "../core/useTimer";
 import type { Torneio } from "../core/types";
 
@@ -30,16 +26,7 @@ function RelogioRodada({ torneio }: { torneio: Torneio }) {
   );
 }
 
-export function CartaoMinhaMesa() {
-  const torneios = useStore((s) => s.torneios);
-  const abrirTorneio = useStore((s) => s.abrirTorneio);
-  const { nomesJogador } = useAuth();
-
-  const minha = useMemo(() => encontrarMinhaMesa(torneios, nomesJogador), [torneios, nomesJogador]);
-  useAoVivo(minha?.torneio.id ?? null);
-
-  // Só aparece depois que a primeira rodada começa
-  if (!minha || minha.torneio.rodadaAtual === 0) return null;
+export function CartaoMinhaMesa({ minha }: { minha: MinhaMesa }) {
   const { torneio, jogador, mesa, colocacao, venceu } = minha;
 
   const nomeDe = (id: number) => torneio.jogadores.find((j) => j.id === id)?.nome ?? "?";
@@ -56,10 +43,8 @@ export function CartaoMinhaMesa() {
             : "Você está jogando";
 
   return (
-    <button
-      type="button"
-      onClick={() => abrirTorneio(torneio.id)}
-      className="w-full text-left rounded-2xl border p-4 md:p-5 transition hover:brightness-110"
+    <div
+      className="rounded-2xl border p-4 md:p-5"
       style={{
         background: "linear-gradient(90deg, rgba(201,166,72,0.18), rgba(15,15,15,0.75))",
         borderColor: "rgba(201,166,72,0.45)",
@@ -70,10 +55,7 @@ export function CartaoMinhaMesa() {
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="flex-1 min-w-0">
           <div className="text-[11px] font-bold tracking-widest uppercase" style={{ color: "var(--brand-1)" }}>
-            ⚔️ Seu torneio em andamento
-          </div>
-          <div className="text-base md:text-lg font-semibold truncate" style={{ color: "var(--text-strong)" }}>
-            {torneio.nome} · Rodada {torneio.rodadaAtual} de {torneio.qtdRodadas}
+            ⚔️ Sua mesa · Rodada {torneio.rodadaAtual} de {torneio.qtdRodadas}
           </div>
           {mesa && (
             <>
@@ -99,6 +81,6 @@ export function CartaoMinhaMesa() {
         </div>
         <RelogioRodada torneio={torneio} />
       </div>
-    </button>
+    </div>
   );
 }

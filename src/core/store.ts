@@ -68,20 +68,45 @@ interface State {
   reabrirTorneio: () => void;
 }
 
+// Tela aberta, para o F5 voltar ao mesmo lugar (só nesta aba do navegador)
+const KEY_NAVEGACAO = "mtg.navegacao";
+
+function lerNavegacao(): { tela: Tela; torneioId: string | null } {
+  try {
+    const salva = JSON.parse(sessionStorage.getItem(KEY_NAVEGACAO) || "null");
+    if (salva?.tela) return { tela: salva.tela, torneioId: salva.torneioId ?? null };
+  } catch { /* ignore */ }
+  return { tela: "splash", torneioId: null };
+}
+
+function salvarNavegacao(tela: Tela, torneioId: string | null) {
+  try {
+    sessionStorage.setItem(KEY_NAVEGACAO, JSON.stringify({ tela, torneioId }));
+  } catch { /* ignore */ }
+}
+
 export const useStore = create<State>((set, get) => ({
-  tela: "splash",
+  ...lerNavegacao(),
   modoView: (localStorage.getItem("mtg.modoView") as ModoView) || "jogador",
   setModoView: (m) => { localStorage.setItem("mtg.modoView", m); set({ modoView: m }); },
   setUsuarioId: (id) => set({ usuarioId: id }),
   setSincronizando: (v) => set({ sincronizando: v }),
-  torneioId: null,
   torneios: storage.listarTorneios(),
   usuarioId: null,
   sincronizando: true,
 
-  irPara: (tela) => set({ tela }),
-  abrirTorneio: (id) => set({ torneioId: id, tela: "torneio" }),
-  voltarParaLista: () => set({ torneioId: null, tela: "torneios" }),
+  irPara: (tela) => {
+    salvarNavegacao(tela, get().torneioId);
+    set({ tela });
+  },
+  abrirTorneio: (id) => {
+    salvarNavegacao("torneio", id);
+    set({ torneioId: id, tela: "torneio" });
+  },
+  voltarParaLista: () => {
+    salvarNavegacao("torneios", null);
+    set({ torneioId: null, tela: "torneios" });
+  },
 
   recarregar: () => {
     // Migração: renomeia jogadores do "Torneio Teste" se tiverem nomes antigos

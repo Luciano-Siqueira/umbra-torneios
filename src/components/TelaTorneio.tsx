@@ -48,7 +48,20 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
   const { toast } = useToast();
   const reabrir = useStore((s) => s.reabrirTorneio);
   const finalizar = useStore((s) => s.finalizarTorneio);
-  const [aba, setAba] = useState<Aba>("jogadores");
+  const torneioId = useStore((s) => s.torneioId);
+  const [abaEscolhida, setAbaEscolhida] = useState<Aba>(() => {
+    try {
+      const salva = sessionStorage.getItem(`mtg.aba.${torneioId}`);
+      if (ABAS.some((a) => a.id === salva)) return salva as Aba;
+    } catch { /* ignore */ }
+    return "jogadores";
+  });
+  const setAba = (nova: Aba) => {
+    setAbaEscolhida(nova);
+    try { sessionStorage.setItem(`mtg.aba.${torneioId}`, nova); } catch { /* ignore */ }
+  };
+  // Financeiro é só de quem organiza: o F5 pode reabrir depois de trocar de modo
+  const aba: Aba = abaEscolhida === "financeiro" && !podeEditar ? "jogadores" : abaEscolhida;
 
   // Quem organiza é a fonte dos dados; quem só acompanha recebe ao vivo
   useAoVivo(!podeEditar && torneio ? torneio.id : null);

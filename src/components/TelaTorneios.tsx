@@ -8,7 +8,6 @@ import type { Torneio } from "../core/types";
 import { exportarTudo, importarTudo } from "../core/backup";
 import { useAuth } from "../core/auth";
 import { AuthChip } from "./AuthChip";
-import { CartaoMinhaMesa } from "./CartaoMinhaMesa";
 import { calcularMetricas, metricasRecentes } from "../core/metricas";
 import { ranking } from "../core/resultados";
 import { podeEditarTorneios, torneiosVisiveis } from "../core/visibilidade";
@@ -330,9 +329,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
 
       {/* Faixa "Em andamento" + KPIs rápidos — colados abaixo do menu */}
       <div className="px-6 md:px-10 space-y-4 mb-4 mt-2">
-        <CartaoMinhaMesa />
-
-        {torneioEmAndamento && modoView !== "jogador" && (
+        {torneioEmAndamento && (
           <div
             className="flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition hover:brightness-110"
             style={{

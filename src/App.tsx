@@ -49,6 +49,8 @@ function AppInner() {
         toast("Conexão de volta. Alterações enviadas.", "sucesso");
       } else if (aviso.tipo === "recusado") {
         toast(`O servidor recusou salvar "${aviso.nome}": ${aviso.motivo}`, "erro");
+      } else if (aviso.tipo === "ao-vivo-falhou") {
+        toast(`Os jogadores podem não ver esta atualização ao vivo: ${aviso.motivo}`, "erro");
       } else {
         toast(`Não foi possível excluir o torneio: ${aviso.motivo}`, "erro");
       }

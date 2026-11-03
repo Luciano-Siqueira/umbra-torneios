@@ -98,7 +98,8 @@ Mesmo usuário pode ter todos os papéis. O `modoView` (admin/organizador/jogado
 - O timer da rodada fica gravado no torneio (`Torneio.timer`), e cada aparelho calcula o tempo a partir da hora do servidor (`agora_servidor()`)
 - A tabela `torneio_ao_vivo` guarda só rodada, mesas e timer, para o Realtime não transmitir o torneio inteiro. O SQL está em `supabase/torneio_ao_vivo.sql`
 - Quem organiza publica (`publicarAoVivo`); quem acompanha escuta (`useAoVivo`) e baixa o torneio completo só quando a rodada muda
-- `CartaoMinhaMesa` mostra ao jogador a mesa e o tempo, comparando os nomes vinculados à conta com os do torneio
+- `CartaoMinhaMesa`, na aba Mesas, mostra ao jogador a mesa e o tempo, comparando os nomes vinculados à conta com os do torneio
+- Se o Realtime não conectar, `useAoVivo` confere por consulta a cada 15 segundos; sem linha ao vivo, usa o torneio salvo
 
 ### Supabase
 

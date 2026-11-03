@@ -6,26 +6,29 @@ import { puxarTorneio } from "./sync";
 import { sincronizarRelogio } from "./timer";
 import type { LinhaAoVivo } from "./aoVivo";
 
-const INTERVALO_CONFERENCIA_MS = 60_000; // caso o Realtime caia sem avisar
+// Conferência por consulta, caso o Realtime caia ou nem conecte
+const CONFERENCIA_CONECTADO_MS = 60_000;
+const CONFERENCIA_DESCONECTADO_MS = 15_000;
 
 export function useAoVivo(torneioId: string | null): void {
   useEffect(() => {
     if (!torneioId) return;
     let ativo = true;
 
+    const baixarTorneio = async () => {
+      if (await puxarTorneio(torneioId) && ativo) useStore.getState().recarregar();
+    };
+
     const aplicar = async (linha: LinhaAoVivo) => {
-      const { torneios, aplicarAoVivo, recarregar } = useStore.getState();
+      const { torneios, aplicarAoVivo } = useStore.getState();
       const atual = torneios.find((t) => t.id === linha.torneio_id);
       const mudouRodada = !!atual && (atual.rodadaAtual !== linha.rodada || atual.finalizado !== linha.finalizado);
       aplicarAoVivo(linha);
       if (!mudouRodada) return;
 
       // Pontos e histórico não vêm na linha: baixa o torneio uma vez por rodada
-      if (await puxarTorneio(linha.torneio_id)) {
-        if (!ativo) return;
-        recarregar();
-        aplicarAoVivo(linha);
-      }
+      await baixarTorneio();
+      if (ativo) useStore.getState().aplicarAoVivo(linha);
     };
 
     const buscar = async () => {
@@ -35,12 +38,18 @@ export function useAoVivo(torneioId: string | null): void {
         .eq("torneio_id", torneioId)
         .maybeSingle();
       if (!ativo) return;
-      if (error) {
-        console.warn("Erro ao buscar ao vivo", error.message);
-        return;
-      }
+      if (error) console.warn("Erro ao buscar ao vivo", error.message);
       if (data) aplicar(data as LinhaAoVivo);
+      // Sem linha ao vivo, o tempo e as mesas ainda estão no torneio salvo
+      else baixarTorneio();
     };
+
+    let conferencia = 0;
+    const programarConferencia = (ms: number) => {
+      window.clearInterval(conferencia);
+      conferencia = window.setInterval(buscar, ms);
+    };
+    programarConferencia(CONFERENCIA_DESCONECTADO_MS);
 
     const canal = supabase
       .channel(`ao-vivo-${torneioId}`)
@@ -51,14 +60,22 @@ export function useAoVivo(torneioId: string | null): void {
           if (ativo && "torneio_id" in mudanca.new) aplicar(mudanca.new as LinhaAoVivo);
         },
       )
-      .subscribe();
+      .subscribe((estado, erro) => {
+        if (!ativo) return;
+        if (estado === "SUBSCRIBED") {
+          programarConferencia(CONFERENCIA_CONECTADO_MS);
+          buscar();
+        } else {
+          if (erro) console.warn("Realtime desconectado", estado, erro.message);
+          programarConferencia(CONFERENCIA_DESCONECTADO_MS);
+        }
+      });
 
     // Celular bloqueado derruba a conexão: confere ao voltar para o app
     const aoVoltar = () => {
       if (document.visibilityState === "visible") buscar();
     };
     document.addEventListener("visibilitychange", aoVoltar);
-    const conferencia = window.setInterval(buscar, INTERVALO_CONFERENCIA_MS);
 
     sincronizarRelogio();
     buscar();

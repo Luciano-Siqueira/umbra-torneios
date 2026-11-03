@@ -6,6 +6,9 @@ import { useToast } from "../ui/Toast";
 import { confirmar } from "../ui/Confirm";
 import { Modal } from "../ui/Modal";
 import { DialogoResultado } from "../DialogoResultado";
+import { CartaoMinhaMesa } from "../CartaoMinhaMesa";
+import { useAuth } from "../../core/auth";
+import { encontrarMinhaMesa } from "../../core/minhaMesa";
 import { useTimer, formatarTempo } from "../../core/useTimer";
 
 export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar: boolean }) {
@@ -16,6 +19,8 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
 
   const [mesaSel, setMesaSel] = useState<{ mesa: Mesa; idx: number } | null>(null);
   const timer = useTimer(torneio.tempoRodadaMin, torneio.tempoExtraMin, torneio.timer, podeEditar);
+  const { nomesJogador } = useAuth();
+  const minha = useMemo(() => encontrarMinhaMesa([torneio], nomesJogador), [torneio, nomesJogador]);
 
   useEffect(() => {
     timer.setOnFimNormal(() => toast("⏰ Tempo normal acabou! Iniciando tempo extra.", "aviso"));
@@ -271,6 +276,10 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
   // Com rodada em andamento
   return (
     <div className="space-y-4 w-full">
+      {minha?.mesa && <CartaoMinhaMesa minha={minha} />}
+
+      {/* Quem só acompanha e está jogando já vê o tempo no cartão acima */}
+      {(podeEditar || !minha?.mesa) && (
       <div className="card flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
           <div className="label mb-1">Rodada {torneio.rodadaAtual} de {torneio.qtdRodadas}</div>
@@ -296,6 +305,7 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
           </div>
         )}
       </div>
+      )}
 
       <div className="flex flex-wrap gap-2 justify-end">
         {podeEditar && nenhumaFinalizada && (

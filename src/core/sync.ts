@@ -16,12 +16,17 @@ export type AvisoEnvio =
   | { tipo: "sem-conexao" }
   | { tipo: "recuperado" }
   | { tipo: "recusado"; nome: string; motivo: string }
-  | { tipo: "exclusao-falhou"; motivo: string };
+  | { tipo: "exclusao-falhou"; motivo: string }
+  | { tipo: "ao-vivo-falhou"; motivo: string };
 
 let avisar: (aviso: AvisoEnvio) => void = () => {};
 
 export function definirAvisoEnvio(fn: (aviso: AvisoEnvio) => void) {
   avisar = fn;
+}
+
+export function avisarFalhaAoVivo(motivo: string) {
+  avisar({ tipo: "ao-vivo-falhou", motivo });
 }
 
 function lerPendentes(): string[] {

@@ -1,6 +1,6 @@
 // Publica o estado da rodada na tabela pequena que o Realtime transmite
 import { supabase } from "./supabaseClient";
-import { enviarTorneioAgora, erroDeConexao } from "./sync";
+import { avisarFalhaAoVivo, enviarTorneioAgora, erroDeConexao } from "./sync";
 import type { Mesa, TimerRodada, Torneio } from "./types";
 
 export interface LinhaAoVivo {
@@ -39,6 +39,8 @@ export async function publicarAoVivo(t: Torneio, enviarAntes = false): Promise<v
       republicacoes.delete(t.id);
       publicarAoVivo(t);
     }, ESPERA_REPUBLICAR_MS));
+  } else {
+    avisarFalhaAoVivo(error.message);
   }
 }
 
