@@ -4,10 +4,10 @@ import { useAuth } from "../core/auth";
 import { AuthChip } from "./AuthChip";
 import { calcularMetricas, metricasRecentes, type MetricasGlobais } from "../core/metricas";
 import {
-  calcularDesempenho, listarNomesJogadores, mesmoJogador,
+  calcularDesempenho, calcularGanhos, listarNomesJogadores, mesmoJogador,
   type DesempenhoJogador, type EvolucaoJogador, type ResultadoMesa,
 } from "../core/desempenho";
-import { torneiosVisiveis } from "../core/visibilidade";
+import { podeEditarTorneios, torneiosVisiveis } from "../core/visibilidade";
 import type { Torneio } from "../core/types";
 import { BANNER_IMAGE } from "../banner-image";
 
@@ -26,6 +26,9 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
   );
   const metricasTodas = useMemo(() => calcularMetricas(torneiosTodos), [torneiosTodos]);
   const metricas = useMemo(() => calcularMetricas(torneios), [torneios]);
+  // Jogador vê só o que ganhou; a arrecadação fica com quem organiza
+  const verArrecadacao = podeEditarTorneios(modoView, auth);
+  const ganhos = useMemo(() => calcularGanhos(torneios, auth.nomesJogador), [torneios, auth.nomesJogador]);
   const sincronizando = useStore((s) => s.sincronizando);
   const carregando = sincronizando || (!auth.perfilCarregado && !auth.perfilErro);
   const ult30 = useMemo(() => metricasRecentes(torneios, 30), [torneios]);
@@ -123,11 +126,19 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
                   valor={metricas.totalPartidas.toLocaleString("pt-BR")}
                   sub={`${metricas.empatesPorTempo} empates por tempo`}
                 />
-                <KpiTile
-                  label="Arrecadação total"
-                  valor={`R$ ${metricas.totalArrecadado.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                  sub="todos os torneios"
-                />
+                {verArrecadacao ? (
+                  <KpiTile
+                    label="Arrecadação total"
+                    valor={`R$ ${metricas.totalArrecadado.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    sub="todos os torneios"
+                  />
+                ) : (
+                  <KpiTile
+                    label="Seus prêmios"
+                    valor={`R$ ${ganhos.total.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    sub={ganhos.premiacoes === 1 ? "em 1 torneio premiado" : `em ${ganhos.premiacoes} torneios premiados`}
+                  />
+                )}
               </div>
             </section>
 
