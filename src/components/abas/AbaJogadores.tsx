@@ -15,6 +15,7 @@ export function AbaJogadores({ torneio }: { torneio: Torneio }) {
   const [nome, setNome] = useState("");
   const [deck, setDeck] = useState("");
   const [sugestoes, setSugestoes] = useState<string[]>([]);
+  const [sugestaoAtiva, setSugestaoAtiva] = useState(0);
 
   const rodadaAndamento = torneio.mesas.length > 0;
   const ativos = torneio.jogadores.filter((j) => j.ativo);
@@ -27,6 +28,7 @@ export function AbaJogadores({ torneio }: { torneio: Torneio }) {
   const onDigitar = (v: string) => {
     setNome(v);
     setSugestoes(v.trim().length >= 2 ? sugerirNomes(v, 6) : []);
+    setSugestaoAtiva(0);
   };
 
   const adicionar = (nomeInput?: string) => {
@@ -62,10 +64,16 @@ export function AbaJogadores({ torneio }: { torneio: Torneio }) {
               value={nome}
               onChange={(e) => onDigitar(e.target.value)}
               onKeyDown={(e) => {
+                if ((e.key === "ArrowDown" || e.key === "ArrowUp") && sugestoes.length > 0) {
+                  // Setas percorrem as sugestões, voltando ao início/fim da lista
+                  e.preventDefault();
+                  const passo = e.key === "ArrowDown" ? 1 : -1;
+                  setSugestaoAtiva((i) => (i + passo + sugestoes.length) % sugestoes.length);
+                }
                 if (e.key === "Enter") {
                   if (sugestoes.length > 0) {
-                    // Enter aceita a primeira sugestão (definitivo)
-                    setNome(sugestoes[0]);
+                    // Enter aceita a sugestão destacada (definitivo)
+                    setNome(sugestoes[sugestaoAtiva]);
                     setSugestoes([]);
                   } else {
                     adicionar();
@@ -81,10 +89,11 @@ export function AbaJogadores({ torneio }: { torneio: Torneio }) {
                 {sugestoes.map((s, i) => (
                   <button
                     key={s}
+                    ref={i === sugestaoAtiva ? (el) => el?.scrollIntoView({ block: "nearest" }) : undefined}
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => { setNome(s); setSugestoes([]); }}
                     className={`block w-full text-left px-3 py-2 hover:bg-bg-panel text-sm
-                                ${i === 0 ? "text-acento font-semibold" : ""}`}
+                                ${i === sugestaoAtiva ? "bg-bg-panel text-acento font-semibold" : ""}`}
                   >{s}</button>
                 ))}
               </div>
