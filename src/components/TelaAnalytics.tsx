@@ -290,6 +290,58 @@ function DesempenhoView({ d, posicaoGeral, totalGeral }: {
   return (
     <>
       <section>
+        <div className="ds-sect">Conquistas ({obtidas} de {d.conquistas.length})</div>
+        <div className="ds-grid ds-g4">
+          {d.conquistas.map((c) => (
+            <div
+              key={c.titulo}
+              className="ds-card"
+              style={{ opacity: c.obtida ? 1 : 0.4, filter: c.obtida ? undefined : "grayscale(1)" }}
+            >
+              <div className="text-2xl">{c.icone}</div>
+              <div className="text-sm font-bold mt-1" style={{ color: "var(--text-strong)" }}>{c.titulo}</div>
+              <div className="text-xs mt-0.5" style={{ color: "var(--text-muted-ds)" }}>{c.descricao}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <div className="ds-card">
+          <div className="ds-card-h"><h3>🗂 Histórico de torneios</h3></div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
+              <thead>
+                <tr style={{ color: "var(--text-muted-ds)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".02em" }}>
+                  <th className="text-left py-2">Data</th>
+                  <th className="text-left py-2">Torneio</th>
+                  <th className="text-left py-2">Deck</th>
+                  <th className="text-right py-2">Pos.</th>
+                  <th className="text-right py-2">Pts</th>
+                  <th className="text-right py-2">V</th>
+                </tr>
+              </thead>
+              <tbody>
+                {d.historico.map((t) => (
+                  <tr key={t.id} style={{ borderTop: "0.8px solid var(--line-soft)" }}>
+                    <td className="py-1.5 whitespace-nowrap">{formatarData(t.data)}</td>
+                    <td className="py-1.5" style={{ color: "var(--text-strong)" }}>{t.nome}</td>
+                    <td className="py-1.5">{t.deck || "—"}</td>
+                    <td className="py-1.5 text-right tabular-nums whitespace-nowrap">
+                      {t.posicao === 1 && "🏆 "}
+                      {t.posicao !== null ? `${t.posicao}º de ${t.total}` : "em andamento"}
+                    </td>
+                    <td className="py-1.5 text-right tabular-nums">{t.pontos}</td>
+                    <td className="py-1.5 text-right tabular-nums">{t.vitorias}/{t.partidas}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section>
         <div className="ds-sect">Resumo de {d.nome}</div>
         <div className="ds-grid ds-g4">
           <KpiTile
@@ -433,57 +485,6 @@ function DesempenhoView({ d, posicaoGeral, totalGeral }: {
         </div>
       </section>
 
-      <section>
-        <div className="ds-sect">Conquistas ({obtidas} de {d.conquistas.length})</div>
-        <div className="ds-grid ds-g4">
-          {d.conquistas.map((c) => (
-            <div
-              key={c.titulo}
-              className="ds-card"
-              style={{ opacity: c.obtida ? 1 : 0.4, filter: c.obtida ? undefined : "grayscale(1)" }}
-            >
-              <div className="text-2xl">{c.icone}</div>
-              <div className="text-sm font-bold mt-1" style={{ color: "var(--text-strong)" }}>{c.titulo}</div>
-              <div className="text-xs mt-0.5" style={{ color: "var(--text-muted-ds)" }}>{c.descricao}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <div className="ds-card">
-          <div className="ds-card-h"><h3>🗂 Histórico de torneios</h3></div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
-              <thead>
-                <tr style={{ color: "var(--text-muted-ds)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".02em" }}>
-                  <th className="text-left py-2">Data</th>
-                  <th className="text-left py-2">Torneio</th>
-                  <th className="text-left py-2">Deck</th>
-                  <th className="text-right py-2">Pos.</th>
-                  <th className="text-right py-2">Pts</th>
-                  <th className="text-right py-2">V</th>
-                </tr>
-              </thead>
-              <tbody>
-                {d.historico.map((t) => (
-                  <tr key={t.id} style={{ borderTop: "0.8px solid var(--line-soft)" }}>
-                    <td className="py-1.5 whitespace-nowrap">{formatarData(t.data)}</td>
-                    <td className="py-1.5" style={{ color: "var(--text-strong)" }}>{t.nome}</td>
-                    <td className="py-1.5">{t.deck || "—"}</td>
-                    <td className="py-1.5 text-right tabular-nums whitespace-nowrap">
-                      {t.posicao === 1 && "🏆 "}
-                      {t.posicao !== null ? `${t.posicao}º de ${t.total}` : "em andamento"}
-                    </td>
-                    <td className="py-1.5 text-right tabular-nums">{t.pontos}</td>
-                    <td className="py-1.5 text-right tabular-nums">{t.vitorias}/{t.partidas}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
     </>
   );
 }
