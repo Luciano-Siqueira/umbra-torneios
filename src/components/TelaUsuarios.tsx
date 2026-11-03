@@ -342,12 +342,12 @@ function ModalSenhaAdmin({ usuario, emailLogado, onFechar, onConfirmado }: {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)" }}
-      onClick={onFechar}
+      // Só fecha se o clique começou fora da caixa (arrastar de dentro pra fora não fecha)
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onFechar(); }}
     >
       <form
         className="w-full max-w-sm rounded-2xl p-6"
         style={{ background: "#1a1a1a", border: "1px solid rgba(201,166,72,0.3)" }}
-        onClick={(e) => e.stopPropagation()}
         onSubmit={confirmarSenha}
       >
         <div className="text-[10px] font-bold tracking-[0.3em]" style={{ color: "#c9a648" }}>
@@ -444,12 +444,12 @@ function ModalEditarNomes({ usuario, onFechar, onAtualizado, toast }: {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)" }}
-      onClick={onFechar}
+      // Só fecha se o clique começou fora da caixa (arrastar de dentro pra fora não fecha)
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onFechar(); }}
     >
       <div
         className="w-full max-w-md rounded-2xl p-6"
         style={{ background: "#1a1a1a", border: "1px solid rgba(201,166,72,0.3)" }}
-        onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4">
           <div className="text-[10px] font-bold tracking-[0.3em]" style={{ color: "#c9a648" }}>

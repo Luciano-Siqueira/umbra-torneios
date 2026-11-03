@@ -27,8 +27,9 @@ Sistema web de gerenciamento de torneios de MTG multiplayer. Parte da marca **Um
 ```bash
 npm install
 npm run dev              # dev server
-npm run build            # build normal pra Vercel
-npm run build:single     # gera mtg-tournament.html standalone (tudo inline)
+npm run build            # checa os tipos e faz o build pra Vercel
+npm run build:single     # checa os tipos e gera dist-single/index.html standalone (tudo inline)
+npm test                 # testes automáticos (src/core/testes)
 ```
 
 Deploy: push na `main` → Vercel autodeploys.
@@ -41,7 +42,7 @@ Deploy: push na `main` → Vercel autodeploys.
 ```
 src/
   App.tsx                       # root + roteamento interno via useStore
-  banner-image.ts               # exporta o banner (src/assets/banner.jpg)
+  banner-image.ts               # exporta o banner (src/assets/banner.webp)
   core/
     supabaseClient.ts           # cliente Supabase (lê as variáveis VITE_SUPABASE_*)
     auth.ts                     # useAuth hook + entrar/registrar/sair/vincularNome
@@ -69,8 +70,8 @@ src/
     DialogoTorneio.tsx          # criar/editar torneio
     DialogoResultado.tsx        # registrar resultado de mesa
     BannerArte.tsx              # arte do topo
-    abas/                       # AbaMesas, AbaJogadores, AbaStandings, etc
-    sorteios/                   # Roleta, CorridaPatinhos
+    abas/                       # AbaMesas, AbaJogadores, AbaRanking, etc
+    sorteios/                   # SorteioRoda, CorridaPatinhos
     ui/                         # Toast, confirmar, componentes base
 ```
 
@@ -140,7 +141,8 @@ O prefixo `VITE_` é obrigatório e coloca o valor no JavaScript enviado ao nave
 - **Importar backup**: 3 casos — ID novo adiciona; mesmo ID+nome sobrescreve; mesmo ID+nome diferente vira novo ID com sufixo `_imp_timestamp`
 - **Confirmações destrutivas**: usar helper `confirmar()` de `components/ui`
 - **Deletar admin**: bloquear auto-delete (`user_id === auth.session?.user?.id`)
-- **Idioma**: português brasileiro em labels, código e commits
+- **Idioma**: português brasileiro em labels e código
+- **Commits**: em inglês, no padrão Conventional Commits (`fix(auth): ...`)
 - **Emojis** nos papéis: 👑 admin, 🎯 organizador, 👤 jogador
 
 ---
@@ -162,4 +164,5 @@ Qualquer novo agente que pegar esse projeto:
 2. Confere as tabelas no Supabase (`admins`, `organizadores`, `usuarios_jogadores`, `torneios`) e a função `eh_admin()`
 3. Cria o `.env.local` (veja a seção Supabase); `npm install && npm run dev` roda local em `http://localhost:5173`
 4. Mudanças em `src/` → `npm run build` → commit → push → Vercel autodeploys
-5. Pra testar offline: `npm run build:single` gera `mtg-tournament.html` que roda abrindo direto no browser
+5. Pra testar offline: `npm run build:single` gera `dist-single/index.html` que roda abrindo direto no browser
+6. Estrutura do banco: `supabase/exportar_schema.sql` gera o `supabase/schema.sql`; atualize quando mudar tabelas, policies ou funções

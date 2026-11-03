@@ -10,14 +10,14 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg"],
       workbox: {
-        globPatterns: ["**/*.{js,css,html,svg,jpg}"], // inclui o banner no cache offline
+        globPatterns: ["**/*.{js,css,html,svg,webp,png}"], // inclui o banner no cache offline
       },
       manifest: {
-        name: "MTG Tournament System",
-        short_name: "MTG Torneios",
-        description: "Sistema de torneios Rei das Cartinhas",
-        theme_color: "#a78bfa",
-        background_color: "#0f0e17",
+        name: "Umbra Torneios",
+        short_name: "Umbra Torneios",
+        description: "Gestão de torneios de MTG multiplayer",
+        theme_color: "#0a0a0a",
+        background_color: "#0a0a0a",
         display: "standalone",
         orientation: "portrait",
         icons: [

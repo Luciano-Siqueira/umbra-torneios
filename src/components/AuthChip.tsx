@@ -19,7 +19,7 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
   const modosDisp: ModoView[] = [];
   if (auth.isAdmin) modosDisp.push("admin");
   if (auth.isOrganizador || auth.isAdmin) modosDisp.push("organizador");
-  modosDisp.push("jogador"); // Todo mundo pode ver como jogador
+  modosDisp.push("jogador"); // Qualquer usuário pode ver como jogador
   // Jogador é default; só valida se o modo atual ainda é permitido
   if (auth.perfilCarregado && !modosDisp.includes(modoView)) {
     setTimeout(() => setModoView("jogador"), 0);

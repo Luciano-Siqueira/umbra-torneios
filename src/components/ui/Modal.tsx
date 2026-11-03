@@ -29,12 +29,11 @@ export function Modal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 animate-fadeIn p-4"
-      onClick={() => fecharAoClicarFora && onClose()}
+      onMouseDown={(e) => { if (fecharAoClicarFora && e.target === e.currentTarget) onClose(); }}
     >
       <div
         className={`bg-bg-panel rounded-2xl shadow-2xl w-full ${maxW} animate-slideUp
                     border border-bg-cardalt max-h-[90vh] overflow-hidden flex flex-col`}
-        onClick={(e) => e.stopPropagation()}
       >
         {title && (
           <div className="px-6 py-4 border-b border-bg-cardalt">

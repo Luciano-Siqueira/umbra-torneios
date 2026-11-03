@@ -119,7 +119,7 @@ export const useStore = create<State>((set, get) => ({
     // Remove torneio teste existente antes (busca por nome exato) para evitar duplicatas
     const atuais = storage.listarTorneios();
     for (const t of atuais) {
-      if (t.nome === "Torneio Teste") storage.removerTorneio(t.id);
+      if (t.nome === "Torneio Teste") get().removerTorneio(t.id);
     }
     const nomes = [
       "Nissa Revane", "Jace Beleren", "Liliana Vess", "Chandra Nalaar",

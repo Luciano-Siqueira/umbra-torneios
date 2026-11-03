@@ -10,6 +10,7 @@ import { useAuth } from "../core/auth";
 import { AuthChip } from "./AuthChip";
 import { CartaoMinhaMesa } from "./CartaoMinhaMesa";
 import { calcularMetricas, metricasRecentes } from "../core/metricas";
+import { ranking } from "../core/resultados";
 import { podeEditarTorneios, torneiosVisiveis } from "../core/visibilidade";
 import { BANNER_IMAGE } from "../banner-image";
 
@@ -61,8 +62,8 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
       .sort((a, b) => (b.dataCriacao || "").localeCompare(a.dataCriacao || ""));
     if (finalizados.length === 0) return null;
     const t = finalizados[0];
-    const r = metricas.rankingJogadores;
-    return r.length > 0 ? { nome: r[0].nome, torneio: t.nome } : null;
+    const campeao = ranking(t)[0];
+    return campeao ? { nome: campeao.nome, torneio: t.nome } : null;
   })();
   const irPara = useStore((s) => s.irPara);
   const { toast } = useToast();
@@ -120,7 +121,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
     <div
       className="min-h-screen text-fg relative"
       style={{
-        // Overlay bem leve: dragões continuam visíveis em todo lugar
+        // Overlay bem leve: dragões continuam visíveis na tela inteira
         backgroundImage: `linear-gradient(to bottom,
           rgba(10,9,22,0.25) 0%,
           rgba(10,9,22,0.45) 60%,

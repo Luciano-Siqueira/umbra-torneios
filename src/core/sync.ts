@@ -193,7 +193,7 @@ export async function enviarNome(nome: string) {
   try { await supabase.from("nomes_cadastrados").upsert({ nome }); } catch {}
 }
 
-// Empurra TODO o localStorage pro servidor (migração inicial)
+// Empurra o localStorage inteiro pro servidor (migração inicial)
 export async function empurrarTudo(): Promise<{ enviados: number; erros: string[] }> {
   const erros: string[] = [];
   const torneios = storage.listarTorneios();

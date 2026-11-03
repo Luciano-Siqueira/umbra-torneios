@@ -11,6 +11,7 @@ interface Props {
 export function TelaVincularNome({ aberta, onConcluido }: Props) {
   const [nome, setNome] = useState("");
   const [sugestoes, setSugestoes] = useState<string[]>([]);
+  const [sugestaoAtiva, setSugestaoAtiva] = useState(0);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
   const [nomesServidor, setNomesServidor] = useState<string[]>([]);
@@ -34,6 +35,7 @@ export function TelaVincularNome({ aberta, onConcluido }: Props) {
   const onDigitar = (v: string) => {
     setNome(v);
     setErro("");
+    setSugestaoAtiva(0);
     const q = v.trim().toLowerCase();
     if (q.length >= 1) {
       setSugestoes(
@@ -101,9 +103,15 @@ export function TelaVincularNome({ aberta, onConcluido }: Props) {
               value={nome}
               onChange={(e) => onDigitar(e.target.value)}
               onKeyDown={(e) => {
+                if ((e.key === "ArrowDown" || e.key === "ArrowUp") && sugestoes.length > 0) {
+                  // Setas percorrem as sugestões, voltando ao início/fim da lista
+                  e.preventDefault();
+                  const passo = e.key === "ArrowDown" ? 1 : -1;
+                  setSugestaoAtiva((i) => (i + passo + sugestoes.length) % sugestoes.length);
+                }
                 if (e.key === "Enter") {
-                  if (sugestoes.length > 0 && !nomesServidor.includes(nome)) {
-                    setNome(sugestoes[0]);
+                  if (sugestoes.length > 0 && (sugestaoAtiva > 0 || !nomesServidor.includes(nome))) {
+                    setNome(sugestoes[sugestaoAtiva]);
                     setSugestoes([]);
                   } else {
                     salvar();
@@ -123,6 +131,7 @@ export function TelaVincularNome({ aberta, onConcluido }: Props) {
                 {sugestoes.map((s, i) => (
                   <button
                     key={s}
+                    ref={i === sugestaoAtiva ? (el) => el?.scrollIntoView({ block: "nearest" }) : undefined}
                     type="button"
                     onMouseDown={(e) => {
                       e.preventDefault();
@@ -130,7 +139,9 @@ export function TelaVincularNome({ aberta, onConcluido }: Props) {
                       setSugestoes([]);
                     }}
                     className="block w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition cursor-pointer"
-                    style={{ color: i === 0 ? "#c9a648" : "#f5f5f5" }}
+                    style={i === sugestaoAtiva
+                      ? { color: "#c9a648", background: "rgba(255,255,255,0.05)" }
+                      : { color: "#f5f5f5" }}
                   >
                     {s}
                   </button>
