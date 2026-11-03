@@ -29,7 +29,7 @@ export default {
         sucesso: "#7bc47f",
         atencao: "#fbbf24",
         perigo: "#e15b5b",
-        info: "#5b9bd5",
+        info: "#c4c4c4",
         pos: {
           1: "#fbbf24", // ouro
           2: "#d1d5db", // prata

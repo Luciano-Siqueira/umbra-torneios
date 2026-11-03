@@ -135,7 +135,7 @@ function AppInner() {
       {semConexao && (
         <div
           className="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap"
-          style={{ background: "var(--warn)", color: "#0a1220" }}
+          style={{ background: "var(--warn)", color: "#0a0a0a" }}
         >
           ⏳ Alterações aguardando internet
         </div>

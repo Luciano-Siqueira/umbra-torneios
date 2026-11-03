@@ -78,23 +78,23 @@ export const SorteioRoda = forwardRef<RodaHandle, Props>(function SorteioRoda(
 
     // Anel externo gradiente (3 cores) estilo roleta premium
     const anel = ctx.createConicGradient(0, cx, cy);
-    anel.addColorStop(0, "#22d3ee");
-    anel.addColorStop(0.33, "#a78bfa");
-    anel.addColorStop(0.66, "#f472b6");
-    anel.addColorStop(1, "#22d3ee");
+    anel.addColorStop(0, "#c9a648");
+    anel.addColorStop(0.33, "#8b0000");
+    anel.addColorStop(0.66, "#8b0000");
+    anel.addColorStop(1, "#c9a648");
     ctx.fillStyle = anel;
     ctx.beginPath();
     ctx.arc(cx, cy, r + 14, 0, Math.PI * 2);
     ctx.fill();
 
     // Aro escuro interno (dá "profundidade")
-    ctx.fillStyle = "#0a0820";
+    ctx.fillStyle = "#0a0a0a";
     ctx.beginPath();
     ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
     ctx.fill();
 
     if (n === 0) {
-      ctx.fillStyle = "#1a1a2e";
+      ctx.fillStyle = "#1a1a1a";
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.fill();
@@ -167,9 +167,9 @@ export const SorteioRoda = forwardRef<RodaHandle, Props>(function SorteioRoda(
 
     ctx.shadowBlur = 0;
 
-    // Hub central: glow radial roxo + círculo escuro com borda roxa
+    // Hub central: glow radial dourado + círculo escuro com borda dourada
     const glow = ctx.createRadialGradient(cx, cy, 20, cx, cy, 100);
-    glow.addColorStop(0, "rgba(139,115,255,0.5)");
+    glow.addColorStop(0, "rgba(201,166,72,0.5)");
     glow.addColorStop(1, "transparent");
     ctx.fillStyle = glow;
     ctx.beginPath();
@@ -178,14 +178,14 @@ export const SorteioRoda = forwardRef<RodaHandle, Props>(function SorteioRoda(
 
     const hub = ctx.createRadialGradient(cx - 20, cy - 20, 10, cx, cy, 65);
     hub.addColorStop(0, "#f3f7fc");
-    hub.addColorStop(0.3, "#8B73FF");
-    hub.addColorStop(0.8, "#1a1a2e");
+    hub.addColorStop(0.3, "#c9a648");
+    hub.addColorStop(0.8, "#1a1a1a");
     hub.addColorStop(1, "#000");
     ctx.fillStyle = hub;
     ctx.beginPath();
     ctx.arc(cx, cy, 65, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = "#8B73FF";
+    ctx.strokeStyle = "#c9a648";
     ctx.lineWidth = 2;
     ctx.stroke();
 
@@ -197,7 +197,7 @@ export const SorteioRoda = forwardRef<RodaHandle, Props>(function SorteioRoda(
     ctx.stroke();
 
     // Texto no centro
-    ctx.fillStyle = girando ? "#8B73FF" : "#fff";
+    ctx.fillStyle = girando ? "#c9a648" : "#fff";
     ctx.font = "bold 14px Sora, system-ui";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -290,8 +290,8 @@ export const SorteioRoda = forwardRef<RodaHandle, Props>(function SorteioRoda(
       <div
         className="rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center gap-3"
         style={{
-          background: "rgba(15,28,48,0.6)",
-          border: "1px solid rgba(139,115,255,0.2)",
+          background: "rgba(15,15,15,0.6)",
+          border: "1px solid rgba(201,166,72,0.2)",
           backdropFilter: "blur(14px)",
           WebkitBackdropFilter: "blur(14px)",
           boxShadow: "0 20px 60px -20px rgba(0,0,0,0.6)",
@@ -309,8 +309,8 @@ export const SorteioRoda = forwardRef<RodaHandle, Props>(function SorteioRoda(
           <div
             className="px-3 py-1 rounded-full text-xs font-semibold"
             style={{
-              background: girando ? "rgba(139,115,255,0.15)" : "rgba(252,211,77,0.15)",
-              border: `1px solid ${girando ? "rgba(139,115,255,0.3)" : "rgba(252,211,77,0.3)"}`,
+              background: girando ? "rgba(201,166,72,0.15)" : "rgba(252,211,77,0.15)",
+              border: `1px solid ${girando ? "rgba(201,166,72,0.3)" : "rgba(252,211,77,0.3)"}`,
               color: girando ? "var(--brand-link)" : "#fcd34d",
             }}
           >
@@ -327,8 +327,8 @@ export const SorteioRoda = forwardRef<RodaHandle, Props>(function SorteioRoda(
       <div
         className="rounded-2xl p-5"
         style={{
-          background: "rgba(15,28,48,0.6)",
-          border: "1px solid rgba(139,115,255,0.2)",
+          background: "rgba(15,15,15,0.6)",
+          border: "1px solid rgba(201,166,72,0.2)",
           backdropFilter: "blur(14px)",
         }}
       >
@@ -336,7 +336,7 @@ export const SorteioRoda = forwardRef<RodaHandle, Props>(function SorteioRoda(
         <div className="flex items-center gap-2 mb-4">
           <div
             className="w-1 h-5 rounded"
-            style={{ background: "linear-gradient(180deg, #1ECDA1, #6A4EF0)" }}
+            style={{ background: "linear-gradient(180deg, #c9a648, #8b0000)" }}
           />
           <h3 className="m-0 text-sm font-bold tracking-widest uppercase"
               style={{ color: "var(--text-strong)" }}>SORTEADOS</h3>

@@ -134,10 +134,10 @@ export const CorridaPatinhos = forwardRef<PatinhosHandle, Props>(function Corrid
     ctx.globalAlpha = 1;
 
     // Painel escuro à esquerda (nomes das raias)
-    ctx.fillStyle = "#0a0820";
+    ctx.fillStyle = "#0a0a0a";
     ctx.fillRect(0, 90, MARGEM_ESQ, H - 90);
     // Linha divisória roxa tracejada
-    ctx.strokeStyle = "#8B73FF";
+    ctx.strokeStyle = "#c9a648";
     ctx.lineWidth = 2;
     ctx.setLineDash([4, 4]);
     ctx.globalAlpha = 0.6;
@@ -148,7 +148,7 @@ export const CorridaPatinhos = forwardRef<PatinhosHandle, Props>(function Corrid
     ctx.setLineDash([]);
     ctx.globalAlpha = 1;
     // Label LARGADA
-    ctx.fillStyle = "#8B73FF";
+    ctx.fillStyle = "#c9a648";
     ctx.font = "bold 11px Sora, system-ui";
     ctx.textAlign = "center";
     ctx.fillText("LARGADA", MARGEM_ESQ / 2, 78);
@@ -187,7 +187,7 @@ export const CorridaPatinhos = forwardRef<PatinhosHandle, Props>(function Corrid
     }
 
     // Linhas sutis separando as raias (sem texto)
-    ctx.strokeStyle = "rgba(139,115,255,0.12)";
+    ctx.strokeStyle = "rgba(201,166,72,0.12)";
     ctx.lineWidth = 1;
     ctx.setLineDash([8, 6]);
     for (let i = 1; i < n; i++) {
@@ -437,8 +437,8 @@ export const CorridaPatinhos = forwardRef<PatinhosHandle, Props>(function Corrid
       <div
         className="rounded-2xl p-5"
         style={{
-          background: "rgba(15,28,48,0.65)",
-          border: "1px solid rgba(139,115,255,0.2)",
+          background: "rgba(15,15,15,0.65)",
+          border: "1px solid rgba(201,166,72,0.2)",
           backdropFilter: "blur(14px)",
           boxShadow: "0 20px 60px -20px rgba(0,0,0,0.6)",
         }}
@@ -449,8 +449,8 @@ export const CorridaPatinhos = forwardRef<PatinhosHandle, Props>(function Corrid
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center text-xl"
               style={{
-                background: "linear-gradient(135deg, #38bdf8, #0ea5e9)",
-                boxShadow: "0 4px 12px -4px rgba(56,189,248,0.5)",
+                background: "linear-gradient(135deg, #c9a648, #8b0000)",
+                boxShadow: "0 4px 12px -4px rgba(201,166,72,0.5)",
               }}
             >🏁</div>
             <div>
@@ -465,8 +465,8 @@ export const CorridaPatinhos = forwardRef<PatinhosHandle, Props>(function Corrid
           <div
             className="px-3 py-1 rounded-full text-xs font-semibold"
             style={{
-              background: rodando ? "rgba(252,211,77,0.15)" : "rgba(139,115,255,0.15)",
-              border: `1px solid ${rodando ? "rgba(252,211,77,0.3)" : "rgba(139,115,255,0.3)"}`,
+              background: rodando ? "rgba(252,211,77,0.15)" : "rgba(201,166,72,0.15)",
+              border: `1px solid ${rodando ? "rgba(252,211,77,0.3)" : "rgba(201,166,72,0.3)"}`,
               color: rodando ? "#fcd34d" : "var(--brand-link)",
             }}
           >
@@ -487,8 +487,8 @@ export const CorridaPatinhos = forwardRef<PatinhosHandle, Props>(function Corrid
       <div
         className="rounded-2xl p-5"
         style={{
-          background: "rgba(15,28,48,0.65)",
-          border: "1px solid rgba(139,115,255,0.2)",
+          background: "rgba(15,15,15,0.65)",
+          border: "1px solid rgba(201,166,72,0.2)",
           backdropFilter: "blur(14px)",
         }}
       >
@@ -496,7 +496,7 @@ export const CorridaPatinhos = forwardRef<PatinhosHandle, Props>(function Corrid
         <div className="flex items-center gap-2 mb-4">
           <div
             className="w-1 h-5 rounded"
-            style={{ background: "linear-gradient(180deg, #fbbf24, #f97316)" }}
+            style={{ background: "linear-gradient(180deg, #c9a648, #8b0000)" }}
           />
           <h3 className="m-0 text-sm font-bold tracking-widest uppercase"
               style={{ color: "var(--text-strong)" }}>PÓDIO</h3>
@@ -577,7 +577,7 @@ export const CorridaPatinhos = forwardRef<PatinhosHandle, Props>(function Corrid
             </div>
             <div className="flex flex-col gap-1 text-xs">
               {ranking.slice(3).map((n, i) => {
-                const cor = corPorNome.current.get(n) || "#8B73FF";
+                const cor = corPorNome.current.get(n) || "#c9a648";
                 return (
                   <div key={n + i} className="flex items-center gap-2 py-1">
                     <span className="w-5 text-right tabular-nums" style={{ color: "var(--text-muted-ds)" }}>
@@ -606,7 +606,7 @@ export const CorridaPatinhos = forwardRef<PatinhosHandle, Props>(function Corrid
             </div>
             <div className="flex flex-wrap gap-1">
               {restantes.slice(0, 12).map((n) => {
-                const cor = corPorNome.current.get(n) || "#8B73FF";
+                const cor = corPorNome.current.get(n) || "#c9a648";
                 return (
                   <div
                     key={n}

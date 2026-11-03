@@ -35,9 +35,9 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
       className="min-h-screen relative overflow-hidden flex flex-col"
       style={{
         backgroundImage: `linear-gradient(to bottom,
-          rgba(10,9,22,0.1) 0%,
-          rgba(10,9,22,0.3) 50%,
-          rgba(10,9,22,0.75) 100%), url(${BANNER_IMAGE})`,
+          rgba(10,10,10,0.1) 0%,
+          rgba(10,10,10,0.3) 50%,
+          rgba(10,10,10,0.75) 100%), url(${BANNER_IMAGE})`,
         backgroundSize: "cover",
         backgroundPosition: "center top",
       }}

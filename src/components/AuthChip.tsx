@@ -29,7 +29,7 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
     m === "admin" ? "👑 Admin" : m === "organizador" ? "🎯 Organizador" : "👤 Jogador"
   );
   const corModo = (m: ModoView) => (
-    m === "admin" ? "#c9a648" : m === "organizador" ? "#38bdf8" : "#7bc47f"
+    m === "admin" ? "#c9a648" : m === "organizador" ? "#f5f5f5" : "#c4c4c4"
   );
 
   const { toast } = useToast();

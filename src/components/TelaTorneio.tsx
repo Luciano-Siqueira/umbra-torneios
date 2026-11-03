@@ -82,7 +82,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
 
   if (!torneio) {
     return (
-      <div className="min-h-screen bg-[#0a0916] text-fg flex items-center justify-center">
+      <div className="min-h-screen bg-[#0a0a0a] text-fg flex items-center justify-center">
         <div className="text-center">
           <div className="text-xl">Nenhum torneio ativo</div>
           <button className="btn-primary mt-4" onClick={voltar}>Voltar</button>
@@ -95,7 +95,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
     <div
       className="min-h-screen text-fg flex flex-col"
       style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(10,9,22,0.55) 0%, rgba(10,9,22,0.65) 100%), url(${BANNER_IMAGE})`,
+        backgroundImage: `linear-gradient(to bottom, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0.65) 100%), url(${BANNER_IMAGE})`,
         backgroundSize: "cover",
         backgroundPosition: "center top",
         backgroundAttachment: "fixed",

@@ -39,10 +39,10 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
       className="min-h-screen text-fg"
       style={{
         backgroundImage: `linear-gradient(to bottom,
-          rgba(10,9,22,0.65) 0%,
-          rgba(10,9,22,0.75) 20%,
-          rgba(10,9,22,0.85) 45%,
-          rgba(10,9,22,0.94) 100%), url(${BANNER_IMAGE})`,
+          rgba(10,10,10,0.65) 0%,
+          rgba(10,10,10,0.75) 20%,
+          rgba(10,10,10,0.85) 45%,
+          rgba(10,10,10,0.94) 100%), url(${BANNER_IMAGE})`,
         backgroundSize: "cover",
         backgroundPosition: "center top",
         backgroundAttachment: "fixed",

@@ -32,7 +32,7 @@ export function AbaHistorico({ torneio }: { torneio: Torneio }) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {rodadas.map((r) => (
           <section key={r.numero}>
-            <h2 className="text-lg font-bold mb-2 sticky top-0 bg-[#0a0916] py-1 z-10">
+            <h2 className="text-lg font-bold mb-2 sticky top-0 bg-[#0a0a0a] py-1 z-10">
               <span className="text-acento">Rodada {r.numero}</span>
               <span className="text-sm text-fg-dim ml-2">
                 ({r.mesas.filter((m) => m.finalizada).length}/{r.mesas.length})

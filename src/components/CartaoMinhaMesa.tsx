@@ -68,7 +68,7 @@ export function CartaoMinhaMesa({ minha }: { minha: MinhaMesa }) {
                     key={id}
                     className="text-xs px-2 py-0.5 rounded-full"
                     style={id === jogador.id
-                      ? { background: "var(--brand-1)", color: "#0a1220", fontWeight: 700 }
+                      ? { background: "var(--brand-1)", color: "#0a0a0a", fontWeight: 700 }
                       : { background: "rgba(255,255,255,0.08)", color: "var(--app-text)" }}
                   >
                     {id === jogador.id ? "Você" : nomeDe(id)}

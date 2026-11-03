@@ -143,7 +143,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
     <div
       className="min-h-screen text-fg"
       style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(10,9,22,0.55) 0%, rgba(10,9,22,0.65) 100%), url(${BANNER_IMAGE})`,
+        backgroundImage: `linear-gradient(to bottom, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0.65) 100%), url(${BANNER_IMAGE})`,
         backgroundSize: "cover",
         backgroundPosition: "center top",
         backgroundAttachment: "fixed",
@@ -162,8 +162,8 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <KpiMini label="TOTAL" valor={String(total)} cor="#c4c4c4" />
           <KpiMini label="👑 ADMINS" valor={String(totAdmin)} cor="#c9a648" />
-          <KpiMini label="🎯 ORGANIZADORES" valor={String(totOrg)} cor="#38bdf8" />
-          <KpiMini label="👤 JOGADORES" valor={String(totJog)} cor="#7bc47f" />
+          <KpiMini label="🎯 ORGANIZADORES" valor={String(totOrg)} cor="#f5f5f5" />
+          <KpiMini label="👤 JOGADORES" valor={String(totJog)} cor="#c4c4c4" />
         </div>
 
         <div className="flex gap-2 items-center">
@@ -247,7 +247,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                       <td className="py-2 px-2 text-center">
                         <ToggleButton
                           ativo={u.eh_organizador}
-                          corAtivo="#38bdf8"
+                          corAtivo="#8b0000"
                           disabled={salvando === u.user_id}
                           onClick={() => togglePapel(u, "organizador")}
                         />
@@ -262,7 +262,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                           >✎</IconBtn>
                           <IconBtn
                             titulo="Enviar reset de senha"
-                            cor="#38bdf8"
+                            cor="#c4c4c4"
                             onClick={() => resetarSenha(u)}
                             disabled={salvando === u.user_id}
                           >🔑</IconBtn>

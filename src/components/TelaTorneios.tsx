@@ -123,9 +123,9 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
       style={{
         // Overlay bem leve: dragões continuam visíveis na tela inteira
         backgroundImage: `linear-gradient(to bottom,
-          rgba(10,9,22,0.25) 0%,
-          rgba(10,9,22,0.45) 60%,
-          rgba(10,9,22,0.55) 100%), url(${BANNER_IMAGE})`,
+          rgba(10,10,10,0.25) 0%,
+          rgba(10,10,10,0.45) 60%,
+          rgba(10,10,10,0.55) 100%), url(${BANNER_IMAGE})`,
         backgroundSize: "cover",
         backgroundPosition: "center top",
         backgroundAttachment: "fixed",
@@ -134,14 +134,14 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
       {/* Topbar fixa estilo navbar */}
       <div className="sticky top-0 z-30 px-4 md:px-6 py-3"
         style={{
-          background: "linear-gradient(to bottom, rgba(10,9,22,0.85) 0%, rgba(10,9,22,0.0) 100%)",
+          background: "linear-gradient(to bottom, rgba(10,10,10,0.85) 0%, rgba(10,10,10,0.0) 100%)",
         }}
       >
         <div
           className="flex flex-wrap gap-2 items-center rounded-full pl-2 pr-3 py-2 border"
           style={{
-            background: "rgba(15,28,48,0.72)",
-            borderColor: "rgba(139,115,255,0.18)",
+            background: "rgba(15,15,15,0.72)",
+            borderColor: "rgba(201,166,72,0.18)",
             backdropFilter: "blur(20px) saturate(160%)",
             WebkitBackdropFilter: "blur(20px) saturate(160%)",
             boxShadow: "0 20px 60px -20px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.08)",
@@ -195,9 +195,9 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
           <button
             className="rounded-full px-4 py-2 font-semibold text-sm transition active:scale-95 flex items-center gap-1.5"
             style={{
-              background: "rgba(56,189,248,0.12)",
+              background: "rgba(201,166,72,0.12)",
               color: "var(--action)",
-              border: "1px solid rgba(56,189,248,0.25)"
+              border: "1px solid rgba(201,166,72,0.25)"
             }}
             onClick={() => irPara("analytics")}
           >
@@ -366,7 +366,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
               className="rounded-xl px-5 py-2.5 font-bold text-sm transition active:scale-95 flex-shrink-0"
               style={{
                 background: "var(--warn)",
-                color: "#0a1220",
+                color: "#0a0a0a",
                 boxShadow: "0 4px 16px -4px rgba(252,211,77,0.5)",
               }}
               onClick={(e) => { e.stopPropagation(); abrirTorneio(torneioEmAndamento.id); }}
@@ -396,33 +396,33 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
         {torneios.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <MiniKpi
-              corFundo="rgba(30,205,161,0.1)"
-              corBorda="rgba(30,205,161,0.25)"
-              corLabel="#1ECDA1"
+              corFundo="rgba(201,166,72,0.1)"
+              corBorda="rgba(201,166,72,0.25)"
+              corLabel="#c9a648"
               label="Torneios"
               valor={String(torneios.length)}
               sub={`${ult30.qtd} nos últimos 30 dias`}
             />
             <MiniKpi
-              corFundo="rgba(139,115,255,0.1)"
-              corBorda="rgba(139,115,255,0.25)"
-              corLabel="#8B73FF"
+              corFundo="rgba(201,166,72,0.1)"
+              corBorda="rgba(201,166,72,0.25)"
+              corLabel="#c9a648"
               label="Jogadores únicos"
               valor={String(metricas.totalJogadoresUnicos)}
               sub={`média ${metricas.mediaJogadoresPorTorneio.toFixed(1)} por torneio`}
             />
             <MiniKpi
-              corFundo="rgba(56,189,248,0.1)"
-              corBorda="rgba(56,189,248,0.25)"
-              corLabel="#38bdf8"
+              corFundo="rgba(201,166,72,0.1)"
+              corBorda="rgba(201,166,72,0.25)"
+              corLabel="#c9a648"
               label="Partidas"
               valor={String(metricas.totalPartidas)}
               sub="no histórico"
             />
             <MiniKpi
-              corFundo="rgba(252,211,77,0.1)"
-              corBorda="rgba(252,211,77,0.25)"
-              corLabel="#fcd34d"
+              corFundo="rgba(201,166,72,0.1)"
+              corBorda="rgba(201,166,72,0.25)"
+              corLabel="#c9a648"
               label="Último campeão"
               valor={ultimoCampeao ? `🏆 ${ultimoCampeao.nome}` : "—"}
               sub={ultimoCampeao ? ultimoCampeao.torneio : "nenhum torneio finalizado"}
@@ -542,7 +542,7 @@ function CardTorneio({
       onDoubleClick={onDblClick}
       className="group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1.5 border"
       style={{
-        background: `linear-gradient(135deg, ${corRgba(0.22)} 0%, rgba(26,45,71,0.65) 55%, rgba(15,28,48,0.75) 100%)`,
+        background: `linear-gradient(135deg, ${corRgba(0.22)} 0%, rgba(26,26,26,0.65) 55%, rgba(15,15,15,0.75) 100%)`,
         backdropFilter: "blur(16px) saturate(140%)",
         WebkitBackdropFilter: "blur(16px) saturate(140%)",
         borderColor: selecionado ? cor.hex : "rgba(255,255,255,0.1)",
@@ -581,7 +581,7 @@ function CardTorneio({
                 ? "rgba(110,231,183,0.15)"
                 : torneio.rodadaAtual > 0
                 ? "rgba(252,211,77,0.18)"
-                : "rgba(139,115,255,0.18)",
+                : "rgba(201,166,72,0.18)",
               color: torneio.finalizado
                 ? "var(--good)"
                 : torneio.rodadaAtual > 0
@@ -591,7 +591,7 @@ function CardTorneio({
                 ? "rgba(110,231,183,0.3)"
                 : torneio.rodadaAtual > 0
                 ? "rgba(252,211,77,0.3)"
-                : "rgba(139,115,255,0.3)",
+                : "rgba(201,166,72,0.3)",
             }}
           >
             ● {statusInfo.txt}
