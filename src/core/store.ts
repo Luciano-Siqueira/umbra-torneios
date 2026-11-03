@@ -51,6 +51,7 @@ interface State {
 
   iniciarRodada: () => void;
   resortearMesas: () => void;
+  salvarParcialMesa: (mesaIdx: number, ordem: number[][], empateTopo: number[]) => void;
   finalizarMesa: (mesaIdx: number, ordem: number[][], empateTopo: number[]) => void;
   editarMesa: (mesaIdx: number) => void;
   finalizarTorneio: () => void;
@@ -236,8 +237,18 @@ export const useStore = create<State>((set, get) => ({
     get().atualizarTorneio((t) => {
       // Só refaz se NINGUÉM ainda finalizou nenhuma mesa da rodada
       if (!t.mesas.length) return;
-      if (t.mesas.some((m: Mesa) => m.finalizada)) return;
+      if (t.mesas.some((m: Mesa) => m.finalizada || m.eliminacoes.length > 0 || m.empateTopoIds.length > 0)) return;
       t.mesas = parearRodada(t.jogadores, t.rodadaAtual);
+    });
+  },
+
+  // Guarda quem já saiu sem finalizar a mesa: pontos só contam ao confirmar o resultado
+  salvarParcialMesa: (mesaIdx, ordem, empateTopo) => {
+    get().atualizarTorneio((t) => {
+      const mesa = t.mesas[mesaIdx];
+      if (!mesa || mesa.finalizada) return;
+      mesa.eliminacoes = ordem;
+      mesa.empateTopoIds = empateTopo;
     });
   },
 

@@ -37,7 +37,8 @@ export function AbaMesas({ torneio }: { torneio: Torneio }) {
   });
 
   const semMesas = torneio.mesas.length === 0;
-  const nenhumaFinalizada = torneio.mesas.length > 0 && finalizadas.length === 0;
+  const temParcial = torneio.mesas.some((m) => m.eliminacoes.length > 0 || m.empateTopoIds.length > 0);
+  const nenhumaFinalizada = torneio.mesas.length > 0 && finalizadas.length === 0 && !temParcial;
   const rodadaConcluida = torneio.mesas.length > 0 && pendentes.length === 0;
   const ativos = torneio.jogadores.filter((j) => j.ativo).length;
   const podeIniciar =
@@ -367,9 +368,11 @@ function CardMesa({
   onClick: () => void;
 }) {
   const finalizada = mesa.finalizada;
+  const parcial = !finalizada && (mesa.eliminacoes.length > 0 || mesa.empateTopoIds.length > 0);
   const ordem = finalizada ? construirOrdem(mesa) : mesa.jogadoresIds;
   // Mapa id → colocação REAL (respeita empates)
-  const colocacaoPorId = finalizada ? calcularColocacoes(mesa) : new Map<number, number>();
+  const colocacaoPorId = finalizada || parcial ? calcularColocacoes(mesa) : new Map<number, number>();
+  const eliminados = new Set(mesa.eliminacoes.flat());
 
   return (
     <button
@@ -385,6 +388,8 @@ function CardMesa({
           <span className="text-xs bg-sucesso text-bg font-bold px-2 py-0.5 rounded">
             ✓{mesa.empateTopoIds.length > 1 ? ` empate K=${mesa.empateTopoIds.length}` : ""}
           </span>
+        ) : parcial ? (
+          <span className="text-xs bg-atencao text-bg font-bold px-2 py-0.5 rounded">PARCIAL</span>
         ) : (
           <span className="text-xs bg-info text-bg font-bold px-2 py-0.5 rounded">JOGANDO</span>
         )}
@@ -394,7 +399,7 @@ function CardMesa({
           const col = colocacaoPorId.get(id) ?? (i + 1);
           return (
           <div key={id} className="flex items-center gap-2">
-            {finalizada && (
+            {(finalizada || colocacaoPorId.has(id)) && (
               <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold
                                 ${col === 1 ? "bg-atencao text-bg"
                                   : col === 2 ? "bg-gray-300 text-bg"
@@ -403,7 +408,10 @@ function CardMesa({
                 {col}
               </span>
             )}
-            <span className={col === 1 && finalizada ? "font-bold" : ""}>
+            <span className={
+              col === 1 && finalizada ? "font-bold"
+                : parcial && eliminados.has(id) ? "line-through text-fg-muted" : ""
+            }>
               {jogadoresPorId.get(id) ?? "?"}
             </span>
           </div>

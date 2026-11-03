@@ -17,23 +17,21 @@ interface Props {
 // - "Empate por tempo" agrupa 2+ jogadores para dividir o topo.
 export function DialogoResultado({ mesa, mesaIdx, jogadoresPorId, onFechar }: Props) {
   const finalizarMesa = useStore((s) => s.finalizarMesa);
+  const salvarParcialMesa = useStore((s) => s.salvarParcialMesa);
   const editarMesa = useStore((s) => s.editarMesa);
   const { toast } = useToast();
 
   const editando = mesa.finalizada;
 
   const ids0 = useMemo(() => [...mesa.jogadoresIds], [mesa]);
-  // Estado inicial: se estamos editando, hidratar dos dados salvos
+  // Estado inicial: hidrata dos dados salvos (mesa finalizada ou resultado parcial)
   const [grupos, setGrupos] = useState<number[][]>(() => {
-    if (!editando) return [];
     // reverte a ordem armazenada (last-to-first eliminados) para first-to-last
     // Python armazena eliminacoes na ordem: primeiro grupo = primeiros a saírem (última posição).
     // Como salvamos igual, apenas cópia direta.
     return mesa.eliminacoes.map((g) => [...g]);
   });
-  const [empateTopo, setEmpateTopo] = useState<number[]>(() =>
-    editando ? [...mesa.empateTopoIds] : []
-  );
+  const [empateTopo, setEmpateTopo] = useState<number[]>(() => [...mesa.empateTopoIds]);
   const [marcados, setMarcados] = useState<Set<number>>(new Set());
 
   const alocados = new Set<number>();
@@ -97,6 +95,12 @@ export function DialogoResultado({ mesa, mesaIdx, jogadoresPorId, onFechar }: Pr
     }
     finalizarMesa(mesaIdx, grupos, empateTopo);
     toast(editando ? "Resultado atualizado" : "Mesa finalizada", "sucesso");
+    onFechar();
+  };
+
+  const salvarParcial = () => {
+    salvarParcialMesa(mesaIdx, grupos, empateTopo);
+    toast(`Mesa ${mesa.numero}: resultado parcial salvo`, "sucesso");
     onFechar();
   };
 
@@ -197,6 +201,15 @@ export function DialogoResultado({ mesa, mesaIdx, jogadoresPorId, onFechar }: Pr
 
       <div className="flex justify-end gap-2 pt-2 border-t border-bg-cardalt">
         <button className="btn-ghost" onClick={onFechar}>Cancelar</button>
+        {!editando && (
+          <button
+            className="btn-info"
+            onClick={salvarParcial}
+            title="Guarda quem já saiu. A mesa continua em andamento e os pontos só contam ao confirmar."
+          >
+            Salvar parcial
+          </button>
+        )}
         <button className="btn-success" onClick={confirmarResultado}>
           {editando ? "Salvar alterações" : "Confirmar resultado"}
         </button>

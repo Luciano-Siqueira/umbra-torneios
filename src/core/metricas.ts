@@ -56,7 +56,7 @@ export function calcularMetricas(torneios: Torneio[]): MetricasGlobais {
     ];
     for (const m of todasMesas) {
       if (m.finalizada) totalPartidas += 1;
-      if (m.empateTopoIds.length > 1) empatesPorTempo += 1;
+      if (m.finalizada && m.empateTopoIds.length > 1) empatesPorTempo += 1;
     }
 
     // Campeões (ranking final só nos finalizados)
