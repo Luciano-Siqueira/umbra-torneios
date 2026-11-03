@@ -43,7 +43,7 @@ src/
   App.tsx                       # root + roteamento interno via useStore
   banner-image.ts               # imagem de banner base64
   core/
-    supabaseClient.ts           # cliente Supabase (chave publishable, safe to commit)
+    supabaseClient.ts           # cliente Supabase (lê as variáveis VITE_SUPABASE_*)
     auth.ts                     # useAuth hook + entrar/registrar/sair/vincularNome
     admin.ts                    # funções admin: listar, deletar, resetar senha, renomear
     store.ts                    # Zustand store + Tela + ModoView
@@ -93,11 +93,13 @@ Mesmo usuário pode ter todos os papéis. O `modoView` (admin/organizador/jogado
 
 ### Supabase
 
-Credenciais em `src/core/supabaseClient.ts` (chave publishable é segura em client-side):
-```ts
-SUPABASE_URL = "https://rfuiuujdelssjbjetnpy.supabase.co"
-SUPABASE_KEY = "sb_publishable_3hElTU2saGAAPXo-UFwOHw_6bSdEj3m"
+Credenciais em variáveis de ambiente, lidas no build. Localmente ficam em `.env.local` e, em produção, na Vercel (Production e Preview):
+```bash
+VITE_SUPABASE_URL=https://<projeto>.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
+
+O prefixo `VITE_` é obrigatório e coloca o valor no JavaScript enviado ao navegador. Por isso, use só a chave publishable e nunca `sb_secret` ou `service_role`. Depois de mudar uma variável na Vercel, é preciso fazer um novo deploy.
 
 **Tabelas**:
 - `admins (user_id uuid PK)`
@@ -150,6 +152,6 @@ Qualquer novo agente que pegar esse projeto:
 
 1. Lê esse README inteiro antes de abrir qualquer arquivo
 2. Confere as tabelas no Supabase (`admins`, `organizadores`, `usuarios_jogadores`, `torneios`) e a função `eh_admin()`
-3. `npm install && npm run dev` roda local em `http://localhost:5173`
+3. Cria o `.env.local` (veja a seção Supabase); `npm install && npm run dev` roda local em `http://localhost:5173`
 4. Mudanças em `src/` → `npm run build` → commit → push → Vercel autodeploys
 5. Pra testar offline: `npm run build:single` gera `mtg-tournament.html` que roda abrindo direto no browser

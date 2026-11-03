@@ -8,6 +8,11 @@ dist-single
 dist-ssr
 *.local
 
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
+
 # IDE
 .vscode/*
 !.vscode/extensions.json
