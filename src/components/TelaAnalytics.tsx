@@ -1,25 +1,38 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useStore } from "../core/store";
 import { useAuth } from "../core/auth";
 import { AuthChip } from "./AuthChip";
-import { calcularMetricas, metricasRecentes } from "../core/metricas";
+import { calcularMetricas, metricasRecentes, type MetricasGlobais } from "../core/metricas";
+import {
+  calcularDesempenho, listarNomesJogadores, mesmoJogador,
+  type DesempenhoJogador, type EvolucaoJogador, type ResultadoMesa,
+} from "../core/desempenho";
+import type { Torneio } from "../core/types";
 import { BANNER_IMAGE } from "../banner-image";
+
+type AbaAnalytics = "geral" | "jogador";
 
 export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?: () => void; onVincularNome?: () => void } = {}) {
   const torneios = useStore((s) => s.torneios);
   const voltar = useStore((s) => s.voltarParaLista);
+  const modoView = useStore((s) => s.modoView);
   const auth = useAuth();
   const metricas = useMemo(() => calcularMetricas(torneios), [torneios]);
   const ult30 = useMemo(() => metricasRecentes(torneios, 30), [torneios]);
   const ult7 = useMemo(() => metricasRecentes(torneios, 7), [torneios]);
+
+  // Quem está vendo como jogador e tem nome vinculado já abre no próprio desempenho
+  const meuNome = auth.nomesJogador[0] ?? "";
+  const [abaEscolhida, setAbaEscolhida] = useState<AbaAnalytics | null>(null);
+  const aba: AbaAnalytics = abaEscolhida ?? (modoView === "jogador" && meuNome ? "jogador" : "geral");
 
   return (
     <div
       className="min-h-screen text-fg"
       style={{
         backgroundImage: `linear-gradient(to bottom,
-          rgba(10,9,22,0.15) 0%,
-          rgba(10,9,22,0.25) 20%,
+          rgba(10,9,22,0.65) 0%,
+          rgba(10,9,22,0.75) 20%,
           rgba(10,9,22,0.85) 45%,
           rgba(10,9,22,0.94) 100%), url(${BANNER_IMAGE})`,
         backgroundSize: "cover",
@@ -27,8 +40,6 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
         backgroundAttachment: "fixed",
       }}
     >
-      <header className="relative h-32 md:h-40 pointer-events-none" />
-
       <div className="px-6 md:px-10 py-4 flex items-center gap-3">
         <button className="btn-ghost" onClick={voltar}>← Voltar</button>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: "var(--text-strong)" }}>
@@ -45,6 +56,28 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
           </div>
         ) : (
           <>
+            <nav className="flex gap-1 border-b border-bg-cardalt">
+              {([
+                { id: "geral", icone: "📊", label: "Visão geral" },
+                { id: "jogador", icone: "👤", label: "Desempenho do jogador" },
+              ] as const).map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => setAbaEscolhida(a.id)}
+                  className={`px-3 md:px-4 py-2 rounded-t-lg text-sm font-semibold transition
+                              ${aba === a.id
+                                ? "bg-bg-panel text-acento border-b-2 border-acento"
+                                : "text-fg-dim hover:text-fg hover:bg-bg-panel/40"}`}
+                >
+                  <span className="mr-1">{a.icone}</span>{a.label}
+                </button>
+              ))}
+            </nav>
+
+            {aba === "jogador" ? (
+              <PainelJogador torneios={torneios} metricas={metricas} meuNome={meuNome} />
+            ) : (
+              <>
             {/* KPIs principais */}
             <section>
               <div className="ds-sect">Visão geral</div>
@@ -149,10 +182,364 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
                 <GraficoBarras dados={metricas.torneiosPorMes} />
               </div>
             </section>
+              </>
+            )}
           </>
         )}
       </main>
     </div>
+  );
+}
+
+function PainelJogador({ torneios, metricas, meuNome }: {
+  torneios: Torneio[];
+  metricas: MetricasGlobais;
+  meuNome: string;
+}) {
+  const nomes = useMemo(() => listarNomesJogadores(torneios), [torneios]);
+  const [escolhido, setEscolhido] = useState<string | null>(null);
+  const selecionado = escolhido ?? meuNome;
+  const valorSelect = nomes.find((n) => mesmoJogador(n, selecionado)) ?? "";
+  const d = useMemo(
+    () => (selecionado ? calcularDesempenho(torneios, selecionado) : null),
+    [torneios, selecionado]
+  );
+  const posicaoGeral = metricas.rankingJogadores.findIndex((j) => mesmoJogador(j.nome, selecionado)) + 1;
+
+  return (
+    <>
+      <section className="flex items-center gap-2 flex-wrap">
+        <select
+          value={valorSelect}
+          onChange={(e) => setEscolhido(e.target.value)}
+          className="input flex-1 max-w-md"
+          style={{ colorScheme: "dark" }}
+        >
+          <option value="" disabled>Escolha um jogador...</option>
+          {nomes.map((n) => <option key={n} value={n}>{n}</option>)}
+        </select>
+        {meuNome && !mesmoJogador(meuNome, selecionado) && (
+          <button className="btn-ghost text-sm" onClick={() => setEscolhido(meuNome)}>
+            👤 Ver meu desempenho
+          </button>
+        )}
+      </section>
+
+      {!d ? (
+        <div className="ds-card text-center py-16" style={{ color: "var(--text-2)" }}>
+          {selecionado
+            ? `${selecionado} ainda não aparece em nenhum torneio.`
+            : "Escolha um jogador para ver o desempenho."}
+        </div>
+      ) : (
+        <DesempenhoView d={d} posicaoGeral={posicaoGeral} totalGeral={metricas.rankingJogadores.length} />
+      )}
+    </>
+  );
+}
+
+function DesempenhoView({ d, posicaoGeral, totalGeral }: {
+  d: DesempenhoJogador;
+  posicaoGeral: number;
+  totalGeral: number;
+}) {
+  const obtidas = d.conquistas.filter((c) => c.obtida).length;
+  const distribuicao = [
+    { label: "🥇 Vitórias", valor: d.vitorias },
+    { label: "🤝 Empates por tempo", valor: d.empates },
+    ...d.colocacoes.map((c) => ({ label: `${c.posicao}º lugar na mesa`, valor: c.qtd })),
+  ];
+
+  return (
+    <>
+      <section>
+        <div className="ds-sect">Resumo de {d.nome}</div>
+        <div className="ds-grid ds-g4">
+          <KpiTile
+            label="Ranking geral"
+            valor={posicaoGeral > 0 ? `${posicaoGeral}º` : "—"}
+            sub={`de ${totalGeral} jogadores`}
+          />
+          <KpiTile
+            label="Campeonatos"
+            valor={String(d.campeonatos)}
+            sub={`${d.podios} pódios em ${d.finalizados} finalizados`}
+          />
+          <KpiTile
+            label="Taxa de vitória"
+            valor={`${(d.winrate * 100).toFixed(0)}%`}
+            sub={`${d.vitorias} vitórias em ${d.partidas} mesas`}
+          />
+          <KpiTile
+            label="Acima do esperado"
+            valor={d.partidas > 0 ? `${d.fatorVitoria.toFixed(2).replace(".", ",")}x` : "—"}
+            sub={`esperado pelo tamanho das mesas: ${d.vitoriasEsperadas.toFixed(1).replace(".", ",")} vitórias`}
+          />
+        </div>
+      </section>
+
+      <section className="ds-grid ds-g2">
+        <div className="ds-card">
+          <div className="ds-card-h"><h3>⚡ Forma recente</h3></div>
+          {d.forma.length === 0 ? (
+            <SemDados texto="Nenhuma mesa finalizada ainda." />
+          ) : (
+            <>
+              <div className="flex gap-1.5 flex-wrap">
+                {d.forma.map((r, i) => <ChipResultado key={i} resultado={r} />)}
+              </div>
+              <div className="text-xs mt-3" style={{ color: "var(--text-muted-ds)" }}>
+                Últimas {d.forma.length} mesas, da mais antiga para a mais recente.
+                {" "}Sequência atual: <b style={{ color: "var(--text-strong)" }}>{d.sequenciaAtual}</b>
+                {" "}· Melhor sequência: <b style={{ color: "var(--text-strong)" }}>{d.melhorSequencia}</b>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="ds-card">
+          <div className="ds-card-h"><h3>🎲 Como terminam as mesas</h3></div>
+          {d.partidas === 0 ? (
+            <SemDados texto="Nenhuma mesa finalizada ainda." />
+          ) : (
+            <BarraHorizontal dados={distribuicao} />
+          )}
+        </div>
+      </section>
+
+      <section>
+        <div className="ds-card">
+          <div className="ds-card-h"><h3>📈 Evolução nos torneios</h3></div>
+          {d.evolucao.length === 0 ? (
+            <SemDados texto="Aparece quando o jogador tiver um torneio finalizado." />
+          ) : (
+            <GraficoEvolucao dados={d.evolucao} />
+          )}
+        </div>
+      </section>
+
+      <section className="ds-grid ds-g2">
+        <div className="ds-card">
+          <div className="ds-card-h"><h3>⚔️ Rivais</h3></div>
+          {d.rivais.length === 0 ? (
+            <SemDados texto="Nenhuma mesa finalizada ainda." />
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <DestaqueRival
+                  titulo="😈 Carrasco"
+                  nome={d.carrasco?.nome}
+                  detalhe={d.carrasco ? `venceu ${d.carrasco.vitoriasDele} mesas contra ${d.nome}` : undefined}
+                />
+                <DestaqueRival
+                  titulo="🎯 Freguês"
+                  nome={d.fregues?.nome}
+                  detalhe={d.fregues ? `perdeu ${d.fregues.minhasVitorias} mesas para ${d.nome}` : undefined}
+                />
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
+                  <thead>
+                    <tr style={{ color: "var(--text-muted-ds)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".02em" }}>
+                      <th className="text-left py-2">Jogador</th>
+                      <th className="text-right py-2">Mesas</th>
+                      <th className="text-right py-2">Venceu</th>
+                      <th className="text-right py-2">Perdeu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {d.rivais.map((r) => (
+                      <tr key={r.nome} style={{ borderTop: "0.8px solid var(--line-soft)" }}>
+                        <td className="py-1.5" style={{ color: "var(--text-strong)" }}>{r.nome}</td>
+                        <td className="py-1.5 text-right tabular-nums">{r.mesas}</td>
+                        <td className="py-1.5 text-right tabular-nums" style={{ color: "var(--good)" }}>{r.minhasVitorias}</td>
+                        <td className="py-1.5 text-right tabular-nums" style={{ color: "#f87171" }}>{r.vitoriasDele}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="ds-card">
+          <div className="ds-card-h"><h3>🎴 Desempenho por deck</h3></div>
+          {d.decks.length === 0 ? (
+            <SemDados texto="Nenhum deck registrado para este jogador." />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
+                <thead>
+                  <tr style={{ color: "var(--text-muted-ds)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".02em" }}>
+                    <th className="text-left py-2">Deck</th>
+                    <th className="text-right py-2">Torn.</th>
+                    <th className="text-right py-2">🏆</th>
+                    <th className="text-right py-2">V</th>
+                    <th className="text-right py-2">WR</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {d.decks.map((x) => (
+                    <tr key={x.nome} style={{ borderTop: "0.8px solid var(--line-soft)" }}>
+                      <td className="py-1.5" style={{ color: "var(--text-strong)" }}>{x.nome}</td>
+                      <td className="py-1.5 text-right tabular-nums">{x.torneios}</td>
+                      <td className="py-1.5 text-right tabular-nums" style={{ color: "var(--warn)" }}>{x.campeonatos || "—"}</td>
+                      <td className="py-1.5 text-right tabular-nums">{x.vitorias}/{x.partidas}</td>
+                      <td className="py-1.5 text-right tabular-nums" style={{ color: "var(--good)" }}>{(x.winrate * 100).toFixed(0)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section>
+        <div className="ds-sect">Conquistas ({obtidas} de {d.conquistas.length})</div>
+        <div className="ds-grid ds-g4">
+          {d.conquistas.map((c) => (
+            <div
+              key={c.titulo}
+              className="ds-card"
+              style={{ opacity: c.obtida ? 1 : 0.4, filter: c.obtida ? undefined : "grayscale(1)" }}
+            >
+              <div className="text-2xl">{c.icone}</div>
+              <div className="text-sm font-bold mt-1" style={{ color: "var(--text-strong)" }}>{c.titulo}</div>
+              <div className="text-xs mt-0.5" style={{ color: "var(--text-muted-ds)" }}>{c.descricao}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <div className="ds-card">
+          <div className="ds-card-h"><h3>🗂 Histórico de torneios</h3></div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
+              <thead>
+                <tr style={{ color: "var(--text-muted-ds)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".02em" }}>
+                  <th className="text-left py-2">Data</th>
+                  <th className="text-left py-2">Torneio</th>
+                  <th className="text-left py-2">Deck</th>
+                  <th className="text-right py-2">Pos.</th>
+                  <th className="text-right py-2">Pts</th>
+                  <th className="text-right py-2">V</th>
+                </tr>
+              </thead>
+              <tbody>
+                {d.historico.map((t) => (
+                  <tr key={t.id} style={{ borderTop: "0.8px solid var(--line-soft)" }}>
+                    <td className="py-1.5 whitespace-nowrap">{formatarData(t.data)}</td>
+                    <td className="py-1.5" style={{ color: "var(--text-strong)" }}>{t.nome}</td>
+                    <td className="py-1.5">{t.deck || "—"}</td>
+                    <td className="py-1.5 text-right tabular-nums whitespace-nowrap">
+                      {t.posicao === 1 && "🏆 "}
+                      {t.posicao !== null ? `${t.posicao}º de ${t.total}` : "em andamento"}
+                    </td>
+                    <td className="py-1.5 text-right tabular-nums">{t.pontos}</td>
+                    <td className="py-1.5 text-right tabular-nums">{t.vitorias}/{t.partidas}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function formatarData(iso: string): string {
+  return iso ? new Date(iso).toLocaleDateString("pt-BR") : "—";
+}
+
+function SemDados({ texto }: { texto: string }) {
+  return <div className="text-sm py-4 text-center" style={{ color: "var(--text-muted-ds)" }}>{texto}</div>;
+}
+
+function ChipResultado({ resultado }: { resultado: ResultadoMesa }) {
+  const estilo = {
+    vitoria: { letra: "V", cor: "#6ee7b7", titulo: "Vitória" },
+    empate: { letra: "E", cor: "#fcd34d", titulo: "Empate por tempo" },
+    derrota: { letra: "D", cor: "#f87171", titulo: "Derrota" },
+  }[resultado];
+  return (
+    <span
+      title={estilo.titulo}
+      className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold"
+      style={{ color: estilo.cor, background: `${estilo.cor}18`, border: `1px solid ${estilo.cor}50` }}
+    >
+      {estilo.letra}
+    </span>
+  );
+}
+
+function DestaqueRival({ titulo, nome, detalhe }: { titulo: string; nome?: string; detalhe?: string }) {
+  return (
+    <div className="p-2.5 rounded-lg min-w-0" style={{ background: "var(--surface-subtle)" }}>
+      <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-muted-ds)" }}>{titulo}</div>
+      <div className="text-sm font-bold truncate mt-0.5" style={{ color: "var(--text-strong)" }}>{nome ?? "—"}</div>
+      {detalhe && <div className="text-[11px]" style={{ color: "var(--text-muted-ds)" }}>{detalhe}</div>}
+    </div>
+  );
+}
+
+// Percentil: 100% = primeiro lugar, 0% = último, para comparar torneios de tamanhos diferentes
+function GraficoEvolucao({ dados }: { dados: EvolucaoJogador[] }) {
+  const W = 800, H = 220, pad = { l: 44, r: 24, t: 24, b: 36 };
+  const chartW = W - pad.l - pad.r;
+  const chartH = H - pad.t - pad.b;
+  const pontos = dados.map((d, i) => ({
+    ...d,
+    x: pad.l + (dados.length > 1 ? (i / (dados.length - 1)) * chartW : chartW / 2),
+    y: pad.t + chartH * (1 - d.percentil),
+  }));
+  const passoRotulo = Math.max(1, Math.ceil(dados.length / 10));
+  return (
+    <>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto" }}>
+        {[0, 0.5, 1].map((p) => (
+          <g key={p}>
+            <line
+              x1={pad.l} x2={W - pad.r}
+              y1={pad.t + chartH * (1 - p)}
+              y2={pad.t + chartH * (1 - p)}
+              stroke="var(--line-soft)" strokeWidth="0.5"
+            />
+            <text
+              x={pad.l - 6} y={pad.t + chartH * (1 - p) + 4}
+              textAnchor="end" fontSize="10" fill="var(--text-muted-ds)"
+            >
+              {p * 100}%
+            </text>
+          </g>
+        ))}
+        <polyline
+          points={pontos.map((p) => `${p.x},${p.y}`).join(" ")}
+          fill="none" stroke="var(--brand-1)" strokeWidth="2"
+        />
+        {pontos.map((p, i) => (
+          <g key={`${p.nome}-${i}`}>
+            <circle cx={p.x} cy={p.y} r="5" fill={p.posicao === 1 ? "var(--warn)" : "var(--brand-1)"}>
+              <title>{`${p.nome}: ${p.posicao}º de ${p.total}`}</title>
+            </circle>
+            <text x={p.x} y={p.y - 10} textAnchor="middle" fontSize="10" fontWeight="600" fill="var(--text-strong)">
+              {p.posicao}º
+            </text>
+            {i % passoRotulo === 0 && (
+              <text x={p.x} y={H - pad.b + 16} textAnchor="middle" fontSize="10" fill="var(--text-muted-ds)">
+                {p.data ? new Date(p.data).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) : ""}
+              </text>
+            )}
+          </g>
+        ))}
+      </svg>
+      <div className="text-xs mt-1" style={{ color: "var(--text-muted-ds)" }}>
+        Parcela dos jogadores que ficaram atrás em cada torneio finalizado (100% é o primeiro lugar).
+      </div>
+    </>
   );
 }
 
