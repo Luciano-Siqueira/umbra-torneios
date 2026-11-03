@@ -69,8 +69,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
     ? abaEscolhida!
     : podeEditar ? "jogadores" : "mesas";
 
-  // Quem organiza é a fonte dos dados; quem só acompanha recebe ao vivo
-  useAoVivo(!podeEditar && torneio ? torneio.id : null);
+  useAoVivo(torneio ? torneio.id : null, podeEditar);
 
   if (!torneio) {
     return (

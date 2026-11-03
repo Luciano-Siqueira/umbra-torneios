@@ -47,7 +47,7 @@ export function AbaRanking({ torneio }: { torneio: Torneio }) {
                     </td>
                     <td className="py-2 px-2 font-medium">
                       {j.nome}
-                      {!j.ativo && <span className="ml-2 text-xs text-perigo">(inativo)</span>}
+                      {!j.ativo && <span className="ml-2 text-xs text-perigo">(drop)</span>}
                     </td>
                     <td className="py-2 px-2 text-right font-bold text-acento">{j.pontos}</td>
                     <td className="py-2 px-2 text-right tabular-nums">{(omw * 100).toFixed(1)}%</td>

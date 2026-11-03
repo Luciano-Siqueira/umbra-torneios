@@ -10,7 +10,7 @@ import * as storage from "./storage";
 import * as sync from "./sync";
 import { parearRodada } from "./pareamento";
 import { registrarResultado, desfazerResultado } from "./resultados";
-import { publicarAoVivo, removerAoVivo, type LinhaAoVivo } from "./aoVivo";
+import { publicarAoVivo, publicarAoVivoDepois, removerAoVivo, type LinhaAoVivo } from "./aoVivo";
 import { alternarPausaTimer, iniciarTimer, pararTimer } from "./timer";
 
 export type Tela = "splash" | "torneios" | "torneio" | "analytics" | "usuarios";
@@ -47,6 +47,7 @@ interface State {
   atualizarTorneio: (fn: (t: Torneio) => void) => void;
   // Também avisa quem acompanha; enviarAntes grava o torneio completo primeiro
   atualizarEPublicar: (fn: (t: Torneio) => void, enviarAntes?: boolean) => void;
+  atualizarEPublicarDepois: (fn: (t: Torneio) => void) => void;
   aplicarAoVivo: (linha: LinhaAoVivo) => void;
 
   iniciarTimer: () => void;
@@ -58,6 +59,8 @@ interface State {
   removerJogador: (id: number) => void;
   editarJogador: (id: number, dados: Partial<{ nome: string; deck: string; pago: boolean }>) => void;
   marcarTodosPagos: () => void;
+  alternarDrop: (id: number) => void;
+  registrarPremio: (id: number, valor: number | null) => void;
 
   iniciarRodada: () => void;
   resortearMesas: () => void;
@@ -224,6 +227,12 @@ export const useStore = create<State>((set, get) => ({
     if (t) publicarAoVivo(t, enviarAntes);
   },
 
+  atualizarEPublicarDepois: (fn) => {
+    get().atualizarTorneio(fn);
+    const t = get().torneioAtivo();
+    if (t) publicarAoVivoDepois(t);
+  },
+
   // Só atualiza o local: quem recebe não envia nada de volta
   aplicarAoVivo: (linha) => {
     const t = storage.listarTorneios().find((x) => x.id === linha.torneio_id);
@@ -253,7 +262,7 @@ export const useStore = create<State>((set, get) => ({
   },
 
   addJogador: (nome, deck, pago) => {
-    get().atualizarTorneio((t) => {
+    get().atualizarEPublicarDepois((t) => {
       const j = novoJogador(t.proximoId, nome, deck, pago);
       t.proximoId += 1;
       t.jogadores.push(j);
@@ -262,13 +271,13 @@ export const useStore = create<State>((set, get) => ({
   },
 
   removerJogador: (id) => {
-    get().atualizarTorneio((t) => {
+    get().atualizarEPublicarDepois((t) => {
       t.jogadores = t.jogadores.filter((j) => j.id !== id);
     });
   },
 
   editarJogador: (id, dados) => {
-    get().atualizarTorneio((t) => {
+    get().atualizarEPublicarDepois((t) => {
       const j = t.jogadores.find((x) => x.id === id);
       if (!j) return;
       if (dados.nome !== undefined) j.nome = dados.nome;
@@ -278,8 +287,22 @@ export const useStore = create<State>((set, get) => ({
   },
 
   marcarTodosPagos: () => {
-    get().atualizarTorneio((t) => {
+    get().atualizarEPublicarDepois((t) => {
       for (const j of t.jogadores) j.pago = true;
+    });
+  },
+
+  alternarDrop: (id) => {
+    get().atualizarEPublicarDepois((t) => {
+      const j = t.jogadores.find((x) => x.id === id);
+      if (j) j.ativo = !j.ativo;
+    });
+  },
+
+  registrarPremio: (id, valor) => {
+    get().atualizarEPublicarDepois((t) => {
+      const j = t.jogadores.find((x) => x.id === id);
+      if (j) j.premioPago = valor === null ? null : { valor, em: new Date().toISOString() };
     });
   },
 
@@ -323,7 +346,7 @@ export const useStore = create<State>((set, get) => ({
       if (!mesa || mesa.finalizada) return;
       mesa.eliminacoes = ordem;
       mesa.empateTopoIds = empateTopo;
-    });
+    }, true);
   },
 
   finalizarMesa: (mesaIdx, ordem, empateTopo) => {
@@ -331,11 +354,11 @@ export const useStore = create<State>((set, get) => ({
       const mesa = t.mesas[mesaIdx];
       if (!mesa) return;
       registrarResultado(t, mesa, ordem, empateTopo);
-    });
+    }, true);
   },
 
   editarMesa: (mesaIdx) => {
-    get().atualizarEPublicar((t) => {
+    get().atualizarEPublicarDepois((t) => {
       const mesa = t.mesas[mesaIdx];
       if (!mesa) return;
       desfazerResultado(t, mesa);

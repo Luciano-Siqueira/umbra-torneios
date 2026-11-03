@@ -9,6 +9,7 @@ const ESPERA_MAXIMA_MS = 30_000;
 const KEY_PENDENTES = "mtg.envios.pendentes";
 
 const timeouts = new Map<string, number>();
+const emAndamento = new Map<string, Promise<boolean>>();
 const falhas = new Map<string, number>(); // id → tentativas seguidas sem conexão
 const pendentes = new Set<string>(lerPendentes()); // sobrevivem a recarregar a página
 
@@ -69,7 +70,20 @@ function concluir(id: string) {
   salvarPendentes();
 }
 
-async function enviarPendente(id: string): Promise<boolean> {
+function enviarPendente(id: string): Promise<boolean> {
+  const envio: Promise<boolean> = enviar(id).finally(() => {
+    if (emAndamento.get(id) === envio) emAndamento.delete(id);
+  });
+  emAndamento.set(id, envio);
+  return envio;
+}
+
+// Espera o envio em curso terminar, sem disparar outro
+export async function envioConcluido(id: string): Promise<void> {
+  await emAndamento.get(id);
+}
+
+async function enviar(id: string): Promise<boolean> {
   const t = storage.listarTorneios().find((x) => x.id === id);
   if (!t) {
     concluir(id);
@@ -150,6 +164,22 @@ export async function puxarDoServidor(): Promise<{ torneios: number; erros: stri
     erros.push(e.message || String(e));
     return { torneios: 0, erros };
   }
+}
+
+// Compara só um resumo com o local, para não baixar os torneios inteiros à toa
+export async function listaMudou(): Promise<boolean> {
+  if (pendentes.size > 0) return false;
+  const { data, error } = await supabase
+    .from("torneios")
+    .select("id, rodada:dados->>rodadaAtual, finalizado:dados->>finalizado");
+  if (error || !data) return false;
+  const linhas = data as unknown as { id: string; rodada: string; finalizado: string }[];
+  const locais = new Map(storage.listarTorneios().map((t) => [t.id, t]));
+  if (linhas.length !== locais.size) return true;
+  return linhas.some((l) => {
+    const t = locais.get(l.id);
+    return !t || String(t.rodadaAtual) !== l.rodada || String(t.finalizado) !== l.finalizado;
+  });
 }
 
 // Envia um torneio pro servidor (debounced por id para agrupar updates rápidos)

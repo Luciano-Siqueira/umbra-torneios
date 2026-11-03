@@ -10,7 +10,7 @@ import { useAuth } from "../core/auth";
 import { AuthChip } from "./AuthChip";
 import { calcularMetricas, metricasRecentes } from "../core/metricas";
 import { ranking } from "../core/resultados";
-import { podeEditarTorneios, torneiosVisiveis } from "../core/visibilidade";
+import { podeEditarTorneios, torneioParado, torneiosVisiveis } from "../core/visibilidade";
 import { BANNER_IMAGE } from "../banner-image";
 
 const CORES_MTG = [
@@ -51,8 +51,9 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
   const torneios = torneiosVisiveis(torneiosAll, modoView, auth);
   // Torneio atualmente "em andamento" (rodada > 0, não finalizado) — mais recente
   const torneioEmAndamento = torneios
-    .filter((t) => !t.finalizado && t.rodadaAtual > 0)
+    .filter((t) => !t.finalizado && t.rodadaAtual > 0 && !torneioParado(t))
     .sort((a, b) => (b.dataCriacao || "").localeCompare(a.dataCriacao || ""))[0];
+  const torneiosParados = podeEditar ? torneios.filter((t) => torneioParado(t)) : [];
   const metricas = calcularMetricas(torneios);
   const ult30 = metricasRecentes(torneios, 30);
   const ultimoCampeao = (() => {
@@ -372,6 +373,24 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             >▶ Continuar</button>
           </div>
         )}
+
+        {torneiosParados.map((t) => (
+          <div
+            key={t.id}
+            className="flex flex-wrap items-center gap-3 px-4 py-2.5 rounded-xl border text-sm"
+            style={{
+              background: "rgba(15,15,15,0.7)",
+              borderColor: "rgba(252,211,77,0.3)",
+              color: "var(--text-2)",
+            }}
+          >
+            <span className="flex-1 min-w-[200px]">
+              ⚠ <b style={{ color: "var(--text-strong)" }}>{t.nome}</b> está parado na rodada {t.rodadaAtual} há mais de 3 dias.
+              Abra para finalizar ou continuar.
+            </span>
+            <button className="btn-ghost text-sm" onClick={() => abrirTorneio(t.id)}>Abrir</button>
+          </div>
+        ))}
 
         {/* Mini KPIs */}
         {torneios.length > 0 && (

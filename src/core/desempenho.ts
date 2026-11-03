@@ -94,17 +94,21 @@ export function listarNomesJogadores(torneios: Torneio[]): string[] {
   return Array.from(nomes.values()).sort((a, b) => a.localeCompare(b));
 }
 
-// Prêmios recebidos nos torneios finalizados, pela mesma tabela da aba Premiação
+// Prêmios dos torneios finalizados: o valor registrado como pago ou, sem registro,
+// a estimativa pela mesma tabela da aba Premiação
 export function calcularGanhos(torneios: Torneio[], nomes: string[]): { total: number; premiacoes: number } {
   const meusNomes = new Set(nomes.map(chave));
   let total = 0;
   let premiacoes = 0;
   for (const t of torneios) {
     if (!t.finalizado) continue;
-    const posicao = ranking(t).findIndex((j) => meusNomes.has(chave(j.nome)));
+    const rank = ranking(t);
+    const posicao = rank.findIndex((j) => meusNomes.has(chave(j.nome)));
     if (posicao < 0) continue;
     const arrecadado = t.jogadores.filter((j) => j.pago).length * t.taxaInscricao;
-    const valor = calcularPremiacao(t.jogadores.length, arrecadado)[posicao]?.valor ?? 0;
+    const valor = rank[posicao].premioPago?.valor
+      ?? calcularPremiacao(t.jogadores.length, arrecadado)[posicao]?.valor
+      ?? 0;
     if (valor > 0) {
       total += valor;
       premiacoes += 1;

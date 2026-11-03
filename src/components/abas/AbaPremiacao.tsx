@@ -1,7 +1,49 @@
-import { useMemo } from "react";
-import type { Torneio } from "../../core/types";
+import { useMemo, useState } from "react";
+import type { Jogador, Torneio } from "../../core/types";
 import { calcularPremiacao, descricaoFaixa } from "../../core/premiacao";
 import { ranking } from "../../core/resultados";
+import { useStore } from "../../core/store";
+import { useToast } from "../ui/Toast";
+
+function RegistroPremio({ jogador, sugerido }: { jogador: Jogador; sugerido: number }) {
+  const registrarPremio = useStore((s) => s.registrarPremio);
+  const { toast } = useToast();
+  const [valor, setValor] = useState(sugerido.toFixed(2));
+
+  if (jogador.premioPago) {
+    return (
+      <div className="flex items-center justify-end gap-2 text-xs mt-1">
+        <span className="text-sucesso">
+          ✓ Pago R$ {jogador.premioPago.valor.toFixed(2)} em {new Date(jogador.premioPago.em).toLocaleDateString("pt-BR")}
+        </span>
+        <button className="text-fg-dim hover:text-fg underline" onClick={() => registrarPremio(jogador.id, null)}>
+          Desfazer
+        </button>
+      </div>
+    );
+  }
+
+  const registrar = () => {
+    const n = Number(valor.replace(",", "."));
+    if (!Number.isFinite(n) || n < 0) return toast("Digite um valor válido", "aviso");
+    registrarPremio(jogador.id, Math.round(n * 100) / 100);
+  };
+
+  return (
+    <div className="flex items-center justify-end gap-2 mt-1">
+      <span className="text-xs text-fg-dim">R$</span>
+      <input
+        className="input !py-1 !px-2 text-sm w-24"
+        inputMode="decimal"
+        aria-label={`Valor pago a ${jogador.nome}`}
+        value={valor}
+        onChange={(e) => setValor(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && registrar()}
+      />
+      <button className="btn-info !py-1 !px-3 text-xs" onClick={registrar}>Registrar pago</button>
+    </div>
+  );
+}
 
 export function AbaPremiacao({ torneio }: { torneio: Torneio }) {
   const pagos = torneio.jogadores.filter((j) => j.pago).length;
@@ -13,6 +55,7 @@ export function AbaPremiacao({ torneio }: { torneio: Torneio }) {
   );
   const rank = useMemo(() => ranking(torneio), [torneio]);
   const faixa = descricaoFaixa(torneio.jogadores.length);
+  const totalPago = torneio.jogadores.reduce((s, j) => s + (j.premioPago?.valor ?? 0), 0);
 
   return (
     <div className="w-full space-y-4">
@@ -35,6 +78,9 @@ export function AbaPremiacao({ torneio }: { torneio: Torneio }) {
 
       <div className="card">
         <h3 className="label mb-3">Distribuição da premiação</h3>
+        {torneio.finalizado && (
+          <div className="text-sm text-fg-dim mb-3">Pago até agora: R$ {totalPago.toFixed(2)}</div>
+        )}
         {premios.length === 0 ? (
           <div className="text-fg-dim text-sm text-center py-4">
             Nenhum jogador na faixa ou sem valores.
@@ -58,7 +104,10 @@ export function AbaPremiacao({ torneio }: { torneio: Torneio }) {
                     </div>
                     <div className="text-xs text-fg-dim">{(p.percentual * 100).toFixed(1)}% do prêmio</div>
                   </div>
-                  <div className="text-xl font-black text-sucesso">R$ {p.valor.toFixed(2)}</div>
+                  <div className="text-right">
+                    <div className="text-xl font-black text-sucesso">R$ {p.valor.toFixed(2)}</div>
+                    {torneio.finalizado && j && <RegistroPremio key={j.id} jogador={j} sugerido={p.valor} />}
+                  </div>
                 </div>
               );
             })}

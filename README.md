@@ -102,6 +102,9 @@ Mesmo usuário pode ter todos os papéis. O `modoView` (admin/organizador/jogado
 - Quem organiza publica (`publicarAoVivo`); quem acompanha escuta (`useAoVivo`) e baixa o torneio completo só quando a rodada muda
 - `CartaoMinhaMesa`, na aba Mesas, mostra ao jogador a mesa e o tempo, comparando os nomes vinculados à conta com os do torneio
 - Se o Realtime não conectar, `useAoVivo` confere por consulta a cada 15 segundos; sem linha ao vivo, usa o torneio salvo
+- Outro aparelho de quem organiza também escuta, ignora o eco do que publicou (`ehPublicacaoMinha`) e baixa o torneio inteiro a cada novidade. Se dois aparelhos editarem ao mesmo tempo, vale a última gravação
+- Fora de um torneio, `useListaAtualizada` compara um resumo a cada minuto e só baixa os torneios se algo mudou
+- Torneio iniciado e sem atividade há mais de 3 dias (`torneioParado`) sai da faixa "Em andamento" e gera um aviso para quem organiza
 
 ### Supabase
 

@@ -9,6 +9,7 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
   const addJogador = useStore((s) => s.addJogador);
   const removerJogador = useStore((s) => s.removerJogador);
   const editarJogador = useStore((s) => s.editarJogador);
+  const alternarDrop = useStore((s) => s.alternarDrop);
   const marcarTodosPagos = useStore((s) => s.marcarTodosPagos);
   const { toast } = useToast();
 
@@ -52,6 +53,20 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
   };
 
   const alternarPago = (id: number, atual: boolean) => editarJogador(id, { pago: !atual });
+
+  const drop = async (id: number, nomeJ: string, ativo: boolean) => {
+    if (!ativo) {
+      alternarDrop(id);
+      toast(`${nomeJ} volta a entrar nas próximas rodadas`, "sucesso");
+      return;
+    }
+    const ok = await confirmar({
+      titulo: "Drop de jogador",
+      mensagem: `${nomeJ} sai das próximas rodadas e continua no ranking. Se estiver em uma mesa em andamento, registre o resultado dela normalmente.`,
+      textoOk: "Confirmar drop",
+    });
+    if (ok) alternarDrop(id);
+  };
 
   return (
     <div className="space-y-4 w-full">
@@ -139,7 +154,7 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
             [...torneio.jogadores].forEach((j) => removerJogador(j.id));
             toast("Todos os jogadores foram removidos", "sucesso");
           }}
-          disabled={torneio.jogadores.length === 0 || rodadaAndamento}
+          disabled={torneio.jogadores.length === 0 || torneio.rodadaAtual > 0}
         >🗑 Remover todos</button>
       </div>
       )}
@@ -166,7 +181,7 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
                   {podeEditar && <th className="text-left py-2 px-2 text-[10px] font-bold tracking-widest uppercase w-12">PAGO</th>}
                   <th className="text-left py-2 px-2 text-[10px] font-bold tracking-widest uppercase">JOGADOR</th>
                   <th className="text-left py-2 px-2 text-[10px] font-bold tracking-widest uppercase">DECK</th>
-                  {podeEditar && <th className="text-right py-2 px-2 text-[10px] font-bold tracking-widest uppercase w-16">AÇÕES</th>}
+                  {podeEditar && <th className="text-right py-2 px-2 text-[10px] font-bold tracking-widest uppercase">AÇÕES</th>}
                 </tr>
               </thead>
               <tbody>
@@ -190,7 +205,7 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
                         {j.nome}
                       </span>
                       {!j.ativo && (
-                        <span className="ml-2 text-[10px] bg-perigo/20 text-perigo px-2 py-0.5 rounded">INATIVO</span>
+                        <span className="ml-2 text-[10px] bg-perigo/20 text-perigo px-2 py-0.5 rounded">DROP</span>
                       )}
                     </td>
                     <td className="py-1.5 px-2">
@@ -216,12 +231,20 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
                     </td>
                     {podeEditar && (
                     <td className="py-1.5 px-2 text-right">
-                      <button
-                        className="text-perigo hover:text-red-400 text-xl leading-none px-2"
-                        onClick={() => remover(j.id, j.nome)}
-                        title="Remover"
-                        disabled={rodadaAndamento}
-                      >×</button>
+                      {/* Depois de iniciado, remover quebraria o histórico das mesas */}
+                      {torneio.rodadaAtual === 0 ? (
+                        <button
+                          className="text-perigo hover:text-red-400 text-xl leading-none px-2"
+                          onClick={() => remover(j.id, j.nome)}
+                          title="Remover"
+                        >×</button>
+                      ) : !torneio.finalizado && (
+                        <button
+                          className="text-xs px-2 py-1 rounded border border-white/10 hover:bg-white/5 whitespace-nowrap"
+                          onClick={() => drop(j.id, j.nome, j.ativo)}
+                          title={j.ativo ? "Tirar das próximas rodadas" : "Voltar para as próximas rodadas"}
+                        >{j.ativo ? "Drop" : "Desfazer drop"}</button>
+                      )}
                     </td>
                     )}
                   </tr>

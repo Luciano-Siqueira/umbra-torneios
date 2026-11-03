@@ -11,7 +11,8 @@ export interface Jogador {
   adversarios: number[];
   historicoColocacoes: [number, number][]; // (rodada, colocacao)
   historicoGames: [number, number, number][]; // (rodada, ganhos, total)
-  ativo: boolean;
+  ativo: boolean; // false = drop: fica no ranking, mas sai das próximas rodadas
+  premioPago?: { valor: number; em: string } | null; // o que foi pago de fato
 }
 
 export interface Mesa {

@@ -9,6 +9,7 @@ import { DialogoResultado } from "../DialogoResultado";
 import { CartaoMinhaMesa } from "../CartaoMinhaMesa";
 import { useAuth } from "../../core/auth";
 import { encontrarMinhaMesa } from "../../core/minhaMesa";
+import { torneioParado } from "../../core/visibilidade";
 import { useTimer, formatarTempo } from "../../core/useTimer";
 
 export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar: boolean }) {
@@ -22,7 +23,7 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
   const { nomesJogador } = useAuth();
   // O cartão da própria mesa é só do modo jogador
   const minha = useMemo(
-    () => (podeEditar ? null : encontrarMinhaMesa([torneio], nomesJogador)),
+    () => (podeEditar || torneioParado(torneio) ? null : encontrarMinhaMesa([torneio], nomesJogador)),
     [podeEditar, torneio, nomesJogador]
   );
 

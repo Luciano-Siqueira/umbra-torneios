@@ -3,6 +3,17 @@ import type { AuthState } from "./auth";
 import type { ModoView } from "./store";
 import type { Torneio } from "./types";
 
+const DIAS_PARA_PARADO = 3;
+
+// Torneio iniciado, sem finalizar e sem rodada ou tempo novos há dias: provavelmente foi esquecido
+export function torneioParado(t: Torneio, agora: number = Date.now()): boolean {
+  if (t.finalizado || t.rodadaAtual === 0) return false;
+  const ultimaAtividade = Math.max(
+    ...[t.dataCriacao, t.dataRodadaAtual, t.timer?.iniciadoEm].map((d) => Date.parse(d ?? "") || 0),
+  );
+  return agora - ultimaAtividade > DIAS_PARA_PARADO * 86_400_000;
+}
+
 // Só controla a interface: quem protege os dados é o RLS
 export function podeEditarTorneios(modoView: ModoView, auth: AuthState): boolean {
   if (modoView === "admin") return auth.isAdmin;

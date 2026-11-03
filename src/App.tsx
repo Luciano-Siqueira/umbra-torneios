@@ -7,6 +7,7 @@ import { TelaTorneio } from "./components/TelaTorneio";
 import { TelaLogin } from "./components/TelaLogin";
 import { TelaVincularNome } from "./components/TelaVincularNome";
 import { useAuth } from "./core/auth";
+import { useListaAtualizada } from "./core/useAoVivo";
 import { definirAvisoEnvio, puxarDoServidor, retomarEnvios } from "./core/sync";
 
 // Telas carregadas só quando abertas
@@ -38,6 +39,9 @@ function AppInner() {
   const [loginAberto, setLoginAberto] = useState(false);
   const [vincularAberto, setVincularAberto] = useState(false);
   const [semConexao, setSemConexao] = useState(false);
+
+  // Dentro de um torneio quem atualiza é o useAoVivo
+  useListaAtualizada(!!auth.session && tela !== "torneio");
 
   useEffect(() => {
     definirAvisoEnvio((aviso) => {

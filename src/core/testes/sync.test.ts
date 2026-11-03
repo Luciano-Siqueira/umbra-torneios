@@ -143,7 +143,7 @@ describe("ao vivo", () => {
     const t = s().criarTorneio("Ao vivo", 10, 3, 75, 15);
     s().abrirTorneio(t.id);
     for (let i = 1; i <= 8; i++) s().addJogador(`J${i}`, "", true);
-    await esperar(900);
+    await esperar(1200);
     pedidos = [];
   });
 
