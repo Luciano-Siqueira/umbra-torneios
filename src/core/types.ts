@@ -55,6 +55,7 @@ export interface Torneio {
   premiacaoModo: PremiacaoModo;
   premiosCadastrados: PremioCadastrado[];
   dataRodadaAtual: string;
+  criadoPor?: string; // user_id de quem criou (torneios antigos não têm)
 }
 
 // ============================================================

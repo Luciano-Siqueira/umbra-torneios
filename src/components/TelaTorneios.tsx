@@ -11,6 +11,7 @@ import { exportarTudo, importarTudo } from "../core/backup";
 import { useAuth } from "../core/auth";
 import { AuthChip } from "./AuthChip";
 import { calcularMetricas, metricasRecentes } from "../core/metricas";
+import { torneiosVisiveis } from "../core/visibilidade";
 import { BANNER_IMAGE } from "../banner-image";
 
 const CORES_MTG = [
@@ -33,21 +34,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
   const podeEditar = (auth.isAdmin && modoView === "admin") || modoView === "organizador";
 
   // Filtra torneios conforme modo de visualização atual
-  const torneios = (() => {
-    if (!auth.session) return torneiosAll;
-    const uid = auth.session.user.id;
-    if (modoView === "admin" && auth.isAdmin) return torneiosAll;
-    if (modoView === "organizador") {
-      return torneiosAll.filter((t: any) => t.criadoPor === uid || !t.criadoPor);
-    }
-    if (modoView === "jogador") {
-      const meusNomes = new Set(auth.nomesJogador.map((n) => n.toLowerCase()));
-      return torneiosAll.filter((t) =>
-        t.jogadores.some((j: any) => meusNomes.has(j.nome.toLowerCase()))
-      );
-    }
-    return torneiosAll;
-  })();
+  const torneios = torneiosVisiveis(torneiosAll, modoView, auth);
   // Torneio atualmente "em andamento" (rodada > 0, não finalizado) — mais recente
   const torneioEmAndamento = torneios
     .filter((t) => !t.finalizado && t.rodadaAtual > 0)

@@ -7,16 +7,24 @@ import {
   calcularDesempenho, listarNomesJogadores, mesmoJogador,
   type DesempenhoJogador, type EvolucaoJogador, type ResultadoMesa,
 } from "../core/desempenho";
+import { torneiosVisiveis } from "../core/visibilidade";
 import type { Torneio } from "../core/types";
 import { BANNER_IMAGE } from "../banner-image";
 
 type AbaAnalytics = "geral" | "jogador";
 
 export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?: () => void; onVincularNome?: () => void } = {}) {
-  const torneios = useStore((s) => s.torneios);
+  const torneiosTodos = useStore((s) => s.torneios);
   const voltar = useStore((s) => s.voltarParaLista);
   const modoView = useStore((s) => s.modoView);
   const auth = useAuth();
+  // A visão geral respeita o modo; o ranking do painel do jogador continua geral
+  const torneios = useMemo(
+    () => torneiosVisiveis(torneiosTodos, modoView, auth),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [torneiosTodos, modoView, auth.session?.user?.id, auth.isAdmin, auth.isOrganizador, auth.nomesJogador]
+  );
+  const metricasTodas = useMemo(() => calcularMetricas(torneiosTodos), [torneiosTodos]);
   const metricas = useMemo(() => calcularMetricas(torneios), [torneios]);
   const ult30 = useMemo(() => metricasRecentes(torneios, 30), [torneios]);
   const ult7 = useMemo(() => metricasRecentes(torneios, 7), [torneios]);
@@ -50,7 +58,7 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
       </div>
 
       <main className="px-6 md:px-10 pb-12 space-y-6">
-        {torneios.length === 0 ? (
+        {torneiosTodos.length === 0 ? (
           <div className="ds-card text-center py-16" style={{ color: "var(--text-2)" }}>
             Nenhum torneio ainda — crie um torneio para ver estatísticas.
           </div>
@@ -75,9 +83,23 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
             </nav>
 
             {aba === "jogador" ? (
-              <PainelJogador torneios={torneios} metricas={metricas} meuNome={meuNome} />
+              <PainelJogador torneios={torneiosTodos} metricas={metricasTodas} meuNome={meuNome} />
+            ) : torneios.length === 0 ? (
+              <div className="ds-card text-center py-16" style={{ color: "var(--text-2)" }}>
+                {modoView === "organizador"
+                  ? "Você ainda não organizou nenhum torneio."
+                  : "Você ainda não participou de nenhum torneio."}
+              </div>
             ) : (
               <>
+            <div className="text-xs" style={{ color: "var(--text-2)" }}>
+              {modoView === "admin"
+                ? "Mostrando todos os torneios."
+                : modoView === "organizador"
+                  ? "Mostrando os torneios que você organizou."
+                  : "Mostrando os torneios em que você jogou."}
+            </div>
+
             {/* KPIs principais */}
             <section>
               <div className="ds-sect">Visão geral</div>

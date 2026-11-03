@@ -19,7 +19,9 @@ interface State {
   modoView: ModoView;
   torneioId: string | null;
   torneios: Torneio[];
+  usuarioId: string | null; // grava quem criou cada torneio
   setModoView: (m: ModoView) => void;
+  setUsuarioId: (id: string | null) => void;
 
   irPara: (tela: Tela) => void;
   abrirTorneio: (id: string) => void;
@@ -57,8 +59,10 @@ export const useStore = create<State>((set, get) => ({
   tela: "splash",
   modoView: (localStorage.getItem("mtg.modoView") as ModoView) || "jogador",
   setModoView: (m) => { localStorage.setItem("mtg.modoView", m); set({ modoView: m }); },
+  setUsuarioId: (id) => set({ usuarioId: id }),
   torneioId: null,
   torneios: storage.listarTorneios(),
+  usuarioId: null,
 
   irPara: (tela) => set({ tela }),
   abrirTorneio: (id) => set({ torneioId: id, tela: "torneio" }),
@@ -89,6 +93,7 @@ export const useStore = create<State>((set, get) => ({
 
   criarTorneio: (nome, taxa, rodadas, tempoMin, tempoExtra) => {
     const t = novoTorneio(nome, taxa, rodadas, tempoMin, tempoExtra);
+    t.criadoPor = get().usuarioId ?? undefined;
     storage.upsertTorneio(t);
     sync.enviarTorneio(t);
     set({ torneios: storage.listarTorneios() });
@@ -111,6 +116,7 @@ export const useStore = create<State>((set, get) => ({
       "Angrath", "Huatli", "Saheeli Rai",
     ];
     const t = novoTorneio("Torneio Teste", 15, 3, 75, 15);
+    t.criadoPor = get().usuarioId ?? undefined;
     nomes.forEach((n, i) => {
       const j = novoJogador(i + 1, n, "", i % 2 === 0);
       t.jogadores.push(j);

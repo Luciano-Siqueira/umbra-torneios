@@ -23,6 +23,7 @@ function AppInner() {
   const tela = useStore((s) => s.tela);
   const irPara = useStore((s) => s.irPara);
   const recarregar = useStore((s) => s.recarregar);
+  const setUsuarioId = useStore((s) => s.setUsuarioId);
   const auth = useAuth();
   const { toast } = useToast();
   const [loginAberto, setLoginAberto] = useState(false);
@@ -32,6 +33,10 @@ function AppInner() {
     if (auth.perfilErro) toast("Não foi possível carregar seu perfil: " + auth.perfilErro, "erro");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.perfilErro]);
+
+  useEffect(() => {
+    setUsuarioId(auth.session?.user?.id ?? null);
+  }, [auth.session?.user?.id, setUsuarioId]);
 
   // 1) Carrega localStorage
   useEffect(() => { recarregar(); }, [recarregar]);
