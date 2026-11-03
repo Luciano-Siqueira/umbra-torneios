@@ -20,8 +20,10 @@ interface State {
   torneioId: string | null;
   torneios: Torneio[];
   usuarioId: string | null; // grava quem criou cada torneio
+  sincronizando: boolean; // buscando os torneios no servidor
   setModoView: (m: ModoView) => void;
   setUsuarioId: (id: string | null) => void;
+  setSincronizando: (v: boolean) => void;
 
   irPara: (tela: Tela) => void;
   abrirTorneio: (id: string) => void;
@@ -60,9 +62,11 @@ export const useStore = create<State>((set, get) => ({
   modoView: (localStorage.getItem("mtg.modoView") as ModoView) || "jogador",
   setModoView: (m) => { localStorage.setItem("mtg.modoView", m); set({ modoView: m }); },
   setUsuarioId: (id) => set({ usuarioId: id }),
+  setSincronizando: (v) => set({ sincronizando: v }),
   torneioId: null,
   torneios: storage.listarTorneios(),
   usuarioId: null,
+  sincronizando: true,
 
   irPara: (tela) => set({ tela }),
   abrirTorneio: (id) => set({ torneioId: id, tela: "torneio" }),

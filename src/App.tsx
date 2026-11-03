@@ -1,15 +1,23 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useStore } from "./core/store";
 import { ToastProvider, useToast } from "./components/ui/Toast";
 import { Splash } from "./components/Splash";
 import { TelaTorneios } from "./components/TelaTorneios";
 import { TelaTorneio } from "./components/TelaTorneio";
-import { TelaAnalytics } from "./components/TelaAnalytics";
-import { TelaUsuarios } from "./components/TelaUsuarios";
 import { TelaLogin } from "./components/TelaLogin";
 import { TelaVincularNome } from "./components/TelaVincularNome";
 import { useAuth } from "./core/auth";
 import { puxarDoServidor } from "./core/sync";
+
+// Telas carregadas só quando abertas
+const TelaAnalytics = lazy(() =>
+  import("./components/TelaAnalytics").then((m) => ({ default: m.TelaAnalytics }))
+);
+const TelaUsuarios = lazy(() =>
+  import("./components/TelaUsuarios").then((m) => ({ default: m.TelaUsuarios }))
+);
+
+const KEY_DONO_CACHE = "mtg.torneios.dono";
 
 export default function App() {
   return (
@@ -24,6 +32,7 @@ function AppInner() {
   const irPara = useStore((s) => s.irPara);
   const recarregar = useStore((s) => s.recarregar);
   const setUsuarioId = useStore((s) => s.setUsuarioId);
+  const setSincronizando = useStore((s) => s.setSincronizando);
   const auth = useAuth();
   const { toast } = useToast();
   const [loginAberto, setLoginAberto] = useState(false);
@@ -41,17 +50,25 @@ function AppInner() {
   // 1) Carrega localStorage
   useEffect(() => { recarregar(); }, [recarregar]);
 
-  // 2) Quando a sessão muda (login/logout), limpa cache e puxa fresco do servidor
+  // 2) Mostra o cache na hora e atualiza do servidor por trás
   useEffect(() => {
     if (auth.loading) return;
-    // Sempre limpa a lista local antes de puxar — garante que o filtro RLS valha
-    localStorage.removeItem("mtg.torneios.v1");
+    // Só descarta o cache quando muda a conta — garante que o filtro RLS valha
+    const dono = auth.session?.user?.id ?? "";
+    if (localStorage.getItem(KEY_DONO_CACHE) !== dono) {
+      localStorage.removeItem("mtg.torneios.v1");
+      localStorage.setItem(KEY_DONO_CACHE, dono);
+    }
     recarregar();
+    setSincronizando(true);
     (async () => {
       const res = await puxarDoServidor();
+      setSincronizando(false);
       if (res.erros.length === 0) recarregar();
+      else toast("Não foi possível atualizar os torneios. Mostrando os dados salvos.", "aviso");
     })();
-  }, [auth.loading, auth.session?.user?.id, recarregar]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.loading, auth.session?.user?.id, recarregar, setSincronizando]);
 
   // 3) Se não logado e NÃO está na splash, volta pra splash
   useEffect(() => {
@@ -74,8 +91,10 @@ function AppInner() {
       {tela === "splash" && <Splash onPedirLogin={() => setLoginAberto(true)} />}
       {tela === "torneios" && <TelaTorneios onPedirLogin={() => setLoginAberto(true)} onVincularNome={() => setVincularAberto(true)} />}
       {tela === "torneio" && <TelaTorneio onPedirLogin={() => setLoginAberto(true)} onVincularNome={() => setVincularAberto(true)} />}
-      {tela === "analytics" && <TelaAnalytics onPedirLogin={() => setLoginAberto(true)} onVincularNome={() => setVincularAberto(true)} />}
-      {tela === "usuarios" && <TelaUsuarios onPedirLogin={() => setLoginAberto(true)} onVincularNome={() => setVincularAberto(true)} />}
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-fg-dim">Carregando...</div>}>
+        {tela === "analytics" && <TelaAnalytics onPedirLogin={() => setLoginAberto(true)} onVincularNome={() => setVincularAberto(true)} />}
+        {tela === "usuarios" && <TelaUsuarios onPedirLogin={() => setLoginAberto(true)} onVincularNome={() => setVincularAberto(true)} />}
+      </Suspense>
 
       <TelaLogin
         aberta={loginAberto}

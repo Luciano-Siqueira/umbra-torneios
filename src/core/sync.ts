@@ -35,9 +35,12 @@ export async function puxarDoServidor(): Promise<{ torneios: number; erros: stri
 
     // SUBSTITUI o localStorage pelo que veio do servidor (já filtrado por RLS)
     // Isso garante que, se mudar de usuário, só vê o que ESSE usuário pode ver.
-    const arr = (data as any[]).map((row) => row.dados as Torneio);
-    arr.sort((a, b) => (b.dataCriacao || "").localeCompare(a.dataCriacao || ""));
-    localStorage.setItem("mtg.torneios.v1", JSON.stringify(arr));
+    // Com envio pendente, mantém o local para não apagar a alteração que ainda não subiu.
+    if (timeouts.size === 0) {
+      const arr = (data as any[]).map((row) => row.dados as Torneio);
+      arr.sort((a, b) => (b.dataCriacao || "").localeCompare(a.dataCriacao || ""));
+      localStorage.setItem("mtg.torneios.v1", JSON.stringify(arr));
+    }
 
     return { torneios: data.length, erros };
   } catch (e: any) {

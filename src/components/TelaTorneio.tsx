@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useStore } from "../core/store";
 import { useAuth } from "../core/auth";
 import { confirmar } from "./ui/Confirm";
@@ -11,8 +11,12 @@ import { AbaMesas } from "./abas/AbaMesas";
 import { AbaRanking } from "./abas/AbaRanking";
 import { AbaFinanceiro } from "./abas/AbaFinanceiro";
 import { AbaPremiacao } from "./abas/AbaPremiacao";
-import { AbaSorteios } from "./abas/AbaSorteios";
 import { AbaHistorico } from "./abas/AbaHistorico";
+
+// Roleta e corrida de patinhos carregam só quando a aba é aberta
+const AbaSorteios = lazy(() =>
+  import("./abas/AbaSorteios").then((m) => ({ default: m.AbaSorteios }))
+);
 
 type Aba =
   | "jogadores"
@@ -193,7 +197,11 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
         {aba === "ranking" && <AbaRanking torneio={torneio} />}
         {aba === "financeiro" && <AbaFinanceiro torneio={torneio} />}
         {aba === "premiacao" && <AbaPremiacao torneio={torneio} />}
-        {aba === "sorteios" && <AbaSorteios torneio={torneio} />}
+        {aba === "sorteios" && (
+          <Suspense fallback={<div className="text-center py-12 text-fg-dim">Carregando...</div>}>
+            <AbaSorteios torneio={torneio} />
+          </Suspense>
+        )}
         {aba === "historico" && <AbaHistorico torneio={torneio} />}
       </main>
     </div>

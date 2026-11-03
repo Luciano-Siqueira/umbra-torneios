@@ -41,7 +41,7 @@ Deploy: push na `main` → Vercel autodeploys.
 ```
 src/
   App.tsx                       # root + roteamento interno via useStore
-  banner-image.ts               # imagem de banner base64
+  banner-image.ts               # exporta o banner (src/assets/banner.jpg)
   core/
     supabaseClient.ts           # cliente Supabase (lê as variáveis VITE_SUPABASE_*)
     auth.ts                     # useAuth hook + entrar/registrar/sair/vincularNome
@@ -86,10 +86,11 @@ Mesmo usuário pode ter todos os papéis. O `modoView` (admin/organizador/jogado
 ### Sincronização
 
 - **localStorage** como cache (chave `mtg.torneios.v1`), **Supabase** como fonte de verdade
-- `puxarDoServidor` **SUBSTITUI** o localStorage (não mescla — evita vazar torneios entre contas)
+- Ao abrir, o app mostra o cache e atualiza do servidor por trás; o cache só é descartado quando muda a conta (`mtg.torneios.dono`)
+- O perfil também fica em cache (`mtg.perfil.v1`) e é confirmado com o servidor a cada abertura
+- `puxarDoServidor` **SUBSTITUI** o localStorage (não mescla — evita vazar torneios entre contas), exceto com envio pendente
 - `enviarTorneio` tem debounce de 800ms
-- `sair()` limpa `mtg.torneios.v1` e `mtg.modoView`
-- Troca de user_id no App.tsx limpa cache também
+- `sair()` limpa `mtg.torneios.v1`, `mtg.modoView` e `mtg.perfil.v1`
 
 ### Supabase
 

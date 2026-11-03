@@ -26,6 +26,8 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
   );
   const metricasTodas = useMemo(() => calcularMetricas(torneiosTodos), [torneiosTodos]);
   const metricas = useMemo(() => calcularMetricas(torneios), [torneios]);
+  const sincronizando = useStore((s) => s.sincronizando);
+  const carregando = sincronizando || (!auth.perfilCarregado && !auth.perfilErro);
   const ult30 = useMemo(() => metricasRecentes(torneios, 30), [torneios]);
   const ult7 = useMemo(() => metricasRecentes(torneios, 7), [torneios]);
 
@@ -60,7 +62,7 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
       <main className="px-6 md:px-10 pb-12 space-y-6">
         {torneiosTodos.length === 0 ? (
           <div className="ds-card text-center py-16" style={{ color: "var(--text-2)" }}>
-            Nenhum torneio ainda — crie um torneio para ver estatísticas.
+            {carregando ? "Carregando torneios..." : "Nenhum torneio ainda — crie um torneio para ver estatísticas."}
           </div>
         ) : (
           <>
@@ -86,7 +88,9 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
               <PainelJogador torneios={torneiosTodos} metricas={metricasTodas} meuNome={meuNome} />
             ) : torneios.length === 0 ? (
               <div className="ds-card text-center py-16" style={{ color: "var(--text-2)" }}>
-                {modoView === "organizador"
+                {carregando
+                  ? "Carregando torneios..."
+                  : modoView === "organizador"
                   ? "Você ainda não organizou nenhum torneio."
                   : "Você ainda não participou de nenhum torneio."}
               </div>

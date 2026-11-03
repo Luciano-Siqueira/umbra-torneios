@@ -22,8 +22,23 @@ const CORES_MTG = [
   { hex: "#7bc47f", nome: "FOREST", simbolo: "❦" },
 ];
 
+function EsqueletoTorneios() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" aria-label="Carregando torneios">
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="h-40 rounded-2xl border animate-pulse"
+          style={{ background: "rgba(15,15,15,0.6)", borderColor: "rgba(201,166,72,0.2)" }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: () => void; onVincularNome?: () => void } = {}) {
   const torneiosAll = useStore((s) => s.torneios);
+  const sincronizando = useStore((s) => s.sincronizando);
   const modoView = useStore((s) => s.modoView);
   const abrirTorneio = useStore((s) => s.abrirTorneio);
   const removerTorneio = useStore((s) => s.removerTorneio);
@@ -398,7 +413,9 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
 
       {/* Grid de cards — ocupa toda a tela */}
       <main className="px-6 md:px-10 pb-12">
-        {torneios.length === 0 ? (
+        {torneios.length === 0 && (sincronizando || (!auth.perfilCarregado && !auth.perfilErro)) ? (
+          <EsqueletoTorneios />
+        ) : torneios.length === 0 ? (
           <div
             className="text-center py-16 px-8 rounded-2xl border max-w-xl mx-auto"
             style={{

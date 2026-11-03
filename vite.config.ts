@@ -9,6 +9,9 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg"],
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,svg,jpg}"], // inclui o banner no cache offline
+      },
       manifest: {
         name: "MTG Tournament System",
         short_name: "MTG Torneios",
