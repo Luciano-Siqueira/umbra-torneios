@@ -18,13 +18,39 @@ export async function listarUsuarios(): Promise<UsuarioInfo[]> {
 export async function definirPapel(
   user_id: string,
   eh_admin: boolean,
-  eh_organizador: boolean
+  eh_organizador: boolean,
+  senha?: string
 ): Promise<void> {
-  const { error } = await supabase.rpc("definir_papel", {
+  // Mudar quem é admin exige a senha, conferida no banco
+  const { error } = await supabase.rpc("definir_papel_seguro", {
     p_user_id: user_id,
     p_eh_admin: eh_admin,
     p_eh_organizador: eh_organizador,
+    p_senha: senha ?? null,
   });
+  if (error) throw error;
+}
+
+export interface NomePendente {
+  user_id: string;
+  nome_jogador: string;
+}
+
+export async function listarNomesPendentes(): Promise<NomePendente[]> {
+  const { data, error } = await supabase
+    .from("usuarios_jogadores")
+    .select("user_id, nome_jogador")
+    .eq("aprovado", false);
+  if (error) throw error;
+  return (data || []) as NomePendente[];
+}
+
+export async function aprovarNome(user_id: string, nome: string): Promise<void> {
+  const { error } = await supabase
+    .from("usuarios_jogadores")
+    .update({ aprovado: true })
+    .eq("user_id", user_id)
+    .eq("nome_jogador", nome);
   if (error) throw error;
 }
 
@@ -60,7 +86,7 @@ export async function adicionarNome(user_id: string, nome: string): Promise<void
   if (!n) throw new Error("Nome não pode estar vazio");
   const { error } = await supabase
     .from("usuarios_jogadores")
-    .insert({ user_id, nome_jogador: n });
+    .insert({ user_id, nome_jogador: n, aprovado: true });
   if (error) {
     if (error.code === "23505") throw new Error("Esse nome já está vinculado a outro usuário");
     throw error;

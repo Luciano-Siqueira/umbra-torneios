@@ -101,11 +101,23 @@ export function listarNomesJogadores(torneios: Torneio[]): string[] {
 // a estimativa pela mesma tabela da aba Premiação
 export function premioDoJogador(t: Torneio, j: Jogador): number {
   if (!t.finalizado) return 0;
+  // Quem só participa não recebe os pagamentos, só o prêmio já calculado
+  if (t.jogadores.every((x) => x.pago === undefined)) return t.premios?.[j.id] ?? 0;
   if (j.premioPago) return j.premioPago.valor;
   const posicao = rankingPremiavel(t).findIndex((x) => x.id === j.id);
   if (posicao < 0) return 0;
   const arrecadado = t.jogadores.filter((x) => x.pago).length * t.taxaInscricao;
   return calcularPremiacao(t.jogadores.length, arrecadado)[posicao]?.valor ?? 0;
+}
+
+export function calcularPremios(t: Torneio): Record<number, number> | undefined {
+  if (!t.finalizado) return undefined;
+  const premios: Record<number, number> = {};
+  for (const j of t.jogadores) {
+    const valor = premioDoJogador(t, j);
+    if (valor > 0) premios[j.id] = valor;
+  }
+  return premios;
 }
 
 export function calcularGanhos(torneios: Torneio[], nomes: string[]): { total: number; premiacoes: number } {

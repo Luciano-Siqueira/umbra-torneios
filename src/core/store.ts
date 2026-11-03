@@ -112,26 +112,7 @@ export const useStore = create<State>((set, get) => ({
   },
 
   recarregar: () => {
-    // Migração: renomeia jogadores do "Torneio Teste" se tiverem nomes antigos
-    const antigos = ["Jowrel","Zaangas","Camila","Ana","Wendler","Alex Cardoso","Bruno Bora","Loch","Ruaniktos Bullet","Carlos","Theo","Leonardo","Wellington","Thaís","Dezao","Andril","Chaca","Bruno Lapa","Adriano Alves","Bea","Rafa","Oscar","Onirva","Melk","Metusa","Castanhari","Oz","Oyafuso","Luciano Siqueira"];
-    const novos = ["Nissa Revane","Jace Beleren","Liliana Vess","Chandra Nalaar","Garruk Wildspeaker","Teferi","Elspeth Tirel","Sorin Markov","Ajani Dourado","Sarkhan Vol","Kaya","Narset","Ral Zarek","Vraska","Gideon Jura","Nicol Bolas","Karn","Kiora","Domri Rade","Tezzeret","Dovin Baan","Davriel Cane","Rowan Kenrith","Will Kenrith","Oko","Vivien Reid","Angrath","Huatli","Saheeli Rai"];
-    const mapa = new Map(antigos.map((a, i) => [a, novos[i]]));
-    let mudou = false;
-    const atualizados = storage.listarTorneios().map((t) => {
-      if (t.nome !== "Torneio Teste") return t;
-      const tem = t.jogadores.some((j: any) => mapa.has(j.nome));
-      if (!tem) return t;
-      mudou = true;
-      const clone = JSON.parse(JSON.stringify(t));
-      clone.jogadores = clone.jogadores.map((j: any) => {
-        const novo = mapa.get(j.nome);
-        return novo ? { ...j, nome: novo } : j;
-      });
-      storage.upsertTorneio(clone);
-      storage.registrarNome && clone.jogadores.forEach((j: any) => storage.registrarNome(j.nome));
-      return clone;
-    });
-    set({ torneios: mudou ? storage.listarTorneios() : atualizados });
+    set({ torneios: storage.listarTorneios() });
   },
 
   criarTorneio: (nome, taxa, rodadas, tempoMin, tempoExtra) => {

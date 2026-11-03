@@ -7,7 +7,8 @@ export interface AuthState {
   session: Session | null;
   isAdmin: boolean;
   isOrganizador: boolean;
-  nomesJogador: string[];  // nomes vinculados ao usuário
+  nomesJogador: string[];  // nomes vinculados ao usuário e aprovados
+  nomesPendentes: string[]; // aguardando o admin aprovar
   loading: boolean;
   perfilCarregado: boolean; // true depois de ter o perfil (do cache ou do servidor)
   perfilErro: string | null; // falha na busca do perfil (diferente de "sem papel")
@@ -18,6 +19,7 @@ interface PerfilSalvo {
   isAdmin: boolean;
   isOrganizador: boolean;
   nomesJogador: string[];
+  nomesPendentes?: string[];
 }
 
 const KEY_PERFIL = "mtg.perfil.v1";
@@ -27,6 +29,7 @@ const useAuthStore = create<AuthState>(() => ({
   isAdmin: false,
   isOrganizador: false,
   nomesJogador: [],
+  nomesPendentes: [],
   loading: true,
   perfilCarregado: false,
   perfilErro: null,
@@ -63,6 +66,7 @@ async function carregarPerfil(userId: string) {
         isAdmin: salvo.isAdmin,
         isOrganizador: salvo.isOrganizador,
         nomesJogador: salvo.nomesJogador,
+        nomesPendentes: salvo.nomesPendentes ?? [],
         perfilCarregado: true,
         perfilErro: null,
       }
@@ -71,7 +75,8 @@ async function carregarPerfil(userId: string) {
   const [adminRes, orgRes, jogadoresRes] = await Promise.all([
     supabase.from("admins").select("user_id").eq("user_id", userId).maybeSingle(),
     supabase.from("organizadores").select("user_id").eq("user_id", userId).maybeSingle(),
-    supabase.from("usuarios_jogadores").select("nome_jogador").eq("user_id", userId),
+    // "*" para não quebrar enquanto o banco não tiver a coluna aprovado
+    supabase.from("usuarios_jogadores").select("*").eq("user_id", userId),
   ]);
   if (busca !== ultimaBusca) return;
   buscandoUid = null;
@@ -89,13 +94,15 @@ async function carregarPerfil(userId: string) {
     uid: userId,
     isAdmin: !!adminRes.data,
     isOrganizador: !!orgRes.data,
-    nomesJogador: (jogadoresRes.data || []).map((r: any) => r.nome_jogador),
+    nomesJogador: (jogadoresRes.data || []).filter((r: any) => r.aprovado !== false).map((r: any) => r.nome_jogador),
+    nomesPendentes: (jogadoresRes.data || []).filter((r: any) => r.aprovado === false).map((r: any) => r.nome_jogador),
   };
   localStorage.setItem(KEY_PERFIL, JSON.stringify(perfil));
   useAuthStore.setState({
     isAdmin: perfil.isAdmin,
     isOrganizador: perfil.isOrganizador,
     nomesJogador: perfil.nomesJogador,
+    nomesPendentes: perfil.nomesPendentes,
     perfilCarregado: true,
     perfilErro: null,
   });
@@ -109,6 +116,7 @@ function limparPerfil() {
     isAdmin: false,
     isOrganizador: false,
     nomesJogador: [],
+    nomesPendentes: [],
     perfilCarregado: true,
     perfilErro: null,
   });
@@ -156,7 +164,8 @@ export async function vincularNome(nome: string): Promise<void> {
 
   const { error } = await supabase
     .from("usuarios_jogadores")
-    .insert({ user_id: uid, nome_jogador: nomeLimpo });
+    // Só vale depois da aprovação do admin; o próprio admin já entra aprovado
+    .insert({ user_id: uid, nome_jogador: nomeLimpo, ...(useAuthStore.getState().isAdmin ? { aprovado: true } : {}) });
   if (error) {
     if (error.code === "23505") {
       throw new Error("Esse nome já foi vinculado a outra conta. Escolha outro ou peça pro admin.");

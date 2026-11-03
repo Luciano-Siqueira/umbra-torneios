@@ -25,8 +25,7 @@ export function torneiosVisiveis(torneios: Torneio[], modoView: ModoView, auth: 
   if (modoView === "admin" && auth.isAdmin) return torneios;
   if (modoView === "organizador" && (auth.isOrganizador || auth.isAdmin)) {
     const uid = auth.session.user.id;
-    // Torneios antigos não têm criadoPor e continuam visíveis para não sumirem da gestão
-    return torneios.filter((t) => t.criadoPor === uid || !t.criadoPor);
+    return torneios.filter((t) => t.criadoPor === uid);
   }
   const meusNomes = new Set(auth.nomesJogador.map((n) => n.trim().toLowerCase()));
   return torneios.filter((t) => t.jogadores.some((j) => meusNomes.has(j.nome.trim().toLowerCase())));

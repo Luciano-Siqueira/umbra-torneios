@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "../core/store";
-import { useAuth, entrar } from "../core/auth";
+import { useAuth } from "../core/auth";
 import {
   listarUsuarios, definirPapel, deletarUsuario, enviarResetSenha,
   renomearJogador, adicionarNome, removerNomeDoUsuario,
-  type UsuarioInfo,
+  listarNomesPendentes, aprovarNome,
+  type NomePendente, type UsuarioInfo,
 } from "../core/admin";
 import { useToast } from "./ui/Toast";
 import { AuthChip } from "./AuthChip";
@@ -27,12 +28,14 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
   const [salvando, setSalvando] = useState<string | null>(null);
   const [editando, setEditando] = useState<UsuarioInfo | null>(null);
   const [confirmandoAdmin, setConfirmandoAdmin] = useState<UsuarioInfo | null>(null);
+  const [pendentes, setPendentes] = useState<NomePendente[]>([]);
 
   const carregar = async () => {
     setCarregando(true);
     try {
-      const u = await listarUsuarios();
+      const [u, p] = await Promise.all([listarUsuarios(), listarNomesPendentes()]);
       setUsuarios(u);
+      setPendentes(p);
     } catch (e: any) {
       toast("Erro: " + e.message, "erro");
     } finally {
@@ -72,6 +75,19 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
       return;
     }
     await salvarPapel(u, campo);
+  };
+
+  const decidirNome = async (p: NomePendente, aprovar: boolean) => {
+    if (!aprovar && !confirm(`Recusar o vínculo de "${p.nome_jogador}"? O nome fica livre de novo.`)) return;
+    try {
+      if (aprovar) await aprovarNome(p.user_id, p.nome_jogador);
+      else await removerNomeDoUsuario(p.user_id, p.nome_jogador);
+      setPendentes((prev) => prev.filter((x) => x !== p));
+      await carregar();
+      toast(aprovar ? `"${p.nome_jogador}" aprovado` : `"${p.nome_jogador}" recusado`, "sucesso");
+    } catch (e: any) {
+      toast("Erro: " + e.message, "erro");
+    }
   };
 
   const salvarPapel = async (u: UsuarioInfo, campo: "admin" | "organizador") => {
@@ -176,6 +192,27 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
           />
           <button className="btn-ghost text-sm" onClick={carregar}>↻ Atualizar</button>
         </div>
+
+        {pendentes.length > 0 && (
+          <div className="card space-y-2" style={{ borderColor: "rgba(201,166,72,0.4)" }}>
+            <div className="text-sm font-bold" style={{ color: "#c9a648" }}>
+              Nomes aguardando aprovação ({pendentes.length})
+            </div>
+            <div className="text-xs text-fg-dim">
+              Até aprovar, a conta não vê os torneios desse nome.
+            </div>
+            {pendentes.map((p) => (
+              <div key={`${p.user_id}-${p.nome_jogador}`} className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="font-semibold" style={{ color: "var(--text-strong)" }}>{p.nome_jogador}</span>
+                <span className="text-xs text-fg-dim flex-1 min-w-[120px] truncate">
+                  {usuarios.find((u) => u.user_id === p.user_id)?.email ?? p.user_id}
+                </span>
+                <button className="btn-success !py-1 !px-3 text-xs" onClick={() => decidirNome(p, true)}>Aprovar</button>
+                <button className="btn-ghost !py-1 !px-3 text-xs" onClick={() => decidirNome(p, false)}>Recusar</button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {totSemTorneio > 0 && (
           <div className="text-xs" style={{ color: "var(--warn)" }}>
@@ -302,12 +339,14 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
       {confirmandoAdmin && (
         <ModalSenhaAdmin
           usuario={confirmandoAdmin}
-          emailLogado={auth.session?.user?.email || ""}
           onFechar={() => setConfirmandoAdmin(null)}
-          onConfirmado={async () => {
+          onConfirmar={async (senha) => {
             const u = confirmandoAdmin;
+            // Quem confere a senha é o banco
+            await definirPapel(u.user_id, !u.eh_admin, u.eh_organizador, senha);
+            setUsuarios((prev) => prev.map((x) => x.user_id === u.user_id ? { ...x, eh_admin: !u.eh_admin } : x));
             setConfirmandoAdmin(null);
-            await salvarPapel(u, "admin");
+            toast("Papéis atualizados", "sucesso");
           }}
         />
       )}
@@ -315,11 +354,10 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
   );
 }
 
-function ModalSenhaAdmin({ usuario, emailLogado, onFechar, onConfirmado }: {
+function ModalSenhaAdmin({ usuario, onFechar, onConfirmar }: {
   usuario: UsuarioInfo;
-  emailLogado: string;
   onFechar: () => void;
-  onConfirmado: () => Promise<void>;
+  onConfirmar: (senha: string) => Promise<void>;
 }) {
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
@@ -330,13 +368,11 @@ function ModalSenhaAdmin({ usuario, emailLogado, onFechar, onConfirmado }: {
     setErro("");
     setCarregando(true);
     try {
-      await entrar(emailLogado, senha);
+      await onConfirmar(senha);
     } catch (e: any) {
-      setErro(e.code === "invalid_credentials" ? "Senha incorreta" : e.message || "Erro");
+      setErro(e.message || "Erro");
       setCarregando(false);
-      return;
     }
-    await onConfirmado();
   };
 
   return (

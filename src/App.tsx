@@ -162,7 +162,7 @@ function AppInner() {
       <TelaVincularNome
         aberta={
           vincularAberto ||
-          (!auth.loading && auth.perfilCarregado && !!auth.session && !auth.isAdmin && auth.nomesJogador.length === 0)
+          (!auth.loading && auth.perfilCarregado && !!auth.session && !auth.isAdmin && auth.nomesJogador.length === 0 && auth.nomesPendentes.length === 0)
         }
         onConcluido={async () => {
           setVincularAberto(false);

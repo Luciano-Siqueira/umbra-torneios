@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcularDesempenho, calcularGanhos } from "../desempenho";
+import { calcularDesempenho, calcularGanhos, calcularPremios } from "../desempenho";
 import { novoJogador, novoTorneio, type Torneio } from "../types";
 
 // 4 jogadores pagantes a R$ 10 (R$ 40): 65% para o 1º e 35% para o 2º
@@ -52,6 +52,18 @@ describe("prêmios do jogador", () => {
     const so = calcularDesempenho([t2], "J1")!;
     expect(so.ganhos).toBe(14);
     expect(so.historico).toHaveLength(1);
+  });
+
+  it("quem só participa usa o prêmio já calculado, sem ver os pagamentos", () => {
+    const t = torneio([9, 6, 3, 0]);
+    const premios = calcularPremios(t)!;
+    const semPagamentos = {
+      ...t,
+      premios,
+      jogadores: t.jogadores.map(({ pago: _pago, ...j }) => j as typeof t.jogadores[number]),
+    };
+    expect(calcularGanhos([semPagamentos], ["J1"]).total).toBe(26);
+    expect(calcularGanhos([semPagamentos], ["J3"]).total).toBe(0);
   });
 
   it("soma vários torneios e ignora maiúsculas", () => {

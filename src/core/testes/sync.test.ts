@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useStore } from "../store";
 import * as sync from "../sync";
 import type { AvisoEnvio } from "../sync";
@@ -156,7 +156,7 @@ describe("donos e exclusão", () => {
     const t = s().criarTorneio("Apagar", 10, 3, 75, 15);
     s().removerTorneio(t.id);
     await esperar(1000);
-    const apagados = pedidos.filter((p) => p.metodo === "DELETE").map((p) => p.url.includes("torneio_ao_vivo"));
+    const apagados = pedidos.filter((p) => p.metodo === "DELETE" && !p.url.includes("torneio_privado")).map((p) => p.url.includes("torneio_ao_vivo"));
     expect(apagados).toEqual([true, false]);
     expect(envios().filter((p) => p.corpo.id === t.id)).toHaveLength(0);
   });
@@ -175,7 +175,9 @@ describe("ao vivo", () => {
   it("nova rodada grava o torneio antes de avisar e não envia o torneio inteiro", async () => {
     s().iniciarRodada();
     await esperar(50);
-    const ordem = pedidos.filter((p) => p.metodo !== "GET").map((p) => p.url.includes("torneio_ao_vivo"));
+    const ordem = pedidos
+      .filter((p) => p.metodo !== "GET" && !p.url.includes("torneio_privado"))
+      .map((p) => p.url.includes("torneio_ao_vivo"));
     expect(ordem).toEqual([false, true]);
     const linha = aoVivo()[0].corpo;
     expect(linha.rodada).toBe(1);
@@ -228,9 +230,65 @@ describe("ao vivo", () => {
   });
 });
 
+describe("dados privados", () => {
+  const privados = () => pedidos.filter((p) => p.url.includes("torneio_privado") && p.metodo === "POST");
+
+  async function preparar() {
+    modo = "ok";
+    avisos = [];
+    s().setUsuarioId("u1");
+    const t = s().criarTorneio("Privado", 10, 3, 75, 15);
+    s().abrirTorneio(t.id);
+    s().addJogador("Kaya", "", true);
+    s().addJogador("Oko", "", false);
+    pedidos = [];
+    await esperar(1200);
+    return t.id;
+  }
+
+  it("o torneio vai sem dono e sem pagamentos, que seguem para a tabela privada", async () => {
+    const id = await preparar();
+    const dados = servidor.get(id);
+    expect(dados).not.toHaveProperty("criadoPor");
+    expect(dados.jogadores.every((j: any) => !("pago" in j) && !("premioPago" in j))).toBe(true);
+    const privado = ultimo(privados()).corpo;
+    expect(privado.criado_por).toBe("u1");
+    expect(Object.values(privado.pagamentos).map((p: any) => p.pago)).toEqual([true, false]);
+    expect(s().torneioAtivo()!.criadoPor).toBe("u1");
+    expect(s().torneioAtivo()!.jogadores[0].pago).toBe(true);
+  });
+
+  it("torneio finalizado leva só o prêmio de cada um", async () => {
+    const id = await preparar();
+    s().atualizarTorneio((t) => { t.finalizado = true; t.jogadores[0].pontos = 9; });
+    await esperar(1000);
+    expect(Object.values(servidor.get(id).premios)).toEqual([6.5, 3.5]);
+  });
+
+  it("sem a tabela privada não grava nada, para não perder pagamentos", async () => {
+    vi.resetModules();
+    const novo = await import("../sync");
+    const avisosNovo: AvisoEnvio[] = [];
+    novo.definirAvisoEnvio((a) => avisosNovo.push(a));
+    const rede = (globalThis as any).__rede;
+    const gravados: string[] = [];
+    (globalThis as any).__rede = (url: string, init: RequestInit) => {
+      if (url.includes("torneio_privado")) return json({ code: "PGRST205", message: "tabela não existe", details: null, hint: null }, 404);
+      if (init.method && init.method !== "GET") gravados.push(url);
+      return rede(url, init);
+    };
+    localStorage.setItem("mtg.torneios.v1", JSON.stringify([{ id: "semtabela", nome: "S", jogadores: [{ id: 1, pago: true }], dataCriacao: "2026" }]));
+    novo.enviarTorneio({ id: "semtabela" } as any);
+    await esperar(1000);
+    (globalThis as any).__rede = rede;
+    expect(gravados).toHaveLength(0);
+    expect(avisosNovo[0]).toMatchObject({ tipo: "recusado", motivo: "tabela não existe" });
+  });
+});
+
 describe("importar", () => {
   const recusaDeOutro = (rede: any) => (url: string, init: RequestInit) => {
-    if (init.method === "POST" && url.includes("/torneios") && JSON.parse(init.body as string).dados.criadoPor === "u2") {
+    if (init.method === "POST" && url.includes("torneio_privado") && JSON.parse(init.body as string).criado_por === "u2") {
       return json({ code: "42501", message: "violates row-level security", details: null, hint: null }, 403);
     }
     return rede(url, init);

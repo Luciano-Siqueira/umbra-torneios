@@ -147,7 +147,12 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
             </button>
 
             {/* Desvincular nomes existentes */}
-            {auth.nomesJogador.map((n) => (
+            {auth.nomesPendentes.length > 0 && (
+              <div className="px-3 py-2 text-[11px]" style={{ color: "#c9a648" }}>
+                ⏳ Aguardando aprovação: {auth.nomesPendentes.join(", ")}
+              </div>
+            )}
+            {[...auth.nomesJogador, ...auth.nomesPendentes].map((n) => (
               <button
                 key={n}
                 onClick={async () => {

@@ -457,6 +457,8 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             <div className="text-sm mb-6" style={{ color: "var(--text-2)" }}>
               {auth.isAdmin
                 ? "Clique em + Novo torneio ou 📂 Importar para começar."
+                : auth.session && auth.nomesPendentes.length > 0 && auth.nomesJogador.length === 0
+                  ? <>O nome <b style={{color: "#c9a648"}}>{auth.nomesPendentes.join(", ")}</b> está aguardando a aprovação do admin.<br/>Seus torneios aparecem aqui depois disso.</>
                 : auth.session && auth.nomesJogador.length > 0
                   ? <>Você está vinculado como <b style={{color: "#7bc47f"}}>{auth.nomesJogador.join(", ")}</b>.<br/>Peça pro admin adicionar você em algum torneio.</>
                   : auth.session

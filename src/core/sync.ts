@@ -1,7 +1,8 @@
 // Sincronização bidirecional Supabase ↔ localStorage
 import { supabase } from "./supabaseClient";
 import * as storage from "./storage";
-import type { Torneio } from "./types";
+import { calcularPremios } from "./desempenho";
+import type { Jogador, Torneio } from "./types";
 
 const DEBOUNCE_MS = 800;
 const ESPERA_INICIAL_MS = 5_000;
@@ -113,13 +114,67 @@ export async function envioConcluido(id: string): Promise<void> {
 }
 
 type ErroEnvio = { code?: string; message: string };
+type LinhaPrivada = { torneio_id: string; criado_por: string | null; pagamentos: Record<string, any> };
+
+// Dono e pagamentos ficam em torneio_privado, que quem só participa não consegue ler.
+// Ao participante vai só o prêmio já calculado de cada um.
+function separarPrivado(t: Torneio) {
+  const pagamentos: Record<string, { pago: boolean; premioPago: Jogador["premioPago"] }> = {};
+  const jogadores = t.jogadores.map(({ pago, premioPago, ...publico }) => {
+    if (pago !== undefined) pagamentos[publico.id] = { pago, premioPago: premioPago ?? null };
+    return publico;
+  });
+  const { criadoPor, ...publico } = t;
+  // Cópia sem pagamentos (baixar falhou): não apaga os que estão no servidor
+  const temPagamentos = Object.keys(pagamentos).length > 0 || t.jogadores.length === 0;
+  return {
+    publico: { ...publico, jogadores, premios: calcularPremios(t) },
+    privado: {
+      torneio_id: t.id,
+      criado_por: criadoPor ?? null,
+      ...(temPagamentos ? { pagamentos } : {}),
+    },
+  };
+}
+
+function juntarPrivado(dados: Torneio, privado?: LinhaPrivada): Torneio {
+  if (!privado) return dados;
+  return {
+    ...dados,
+    criadoPor: privado.criado_por ?? undefined,
+    jogadores: dados.jogadores.map((j) => {
+      const p = privado.pagamentos?.[j.id];
+      return { ...j, pago: p?.pago ?? false, premioPago: p?.premioPago ?? undefined };
+    }),
+  };
+}
+
+async function baixarPrivados(id?: string): Promise<Map<string, LinhaPrivada>> {
+  const consulta = supabase.from("torneio_privado").select("torneio_id, criado_por, pagamentos");
+  const { data } = await (id ? consulta.eq("torneio_id", id) : consulta);
+  return new Map(((data ?? []) as LinhaPrivada[]).map((p) => [p.torneio_id, p]));
+}
+
+// Sem a tabela, nada pode ser gravado: tirar os pagamentos do torneio os perderia
+let tabelaPrivadaConfirmada = false;
+async function conferirTabelaPrivada(): Promise<ErroEnvio | null> {
+  if (tabelaPrivadaConfirmada) return null;
+  const { error } = await supabase.from("torneio_privado").select("torneio_id").limit(1);
+  if (!error) tabelaPrivadaConfirmada = true;
+  return error;
+}
 
 // Só grava se o servidor ainda estiver na versão que este aparelho conhece.
 // Assim, a alteração de outro aparelho nunca é sobrescrita sem aviso.
 async function gravar(t: Torneio): Promise<{ conflito?: boolean; error?: ErroEnvio }> {
+  const erroTabela = await conferirTabelaPrivada();
+  if (erroTabela) return { error: erroTabela };
+
   const base: number | undefined = lerVersoes()[t.id];
   const novaVersao = (base ?? 0) + 1;
-  const linha = { id: t.id, nome: t.nome, dados: { ...t, versao: novaVersao }, publico: true };
+  const { publico, privado } = separarPrivado(t);
+  const linha = { id: t.id, nome: t.nome, dados: { ...publico, versao: novaVersao }, publico: true };
+  const gravarPrivado = async () => (await supabase.from("torneio_privado").upsert(privado)).error;
 
   if (base !== undefined) {
     const atualizar = supabase.from("torneios").update(linha).eq("id", t.id);
@@ -130,7 +185,8 @@ async function gravar(t: Torneio): Promise<{ conflito?: boolean; error?: ErroEnv
     if (error) return { error };
     if (data && data.length > 0) {
       salvarVersao(t.id, novaVersao);
-      return {};
+      const erroPrivado = await gravarPrivado();
+      return erroPrivado ? { error: erroPrivado } : {};
     }
   }
 
@@ -143,6 +199,9 @@ async function gravar(t: Torneio): Promise<{ conflito?: boolean; error?: ErroEnv
   if (error) return { error };
 
   if (!atual) {
+    // Nessa ordem: o banco confere o dono do torneio na tabela privada
+    const erroPrivado = await gravarPrivado();
+    if (erroPrivado) return { error: erroPrivado };
     const { error: erroInsercao } = await supabase.from("torneios").upsert(linha);
     if (erroInsercao) return { error: erroInsercao };
     salvarVersao(t.id, novaVersao);
@@ -213,7 +272,7 @@ export async function resolverConflito(id: string, manter: boolean): Promise<voi
     return;
   }
   cancelarEnvio(id);
-  if (dados) storage.upsertTorneio(dados);
+  if (dados) storage.upsertTorneio(juntarPrivado(dados, (await baixarPrivados(id)).get(id)));
 }
 
 // Tenta de novo o que ficou guardado: ao entrar e quando a internet volta
@@ -252,10 +311,13 @@ export async function puxarDoServidor(): Promise<{ torneios: number; erros: stri
     // Isso garante que, se mudar de usuário, só vê o que ESSE usuário pode ver.
     // Com envio pendente, mantém o local para não apagar a alteração que ainda não subiu.
     if (pendentes.size === 0) {
-      const arr = (data as any[]).map((row) => row.dados as Torneio);
+      const privados = await baixarPrivados();
+      const arr = (data as any[]).map((row) => juntarPrivado(row.dados as Torneio, privados.get(row.id)));
       arr.sort((a, b) => (b.dataCriacao || "").localeCompare(a.dataCriacao || ""));
       localStorage.setItem("mtg.torneios.v1", JSON.stringify(arr));
       localStorage.setItem(KEY_VERSOES, JSON.stringify(Object.fromEntries(arr.map((t) => [t.id, t.versao ?? 0]))));
+      // Torneio finalizado antes de existir o campo: publica os prêmios para os participantes
+      arr.filter((t) => t.finalizado && !t.premios && privados.has(t.id)).forEach(enviarTorneio);
     }
 
     return { torneios: data.length, erros };
@@ -305,7 +367,7 @@ export async function puxarTorneio(id: string): Promise<boolean> {
   const { data, error } = await supabase.from("torneios").select("dados").eq("id", id).maybeSingle();
   if (error || !data) return false;
   const t = data.dados as Torneio;
-  storage.upsertTorneio(t);
+  storage.upsertTorneio(juntarPrivado(t, (await baixarPrivados(id)).get(id)));
   salvarVersao(id, t.versao ?? 0);
   return true;
 }
@@ -328,7 +390,10 @@ export async function removerTorneio(id: string) {
   if (error) {
     console.error("Erro ao excluir torneio", error);
     avisar({ tipo: "exclusao-falhou", motivo: error.message });
+    return;
   }
+  // Depois do torneio: o banco confere o dono nesta tabela para deixar excluir
+  await supabase.from("torneio_privado").delete().eq("torneio_id", id);
 }
 
 export async function enviarNome(nome: string) {
@@ -342,9 +407,14 @@ export async function enviarImportado(
 ): Promise<{ torneio?: Torneio; erro?: string }> {
   const dono = uid ?? (await supabase.auth.getSession()).data.session?.user?.id;
   const enviarLinha = async (x: Torneio) => {
+    const erroTabela = await conferirTabelaPrivada();
+    if (erroTabela) return erroTabela;
     const versao = (lerVersoes()[x.id] ?? 0) + 1;
+    const { publico, privado } = separarPrivado(x);
+    const { error: erroPrivado } = await supabase.from("torneio_privado").upsert(privado);
+    if (erroPrivado) return erroPrivado;
     const { error } = await supabase.from("torneios").upsert({
-      id: x.id, nome: x.nome, dados: { ...x, versao }, publico: true,
+      id: x.id, nome: x.nome, dados: { ...publico, versao }, publico: true,
     });
     if (!error) salvarVersao(x.id, versao);
     return error;
