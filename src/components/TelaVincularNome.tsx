@@ -140,7 +140,7 @@ export function TelaVincularNome({ aberta, onConcluido }: Props) {
                     }}
                     className="block w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition cursor-pointer"
                     style={i === sugestaoAtiva
-                      ? { color: "#c9a648", background: "rgba(255,255,255,0.05)" }
+                      ? { color: "#c9a648", background: "rgba(201,166,72,0.25)", fontWeight: 600 }
                       : { color: "#f5f5f5" }}
                   >
                     {s}

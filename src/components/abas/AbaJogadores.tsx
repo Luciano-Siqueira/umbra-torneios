@@ -70,8 +70,9 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
 
   return (
     <div className="space-y-4 w-full">
+      {/* z-30: a lista de sugestões precisa ficar por cima dos botões e cartões abaixo */}
       {podeEditar && (
-      <div className="card">
+      <div className="card relative z-30">
         <div className="label mb-2">Adicionar jogador</div>
         <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
           <div className="relative">
@@ -109,7 +110,7 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => { setNome(s); setSugestoes([]); }}
                     className={`block w-full text-left px-3 py-2 hover:bg-bg-panel text-sm
-                                ${i === sugestaoAtiva ? "bg-bg-panel text-acento font-semibold" : ""}`}
+                                ${i === sugestaoAtiva ? "bg-acento/25 text-acento font-semibold" : ""}`}
                   >{s}</button>
                 ))}
               </div>

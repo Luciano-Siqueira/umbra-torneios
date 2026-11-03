@@ -4,8 +4,8 @@ import { useAuth } from "../core/auth";
 import { AuthChip } from "./AuthChip";
 import { calcularMetricas, metricasRecentes, type MetricasGlobais } from "../core/metricas";
 import {
-  calcularDesempenho, calcularGanhos, listarNomesJogadores, mesmoJogador,
-  type DesempenhoJogador, type EvolucaoJogador, type ResultadoMesa,
+  calcularDesempenho, listarNomesJogadores, mesmoJogador,
+  type Conquista, type DesempenhoJogador, type EvolucaoJogador, type ResultadoMesa, type TorneioDoJogador,
 } from "../core/desempenho";
 import { podeEditarTorneios, torneiosVisiveis } from "../core/visibilidade";
 import type { Torneio } from "../core/types";
@@ -18,26 +18,21 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
   const voltar = useStore((s) => s.voltarParaLista);
   const modoView = useStore((s) => s.modoView);
   const auth = useAuth();
-  // A visão geral respeita o modo; o ranking do painel do jogador continua geral
+  // Admin vê todos, organizador os que criou e jogador aqueles em que jogou
   const torneios = useMemo(
     () => torneiosVisiveis(torneiosTodos, modoView, auth),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [torneiosTodos, modoView, auth.session?.user?.id, auth.isAdmin, auth.isOrganizador, auth.nomesJogador]
   );
-  const metricasTodas = useMemo(() => calcularMetricas(torneiosTodos), [torneiosTodos]);
   const metricas = useMemo(() => calcularMetricas(torneios), [torneios]);
-  // Jogador vê só o que ganhou; a arrecadação fica com quem organiza
-  const verArrecadacao = podeEditarTorneios(modoView, auth);
-  const ganhos = useMemo(() => calcularGanhos(torneios, auth.nomesJogador), [torneios, auth.nomesJogador]);
+  // Jogador vê só o próprio desempenho; visão geral e filtro de jogadores são de quem organiza
+  const podeEditar = podeEditarTorneios(modoView, auth);
   const sincronizando = useStore((s) => s.sincronizando);
   const carregando = sincronizando || (!auth.perfilCarregado && !auth.perfilErro);
   const ult30 = useMemo(() => metricasRecentes(torneios, 30), [torneios]);
   const ult7 = useMemo(() => metricasRecentes(torneios, 7), [torneios]);
 
-  // Quem está vendo como jogador e tem nome vinculado já abre no próprio desempenho
-  const meuNome = auth.nomesJogador[0] ?? "";
-  const [abaEscolhida, setAbaEscolhida] = useState<AbaAnalytics | null>(null);
-  const aba: AbaAnalytics = abaEscolhida ?? (modoView === "jogador" && meuNome ? "jogador" : "geral");
+  const [aba, setAba] = useState<AbaAnalytics>("geral");
 
   return (
     <div
@@ -56,16 +51,28 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
       <div className="px-6 md:px-10 py-4 flex items-center gap-3">
         <button className="btn-ghost" onClick={voltar}>← Voltar</button>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: "var(--text-strong)" }}>
-          📊 Analytics
+          📊 {podeEditar ? "Analytics" : "Meu desempenho"}
         </h1>
         <div className="flex-1" />
         <AuthChip auth={auth} onLoginClick={onPedirLogin} onVincularNome={onVincularNome} onSair={voltar} />
       </div>
 
       <main className="px-6 md:px-10 pb-12 space-y-6">
-        {torneiosTodos.length === 0 ? (
+        {!podeEditar ? (
+          <PainelJogador
+            torneios={torneios}
+            metricas={metricas}
+            meusNomes={auth.nomesJogador}
+            escolherJogador={false}
+            carregando={carregando}
+          />
+        ) : torneios.length === 0 ? (
           <div className="ds-card text-center py-16" style={{ color: "var(--text-2)" }}>
-            {carregando ? "Carregando torneios..." : "Nenhum torneio ainda — crie um torneio para ver estatísticas."}
+            {carregando
+              ? "Carregando torneios..."
+              : modoView === "organizador"
+                ? "Você ainda não organizou nenhum torneio."
+                : "Nenhum torneio ainda — crie um torneio para ver estatísticas."}
           </div>
         ) : (
           <>
@@ -76,7 +83,7 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
               ] as const).map((a) => (
                 <button
                   key={a.id}
-                  onClick={() => setAbaEscolhida(a.id)}
+                  onClick={() => setAba(a.id)}
                   className={`px-3 md:px-4 py-2 rounded-t-lg text-sm font-semibold transition
                               ${aba === a.id
                                 ? "bg-bg-panel text-acento border-b-2 border-acento"
@@ -88,23 +95,17 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
             </nav>
 
             {aba === "jogador" ? (
-              <PainelJogador torneios={torneiosTodos} metricas={metricasTodas} meuNome={meuNome} />
-            ) : torneios.length === 0 ? (
-              <div className="ds-card text-center py-16" style={{ color: "var(--text-2)" }}>
-                {carregando
-                  ? "Carregando torneios..."
-                  : modoView === "organizador"
-                  ? "Você ainda não organizou nenhum torneio."
-                  : "Você ainda não participou de nenhum torneio."}
-              </div>
+              <PainelJogador
+                torneios={torneios}
+                metricas={metricas}
+                meusNomes={auth.nomesJogador}
+                escolherJogador
+                carregando={carregando}
+              />
             ) : (
               <>
             <div className="text-xs" style={{ color: "var(--text-2)" }}>
-              {modoView === "admin"
-                ? "Mostrando todos os torneios."
-                : modoView === "organizador"
-                  ? "Mostrando os torneios que você organizou."
-                  : "Mostrando os torneios em que você jogou."}
+              {modoView === "admin" ? "Mostrando todos os torneios." : "Mostrando os torneios que você organizou."}
             </div>
 
             {/* KPIs principais */}
@@ -126,19 +127,11 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
                   valor={metricas.totalPartidas.toLocaleString("pt-BR")}
                   sub={`${metricas.empatesPorTempo} empates por tempo`}
                 />
-                {verArrecadacao ? (
-                  <KpiTile
-                    label="Arrecadação total"
-                    valor={`R$ ${metricas.totalArrecadado.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                    sub="todos os torneios"
-                  />
-                ) : (
-                  <KpiTile
-                    label="Seus prêmios"
-                    valor={`R$ ${ganhos.total.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                    sub={ganhos.premiacoes === 1 ? "em 1 torneio premiado" : `em ${ganhos.premiacoes} torneios premiados`}
-                  />
-                )}
+                <KpiTile
+                  label="Arrecadação total"
+                  valor={formatarReais(metricas.totalArrecadado)}
+                  sub="todos os torneios"
+                />
               </div>
             </section>
 
@@ -209,16 +202,6 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
                 )}
               </div>
             </section>
-
-            {/* Gráfico mensal */}
-            <section>
-              <div className="ds-card">
-                <div className="ds-card-h">
-                  <h3>📈 Torneios por mês</h3>
-                </div>
-                <GraficoBarras dados={metricas.torneiosPorMes} />
-              </div>
-            </section>
               </>
             )}
           </>
@@ -228,59 +211,102 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
   );
 }
 
-function PainelJogador({ torneios, metricas, meuNome }: {
+function PainelJogador({ torneios, metricas, meusNomes, escolherJogador, carregando }: {
   torneios: Torneio[];
   metricas: MetricasGlobais;
-  meuNome: string;
+  meusNomes: string[];
+  escolherJogador: boolean; // só quem organiza consulta outros jogadores
+  carregando: boolean;
 }) {
-  const nomes = useMemo(() => listarNomesJogadores(torneios), [torneios]);
+  const nomes = useMemo(
+    () => (escolherJogador ? listarNomesJogadores(torneios) : meusNomes),
+    [escolherJogador, torneios, meusNomes]
+  );
+  const meuNome = meusNomes[0] ?? "";
   const [escolhido, setEscolhido] = useState<string | null>(null);
+  const [torneioEscolhido, setTorneioEscolhido] = useState("");
   const selecionado = escolhido ?? meuNome;
   const valorSelect = nomes.find((n) => mesmoJogador(n, selecionado)) ?? "";
-  const d = useMemo(
+
+  const geral = useMemo(
     () => (selecionado ? calcularDesempenho(torneios, selecionado) : null),
     [torneios, selecionado]
+  );
+  // O torneio escolhido pode não existir para o jogador recém-selecionado
+  const torneioId = geral?.historico.some((t) => t.id === torneioEscolhido) ? torneioEscolhido : "";
+  const d = useMemo(
+    () => (torneioId ? calcularDesempenho(torneios.filter((t) => t.id === torneioId), selecionado) : geral),
+    [torneios, torneioId, selecionado, geral]
   );
   const posicaoGeral = metricas.rankingJogadores.findIndex((j) => mesmoJogador(j.nome, selecionado)) + 1;
 
   return (
     <>
       <section className="flex items-center gap-2 flex-wrap">
-        <select
-          value={valorSelect}
-          onChange={(e) => setEscolhido(e.target.value)}
-          className="input flex-1 max-w-md"
-          style={{ colorScheme: "dark" }}
-        >
-          <option value="" disabled>Escolha um jogador...</option>
-          {nomes.map((n) => <option key={n} value={n}>{n}</option>)}
-        </select>
-        {meuNome && !mesmoJogador(meuNome, selecionado) && (
+        {nomes.length > 1 && (
+          <select
+            value={valorSelect}
+            onChange={(e) => setEscolhido(e.target.value)}
+            aria-label="Jogador"
+            className="input flex-1 max-w-md"
+            style={{ colorScheme: "dark" }}
+          >
+            <option value="" disabled>Escolha um jogador...</option>
+            {nomes.map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+        )}
+        {geral && (
+          <select
+            value={torneioId}
+            onChange={(e) => setTorneioEscolhido(e.target.value)}
+            aria-label="Torneio"
+            className="input flex-1 max-w-md"
+            style={{ colorScheme: "dark" }}
+          >
+            <option value="">Todos os torneios</option>
+            {geral.historico.map((t) => (
+              <option key={t.id} value={t.id}>{t.nome} · {formatarData(t.data)}</option>
+            ))}
+          </select>
+        )}
+        {escolherJogador && meuNome && !mesmoJogador(meuNome, selecionado) && (
           <button className="btn-ghost text-sm" onClick={() => setEscolhido(meuNome)}>
             👤 Ver meu desempenho
           </button>
         )}
       </section>
 
-      {!d ? (
+      {!d || !geral ? (
         <div className="ds-card text-center py-16" style={{ color: "var(--text-2)" }}>
-          {selecionado
-            ? `${selecionado} ainda não aparece em nenhum torneio.`
-            : "Escolha um jogador para ver o desempenho."}
+          {carregando
+            ? "Carregando..."
+            : selecionado
+              ? `${selecionado} ainda não aparece em nenhum torneio.`
+              : escolherJogador
+                ? "Escolha um jogador para ver o desempenho."
+                : "Vincule seu nome de jogador para ver seu desempenho."}
         </div>
       ) : (
-        <DesempenhoView d={d} posicaoGeral={posicaoGeral} totalGeral={metricas.rankingJogadores.length} />
+        <DesempenhoView
+          d={d}
+          conquistas={geral.conquistas}
+          torneio={torneioId ? d.historico[0] : null}
+          posicaoGeral={posicaoGeral}
+          totalGeral={metricas.rankingJogadores.length}
+        />
       )}
     </>
   );
 }
 
-function DesempenhoView({ d, posicaoGeral, totalGeral }: {
+function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
   d: DesempenhoJogador;
+  conquistas: Conquista[]; // sempre de todos os torneios
+  torneio: TorneioDoJogador | null; // preenchido quando filtrado por um torneio
   posicaoGeral: number;
   totalGeral: number;
 }) {
-  const obtidas = d.conquistas.filter((c) => c.obtida).length;
+  const obtidas = conquistas.filter((c) => c.obtida).length;
   const distribuicao = [
     { label: "🥇 Vitórias", valor: d.vitorias },
     { label: "🤝 Empates por tempo", valor: d.empates },
@@ -290,9 +316,9 @@ function DesempenhoView({ d, posicaoGeral, totalGeral }: {
   return (
     <>
       <section>
-        <div className="ds-sect">Conquistas ({obtidas} de {d.conquistas.length})</div>
+        <div className="ds-sect">Conquistas ({obtidas} de {conquistas.length})</div>
         <div className="ds-grid ds-g4">
-          {d.conquistas.map((c) => (
+          {conquistas.map((c) => (
             <div
               key={c.titulo}
               className="ds-card"
@@ -319,6 +345,7 @@ function DesempenhoView({ d, posicaoGeral, totalGeral }: {
                   <th className="text-right py-2">Pos.</th>
                   <th className="text-right py-2">Pts</th>
                   <th className="text-right py-2">V</th>
+                  <th className="text-right py-2">Prêmio</th>
                 </tr>
               </thead>
               <tbody>
@@ -333,6 +360,12 @@ function DesempenhoView({ d, posicaoGeral, totalGeral }: {
                     </td>
                     <td className="py-1.5 text-right tabular-nums">{t.pontos}</td>
                     <td className="py-1.5 text-right tabular-nums">{t.vitorias}/{t.partidas}</td>
+                    <td
+                      className="py-1.5 text-right tabular-nums whitespace-nowrap"
+                      style={{ color: t.premio > 0 ? "var(--good)" : undefined }}
+                    >
+                      {t.premio > 0 ? formatarReais(t.premio) : "—"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -342,12 +375,30 @@ function DesempenhoView({ d, posicaoGeral, totalGeral }: {
       </section>
 
       <section>
-        <div className="ds-sect">Resumo de {d.nome}</div>
-        <div className="ds-grid ds-g4">
+        <div className="ds-sect">{torneio ? `${d.nome} em ${torneio.nome}` : `Resumo de ${d.nome}`}</div>
+        <div className="ds-grid ds-g3">
+          {torneio ? (
+            <KpiTile
+              label="Colocação"
+              valor={torneio.posicao !== null ? `${torneio.posicao}º` : "—"}
+              sub={torneio.posicao !== null ? `de ${torneio.total} jogadores` : "torneio em andamento"}
+            />
+          ) : (
+            <KpiTile
+              label="Ranking geral"
+              valor={posicaoGeral > 0 ? `${posicaoGeral}º` : "—"}
+              sub={`de ${totalGeral} jogadores`}
+            />
+          )}
           <KpiTile
-            label="Ranking geral"
-            valor={posicaoGeral > 0 ? `${posicaoGeral}º` : "—"}
-            sub={`de ${totalGeral} jogadores`}
+            label="Prêmios"
+            valor={formatarReais(d.ganhos)}
+            sub={d.torneiosPremiados === 1 ? "em 1 torneio premiado" : `em ${d.torneiosPremiados} torneios premiados`}
+          />
+          <KpiTile
+            label="Pontos"
+            valor={String(d.pontos)}
+            sub={`${d.vitorias} vitórias · ${d.empates} empates · ${d.derrotas} derrotas`}
           />
           <KpiTile
             label="Campeonatos"
@@ -487,6 +538,10 @@ function DesempenhoView({ d, posicaoGeral, totalGeral }: {
 
     </>
   );
+}
+
+function formatarReais(valor: number): string {
+  return `R$ ${valor.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function formatarData(iso: string): string {
@@ -639,71 +694,3 @@ function BarraHorizontal({ dados }: { dados: { label: string; valor: number }[] 
   );
 }
 
-function GraficoBarras({ dados }: { dados: { mes: string; qtd: number; participantes: number }[] }) {
-  if (dados.length === 0) {
-    return <div className="text-center py-8" style={{ color: "var(--text-muted-ds)" }}>Sem dados ainda.</div>;
-  }
-  const W = 800, H = 220, pad = { l: 40, r: 20, t: 20, b: 40 };
-  const maxQtd = Math.max(1, ...dados.map((d) => d.qtd));
-  const barW = (W - pad.l - pad.r) / dados.length;
-  const chartH = H - pad.t - pad.b;
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto" }}>
-      {/* grid */}
-      {[0, 0.25, 0.5, 0.75, 1].map((p) => (
-        <line
-          key={p}
-          x1={pad.l} x2={W - pad.r}
-          y1={pad.t + chartH * (1 - p)}
-          y2={pad.t + chartH * (1 - p)}
-          stroke="var(--line-soft)" strokeWidth="0.5"
-        />
-      ))}
-      {/* eixos y */}
-      {[0, 0.5, 1].map((p) => (
-        <text
-          key={p}
-          x={pad.l - 6} y={pad.t + chartH * (1 - p) + 4}
-          textAnchor="end" fontSize="10" fill="var(--text-muted-ds)"
-        >
-          {Math.round(maxQtd * p)}
-        </text>
-      ))}
-      {/* barras */}
-      {dados.map((d, i) => {
-        const h = (d.qtd / maxQtd) * chartH;
-        const x = pad.l + i * barW + 4;
-        return (
-          <g key={d.mes}>
-            <rect
-              x={x} y={pad.t + chartH - h}
-              width={barW - 8} height={h}
-              fill="url(#grad-bars)" rx="2"
-            >
-              <title>{`${d.mes}: ${d.qtd} torneios · ${d.participantes} participações`}</title>
-            </rect>
-            <text
-              x={x + (barW - 8) / 2} y={H - pad.b + 14}
-              textAnchor="middle" fontSize="10" fill="var(--text-muted-ds)"
-            >
-              {d.mes.slice(5) + "/" + d.mes.slice(2, 4)}
-            </text>
-            <text
-              x={x + (barW - 8) / 2} y={pad.t + chartH - h - 4}
-              textAnchor="middle" fontSize="10" fontWeight="600"
-              fill="var(--text-strong)"
-            >
-              {d.qtd}
-            </text>
-          </g>
-        );
-      })}
-      <defs>
-        <linearGradient id="grad-bars" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="var(--brand-1)" />
-          <stop offset="100%" stopColor="var(--brand-2)" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}

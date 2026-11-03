@@ -228,6 +228,11 @@ export function ranking(torneio: Torneio) {
   });
 }
 
+// Quem deu drop continua no ranking, mas não concorre aos prêmios
+export function rankingPremiavel(torneio: Torneio) {
+  return ranking(torneio).filter((j) => j.ativo);
+}
+
 function jogadorMap(t: Torneio) {
   return new Map(t.jogadores.map((j) => [j.id, j]));
 }

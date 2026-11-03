@@ -1,7 +1,7 @@
 // Desempenho individual de um jogador somando todos os torneios
-import type { Mesa, Torneio } from "./types";
+import type { Jogador, Mesa, Torneio } from "./types";
 import { calcularPremiacao } from "./premiacao";
-import { ranking } from "./resultados";
+import { ranking, rankingPremiavel } from "./resultados";
 
 export type ResultadoMesa = "vitoria" | "empate" | "derrota";
 
@@ -16,6 +16,7 @@ export interface TorneioDoJogador {
   finalizado: boolean;
   posicao: number | null; // só em torneios finalizados
   total: number;
+  premio: number;
 }
 
 export interface EvolucaoJogador {
@@ -55,6 +56,8 @@ export interface DesempenhoJogador {
   finalizados: number;
   campeonatos: number;
   podios: number;
+  ganhos: number; // prêmios somados, em R$
+  torneiosPremiados: number;
   melhorPosicao: number | null;
   partidas: number;
   vitorias: number;
@@ -94,21 +97,25 @@ export function listarNomesJogadores(torneios: Torneio[]): string[] {
   return Array.from(nomes.values()).sort((a, b) => a.localeCompare(b));
 }
 
-// Prêmios dos torneios finalizados: o valor registrado como pago ou, sem registro,
+// Prêmio de um torneio finalizado: o valor registrado como pago ou, sem registro,
 // a estimativa pela mesma tabela da aba Premiação
+export function premioDoJogador(t: Torneio, j: Jogador): number {
+  if (!t.finalizado) return 0;
+  if (j.premioPago) return j.premioPago.valor;
+  const posicao = rankingPremiavel(t).findIndex((x) => x.id === j.id);
+  if (posicao < 0) return 0;
+  const arrecadado = t.jogadores.filter((x) => x.pago).length * t.taxaInscricao;
+  return calcularPremiacao(t.jogadores.length, arrecadado)[posicao]?.valor ?? 0;
+}
+
 export function calcularGanhos(torneios: Torneio[], nomes: string[]): { total: number; premiacoes: number } {
   const meusNomes = new Set(nomes.map(chave));
   let total = 0;
   let premiacoes = 0;
   for (const t of torneios) {
-    if (!t.finalizado) continue;
-    const rank = ranking(t);
-    const posicao = rank.findIndex((j) => meusNomes.has(chave(j.nome)));
-    if (posicao < 0) continue;
-    const arrecadado = t.jogadores.filter((j) => j.pago).length * t.taxaInscricao;
-    const valor = rank[posicao].premioPago?.valor
-      ?? calcularPremiacao(t.jogadores.length, arrecadado)[posicao]?.valor
-      ?? 0;
+    const j = t.jogadores.find((x) => meusNomes.has(chave(x.nome)));
+    if (!j) continue;
+    const valor = premioDoJogador(t, j);
     if (valor > 0) {
       total += valor;
       premiacoes += 1;
@@ -222,6 +229,7 @@ export function calcularDesempenho(torneios: Torneio[], nome: string): Desempenh
       finalizado: t.finalizado,
       posicao,
       total: t.jogadores.length,
+      premio: premioDoJogador(t, j),
     });
   }
 
@@ -262,12 +270,16 @@ export function calcularDesempenho(torneios: Torneio[], nome: string): Desempenh
     { icone: "🧙", titulo: "Maratonista", descricao: "Jogue 50 mesas", obtida: resultados.length >= 50 },
   ];
 
+  const { total: ganhos, premiacoes: torneiosPremiados } = calcularGanhos(ordenados, [nome]);
+
   return {
     nome: nomeExibido,
     torneios: historico.length,
     finalizados: evolucao.length,
     campeonatos,
     podios,
+    ganhos,
+    torneiosPremiados,
     melhorPosicao,
     partidas: resultados.length,
     vitorias,

@@ -19,7 +19,6 @@ export interface MetricasGlobais {
     winrate: number; // 0..1
     campeonatos: number; // vezes que terminou em 1º
   }>;
-  torneiosPorMes: Array<{ mes: string; qtd: number; participantes: number }>;
   topDecks: Array<{ nome: string; usos: number }>;
 }
 
@@ -30,7 +29,6 @@ export function calcularMetricas(torneios: Torneio[]): MetricasGlobais {
     nome: string; torneios: number; vitorias: number; partidas: number;
     pontos: number; campeonatos: number;
   }>();
-  const porMes = new Map<string, { qtd: number; participantes: number }>();
   const porDeck = new Map<string, number>();
 
   let totalPartidas = 0;
@@ -38,15 +36,6 @@ export function calcularMetricas(torneios: Torneio[]): MetricasGlobais {
   let empatesPorTempo = 0;
 
   for (const t of torneios) {
-    const data = t.dataCriacao ? new Date(t.dataCriacao) : null;
-    const chaveMes = data
-      ? `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}`
-      : "sem-data";
-    const bucket = porMes.get(chaveMes) ?? { qtd: 0, participantes: 0 };
-    bucket.qtd += 1;
-    bucket.participantes += t.jogadores.length;
-    porMes.set(chaveMes, bucket);
-
     totalArrecadado += t.jogadores.filter((j) => j.pago).length * t.taxaInscricao;
 
     // Mesas e partidas
@@ -90,10 +79,6 @@ export function calcularMetricas(torneios: Torneio[]): MetricasGlobais {
       return b.winrate - a.winrate;
     });
 
-  const torneiosPorMes = Array.from(porMes.entries())
-    .map(([mes, v]) => ({ mes, qtd: v.qtd, participantes: v.participantes }))
-    .sort((a, b) => a.mes.localeCompare(b.mes));
-
   const topDecks = Array.from(porDeck.entries())
     .map(([nome, usos]) => ({ nome, usos }))
     .sort((a, b) => b.usos - a.usos)
@@ -110,7 +95,6 @@ export function calcularMetricas(torneios: Torneio[]): MetricasGlobais {
     totalArrecadado,
     empatesPorTempo,
     rankingJogadores,
-    torneiosPorMes,
     topDecks,
   };
 }

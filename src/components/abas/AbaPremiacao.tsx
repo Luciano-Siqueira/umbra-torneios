@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Jogador, Torneio } from "../../core/types";
 import { calcularPremiacao, descricaoFaixa } from "../../core/premiacao";
-import { ranking } from "../../core/resultados";
+import { rankingPremiavel } from "../../core/resultados";
 import { useStore } from "../../core/store";
 import { useToast } from "../ui/Toast";
 
@@ -53,7 +53,7 @@ export function AbaPremiacao({ torneio }: { torneio: Torneio }) {
     () => calcularPremiacao(torneio.jogadores.length, arrecadado),
     [torneio.jogadores.length, arrecadado]
   );
-  const rank = useMemo(() => ranking(torneio), [torneio]);
+  const rank = useMemo(() => rankingPremiavel(torneio), [torneio]);
   const faixa = descricaoFaixa(torneio.jogadores.length);
   const totalPago = torneio.jogadores.reduce((s, j) => s + (j.premioPago?.valor ?? 0), 0);
 
