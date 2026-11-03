@@ -103,12 +103,12 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
     }
   };
 
-  if (!auth.loading && !auth.isAdmin) {
+  if (auth.perfilErro || (auth.perfilCarregado && !auth.isAdmin)) {
     return (
       <div className="min-h-screen flex items-center justify-center text-fg p-6">
         <div className="text-center">
-          <div className="text-2xl mb-2">🔒 Acesso restrito</div>
-          <div className="text-sm text-fg-dim mb-4">Essa página é só para administradores.</div>
+          <div className="text-2xl mb-2">{auth.perfilErro ? "⚠️ Erro ao carregar seu perfil" : "🔒 Acesso restrito"}</div>
+          <div className="text-sm text-fg-dim mb-4">{auth.perfilErro || "Essa página é só para administradores."}</div>
           <button className="btn-primary" onClick={voltar}>Voltar</button>
         </div>
       </div>

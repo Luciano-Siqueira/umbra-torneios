@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useStore } from "./core/store";
-import { ToastProvider } from "./components/ui/Toast";
+import { ToastProvider, useToast } from "./components/ui/Toast";
 import { Splash } from "./components/Splash";
 import { TelaTorneios } from "./components/TelaTorneios";
 import { TelaTorneio } from "./components/TelaTorneio";
@@ -24,8 +24,14 @@ function AppInner() {
   const irPara = useStore((s) => s.irPara);
   const recarregar = useStore((s) => s.recarregar);
   const auth = useAuth();
+  const { toast } = useToast();
   const [loginAberto, setLoginAberto] = useState(false);
   const [vincularAberto, setVincularAberto] = useState(false);
+
+  useEffect(() => {
+    if (auth.perfilErro) toast("Não foi possível carregar seu perfil: " + auth.perfilErro, "erro");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.perfilErro]);
 
   // 1) Carrega localStorage
   useEffect(() => { recarregar(); }, [recarregar]);

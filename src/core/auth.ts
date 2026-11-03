@@ -10,6 +10,7 @@ export interface AuthState {
   nomesJogador: string[];  // nomes vinculados ao usuário
   loading: boolean;
   perfilCarregado: boolean; // true só depois de buscar admin + nomes do servidor
+  perfilErro: string | null; // falha na busca do perfil (diferente de "sem papel")
 }
 
 export function useAuth(): AuthState {
@@ -19,18 +20,33 @@ export function useAuth(): AuthState {
   const [nomesJogador, setNomesJogador] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [perfilCarregado, setPerfilCarregado] = useState(false);
+  const [perfilErro, setPerfilErro] = useState<string | null>(null);
 
   useEffect(() => {
     let ativo = true;
+    let perfilUid: string | null = null; // usuário com perfil já carregado
+    let ultimaBusca = 0; // descarta respostas de buscas antigas
 
     const carregarPerfil = async (userId: string) => {
+      // O Supabase repete SIGNED_IN ao voltar pra aba; não recarrega o mesmo usuário
+      if (perfilUid === userId) return;
+      const busca = ++ultimaBusca;
       setPerfilCarregado(false);
+      setPerfilErro(null);
       const [adminRes, orgRes, jogadoresRes] = await Promise.all([
         supabase.from("admins").select("user_id").eq("user_id", userId).maybeSingle(),
         supabase.from("organizadores").select("user_id").eq("user_id", userId).maybeSingle(),
         supabase.from("usuarios_jogadores").select("nome_jogador").eq("user_id", userId),
       ]);
-      if (!ativo) return;
+      if (!ativo || busca !== ultimaBusca) return;
+      // Erro não pode virar "não é admin e não tem nome"
+      const erro = adminRes.error || orgRes.error || jogadoresRes.error;
+      if (erro) {
+        console.error("Erro ao carregar perfil", erro);
+        setPerfilErro(erro.message);
+        return;
+      }
+      perfilUid = userId;
       setIsAdmin(!!adminRes.data);
       setIsOrganizador(!!orgRes.data);
       setNomesJogador((jogadoresRes.data || []).map((r: any) => r.nome_jogador));
@@ -38,6 +54,9 @@ export function useAuth(): AuthState {
     };
 
     const reset = () => {
+      ultimaBusca++;
+      perfilUid = null;
+      setPerfilErro(null);
       setIsAdmin(false);
       setIsOrganizador(false);
       setNomesJogador([]);
@@ -62,7 +81,7 @@ export function useAuth(): AuthState {
     return () => { ativo = false; sub.subscription.unsubscribe(); };
   }, []);
 
-  return { session, isAdmin, isOrganizador, nomesJogador, loading, perfilCarregado };
+  return { session, isAdmin, isOrganizador, nomesJogador, loading, perfilCarregado, perfilErro };
 }
 
 export async function entrar(email: string, senha: string) {
