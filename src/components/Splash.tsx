@@ -55,7 +55,11 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
       ))}
 
       {/* Conteúdo central — aparece rápido */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 text-center">
+      {/* O título "SYSTEM" do banner termina em 34,4% da altura da imagem (proporção 1800x1004) */}
+      <div
+        className="relative z-10 flex-1 flex flex-col items-center justify-start px-6 pb-8 text-center"
+        style={{ paddingTop: "calc(max(34.4vh, 19.2vw) + 16px)" }}
+      >
         <div
           className="text-xs md:text-sm font-mono tracking-[0.5em] mb-4 md:mb-6 opacity-0"
           style={{

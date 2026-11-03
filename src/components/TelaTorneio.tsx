@@ -2,6 +2,9 @@ import { lazy, Suspense, useState } from "react";
 import { useStore } from "../core/store";
 import { useAuth } from "../core/auth";
 import { useAoVivo } from "../core/useAoVivo";
+import { useVibrarFimDaRodada } from "../core/useTimer";
+import { encontrarMinhaMesa } from "../core/minhaMesa";
+import type { Torneio } from "../core/types";
 import { podeEditarTorneios } from "../core/visibilidade";
 import { confirmar } from "./ui/Confirm";
 import { useToast } from "./ui/Toast";
@@ -41,6 +44,12 @@ const ABAS: { id: Aba; label: string; icone: string }[] = [
 
 // Só controla a interface: quem participa ainda baixa o torneio inteiro
 const ABAS_JOGADOR: Aba[] = ["mesas", "ranking", "historico"];
+
+// Componente próprio: o relógio atualiza a cada meio segundo e não deve redesenhar a tela toda
+function VibracaoFimDaRodada({ torneio }: { torneio: Torneio }) {
+  useVibrarFimDaRodada(torneio.tempoRodadaMin, torneio.tempoExtraMin, torneio.timer);
+  return null;
+}
 
 export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: () => void; onVincularNome?: () => void } = {}) {
   const torneio = useStore((s) => s.torneioAtivo());
@@ -217,6 +226,9 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
       </nav>
 
       <main className="flex-1 px-4 md:px-8 py-4 overflow-y-auto">
+        {!podeEditar && encontrarMinhaMesa([torneio], auth.nomesJogador)?.mesa && (
+          <VibracaoFimDaRodada torneio={torneio} />
+        )}
         {aba === "jogadores" && <AbaJogadores torneio={torneio} podeEditar={podeEditar} />}
         {aba === "mesas" && <AbaMesas torneio={torneio} podeEditar={podeEditar} />}
         {aba === "ranking" && <AbaRanking torneio={torneio} />}

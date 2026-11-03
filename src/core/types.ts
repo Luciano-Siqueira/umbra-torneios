@@ -65,6 +65,7 @@ export interface Torneio {
   dataRodadaAtual: string;
   criadoPor?: string; // user_id de quem criou (torneios antigos não têm)
   timer?: TimerRodada | null; // null até iniciar o tempo da rodada
+  versao?: number; // sobe a cada gravação no servidor; revela conflito entre aparelhos
 }
 
 // ============================================================

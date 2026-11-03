@@ -11,24 +11,49 @@ let avisos: AvisoEnvio[] = [];
 const json = (corpo: unknown, status = 200) =>
   new Response(JSON.stringify(corpo), { status, headers: { "content-type": "application/json" } });
 
+// Servidor falso: guarda cada torneio e aplica o filtro de versão como o banco
+const servidor = new Map<string, any>();
+
 (globalThis as any).__rede = (url: string, init: RequestInit) => {
   if (modo === "sem-internet") throw new TypeError("Failed to fetch");
   const metodo = init.method ?? "GET";
   const emTorneios = url.includes("/torneios");
-  if (modo === "recusa" && metodo === "POST" && emTorneios) {
+  const escrita = metodo === "POST" || metodo === "PATCH";
+  if (modo === "recusa" && escrita && emTorneios) {
     return json({ code: "42501", message: "violates row-level security", details: null, hint: null }, 403);
   }
-  pedidos.push({ url, metodo, corpo: init.body ? JSON.parse(init.body as string) : null });
-  if (metodo === "GET" && emTorneios) {
-    return json([{ id: "x", dados: { id: "x", nome: "Do servidor", dataCriacao: "2020" } }]);
+  const corpo = init.body ? JSON.parse(init.body as string) : null;
+  pedidos.push({ url, metodo, corpo });
+  if (!emTorneios) return json([]);
+
+  const filtros = new URL(url).searchParams;
+  const id = filtros.get("id")?.replace("eq.", "");
+  const linhaDe = (d: any) => ({ id: d.id, dados: d, versao: d.versao === undefined ? null : String(d.versao) });
+
+  if (metodo === "GET") {
+    if (!id) return json([{ id: "x", dados: { id: "x", nome: "Do servidor", dataCriacao: "2020" } }]);
+    return json(servidor.has(id) ? [linhaDe(servidor.get(id))] : []);
   }
+  if (metodo === "POST") {
+    servidor.set(corpo.id, corpo.dados);
+    return json([]);
+  }
+  if (metodo === "PATCH") {
+    const atual = servidor.get(id!);
+    const filtro = filtros.get("dados->>versao");
+    const bate = atual && (filtro === "is.null" ? atual.versao === undefined : filtro === `eq.${atual.versao}`);
+    if (!bate) return json([]);
+    servidor.set(id!, corpo.dados);
+    return json([{ id }]);
+  }
+  servidor.delete(id!);
   return json([]);
 };
 
 const esperar = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const s = () => useStore.getState();
 const local = () => JSON.parse(localStorage.getItem("mtg.torneios.v1") || "[]");
-const envios = () => pedidos.filter((p) => p.metodo === "POST" && p.url.includes("/torneios"));
+const envios = () => pedidos.filter((p) => (p.metodo === "POST" || p.metodo === "PATCH") && p.url.includes("/torneios"));
 const aoVivo = () => pedidos.filter((p) => p.metodo === "POST" && p.url.includes("torneio_ao_vivo"));
 const ultimo = <T,>(lista: T[]) => lista[lista.length - 1];
 
@@ -150,7 +175,7 @@ describe("ao vivo", () => {
   it("nova rodada grava o torneio antes de avisar e não envia o torneio inteiro", async () => {
     s().iniciarRodada();
     await esperar(50);
-    const ordem = pedidos.filter((p) => p.metodo === "POST").map((p) => p.url.includes("torneio_ao_vivo"));
+    const ordem = pedidos.filter((p) => p.metodo !== "GET").map((p) => p.url.includes("torneio_ao_vivo"));
     expect(ordem).toEqual([false, true]);
     const linha = aoVivo()[0].corpo;
     expect(linha.rodada).toBe(1);
@@ -199,6 +224,123 @@ describe("ao vivo", () => {
     await esperar(900);
 
     expect(s().torneioAtivo()!.mesas[0].eliminacoes).toHaveLength(1);
-    expect(pedidos.filter((p) => p.metodo === "POST")).toHaveLength(0);
+    expect(pedidos.filter((p) => p.metodo !== "GET")).toHaveLength(0);
+  });
+});
+
+describe("conflito entre aparelhos", () => {
+  // Outro aparelho grava direto no servidor, subindo a versão
+  const outroAparelhoGrava = (id: string, nome: string) => {
+    const atual = servidor.get(id);
+    servidor.set(id, { ...atual, nome, versao: (atual.versao ?? 0) + 1 });
+  };
+
+  async function preparar() {
+    modo = "ok";
+    avisos = [];
+    sync.definirAvisoEnvio((a) => avisos.push(a));
+    const t = s().criarTorneio("Conflito", 10, 3, 75, 15);
+    s().abrirTorneio(t.id);
+    await esperar(900);
+    s().addJogador("Kaya", "", true);
+    await esperar(1300);
+    pedidos = [];
+    avisos = [];
+    return t.id;
+  }
+
+  it("gravações em sequência no mesmo aparelho não dão conflito", async () => {
+    const id = await preparar();
+    s().addJogador("Oko", "", true);
+    await esperar(1300);
+    s().iniciarRodada();
+    s().pausarTimer();
+    s().iniciarTimer();
+    s().pausarTimer();
+    await esperar(200);
+    expect(avisos.filter((a) => a.tipo === "conflito")).toHaveLength(0);
+    expect(servidor.get(id).jogadores).toHaveLength(2);
+    expect(servidor.get(id).versao).toBeGreaterThan(2);
+    expect(sync.temEnviosPendentes()).toBe(false);
+  });
+
+  it("avisa uma vez, não sobrescreve e não publica ao vivo", async () => {
+    const id = await preparar();
+    outroAparelhoGrava(id, "Mudou no outro");
+
+    s().addJogador("Oko", "", true);
+    await esperar(1300);
+    s().addJogador("Karn", "", true);
+    await esperar(1300);
+
+    expect(avisos.filter((a) => a.tipo === "conflito")).toHaveLength(1);
+    expect(servidor.get(id).nome).toBe("Mudou no outro");
+    expect(servidor.get(id).jogadores).toHaveLength(1);
+    expect(sync.temConflito(id)).toBe(true);
+    expect(sync.temEnviosPendentes()).toBe(true);
+    expect(aoVivo()).toHaveLength(0);
+
+    await sync.resolverConflito(id, false);
+  });
+
+  it("manter a deste aparelho grava por cima", async () => {
+    const id = await preparar();
+    outroAparelhoGrava(id, "Mudou no outro");
+    s().addJogador("Oko", "", true);
+    await esperar(1300);
+
+    await sync.resolverConflito(id, true);
+    expect(servidor.get(id).nome).toBe("Conflito");
+    expect(servidor.get(id).jogadores).toHaveLength(2);
+    expect(sync.temConflito(id)).toBe(false);
+    expect(sync.temEnviosPendentes()).toBe(false);
+  });
+
+  it("usar a do outro aparelho descarta a local", async () => {
+    const id = await preparar();
+    outroAparelhoGrava(id, "Mudou no outro");
+    s().addJogador("Oko", "", true);
+    await esperar(1300);
+
+    await sync.resolverConflito(id, false);
+    s().recarregar();
+    expect(local().find((t: any) => t.id === id).nome).toBe("Mudou no outro");
+    expect(local().find((t: any) => t.id === id).jogadores).toHaveLength(1);
+    expect(sync.temEnviosPendentes()).toBe(false);
+
+    // A próxima alteração já parte da versão certa
+    s().addJogador("Karn", "", true);
+    await esperar(1300);
+    expect(avisos.filter((a) => a.tipo === "conflito")).toHaveLength(1);
+    expect(servidor.get(id).nome).toBe("Mudou no outro");
+    expect(servidor.get(id).jogadores).toHaveLength(2);
+  });
+
+  it("sem conflito, atualização recusada pelo RLS vira erro", async () => {
+    const id = await preparar();
+    const rede = (globalThis as any).__rede;
+    (globalThis as any).__rede = (url: string, init: RequestInit) =>
+      init.method === "PATCH" ? json([]) : rede(url, init);
+    s().addJogador("Oko", "", true);
+    await esperar(1300);
+    (globalThis as any).__rede = rede;
+    expect(avisos.some((a) => a.tipo === "recusado")).toBe(true);
+    expect(avisos.some((a) => a.tipo === "conflito")).toBe(false);
+    expect(servidor.get(id).jogadores).toHaveLength(1);
+  });
+
+  it("torneio antigo sem versão continua gravando", async () => {
+    modo = "ok";
+    const t = s().criarTorneio("Antigo", 10, 3, 75, 15);
+    s().abrirTorneio(t.id);
+    await esperar(900);
+    const { versao: _v, ...semVersao } = servidor.get(t.id);
+    servidor.set(t.id, semVersao);
+    await sync.puxarTorneio(t.id);
+    s().recarregar();
+    s().addJogador("Oko", "", true);
+    await esperar(1300);
+    expect(servidor.get(t.id).jogadores).toHaveLength(1);
+    expect(servidor.get(t.id).versao).toBe(1);
   });
 });

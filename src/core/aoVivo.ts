@@ -1,7 +1,7 @@
 // Publica o estado da rodada na tabela pequena que o Realtime transmite
 import { supabase } from "./supabaseClient";
 import * as storage from "./storage";
-import { avisarFalhaAoVivo, envioConcluido, enviarTorneioAgora, erroDeConexao } from "./sync";
+import { avisarFalhaAoVivo, envioConcluido, enviarTorneioAgora, erroDeConexao, temConflito } from "./sync";
 import { agoraMs } from "./timer";
 import type { Mesa, TimerRodada, Torneio } from "./types";
 
@@ -37,6 +37,8 @@ export async function publicarAoVivo(t: Torneio, enviarAntes = false): Promise<v
   // Uma publicação nova substitui a que estava agendada
   cancelarAgendada(t.id);
   if (enviarAntes) await enviarTorneioAgora(t);
+  // Em conflito, a cópia deste aparelho ainda não vale para os outros
+  if (temConflito(t.id)) return;
 
   // O torneio pode ter mudado durante o envio ou a espera
   const atual = storage.listarTorneios().find((x) => x.id === t.id) ?? t;

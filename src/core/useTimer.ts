@@ -37,6 +37,23 @@ export function useContagem(
   };
 }
 
+// Vibra o celular de quem está jogando quando o tempo da rodada acaba.
+// Não funciona no iPhone nem com o app fechado ou a tela bloqueada.
+export function useVibrarFimDaRodada(
+  tempoNormalMin: number,
+  tempoExtraMin: number,
+  timer: TimerRodada | null | undefined,
+) {
+  const { restante } = useContagem(tempoNormalMin, tempoExtraMin, timer);
+  const anteriorRef = useRef(restante);
+
+  useEffect(() => {
+    const anterior = anteriorRef.current;
+    anteriorRef.current = restante;
+    if (anterior > 0 && restante === 0) navigator.vibrate?.([400, 200, 400, 200, 800]);
+  }, [restante]);
+}
+
 // Controles e avisos sonoros: usado por quem organiza a rodada
 export function useTimer(
   tempoNormalMin: number,

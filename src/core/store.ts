@@ -246,19 +246,19 @@ export const useStore = create<State>((set, get) => ({
   },
 
   iniciarTimer: () => {
-    get().atualizarEPublicar((t) => { t.timer = iniciarTimer(t.timer); });
+    get().atualizarEPublicar((t) => { t.timer = iniciarTimer(t.timer); }, true);
   },
 
   pausarTimer: () => {
-    get().atualizarEPublicar((t) => { t.timer = alternarPausaTimer(t.timer); });
+    get().atualizarEPublicar((t) => { t.timer = alternarPausaTimer(t.timer); }, true);
   },
 
   pararTimer: () => {
-    get().atualizarEPublicar((t) => { t.timer = pararTimer(t.timer); });
+    get().atualizarEPublicar((t) => { t.timer = pararTimer(t.timer); }, true);
   },
 
   resetarTimer: () => {
-    get().atualizarEPublicar((t) => { t.timer = null; });
+    get().atualizarEPublicar((t) => { t.timer = null; }, true);
   },
 
   addJogador: (nome, deck, pago) => {

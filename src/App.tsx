@@ -8,7 +8,10 @@ import { TelaLogin } from "./components/TelaLogin";
 import { TelaVincularNome } from "./components/TelaVincularNome";
 import { useAuth } from "./core/auth";
 import { useListaAtualizada } from "./core/useAoVivo";
-import { definirAvisoEnvio, puxarDoServidor, retomarEnvios } from "./core/sync";
+import { publicarAoVivo } from "./core/aoVivo";
+import { listarTorneios } from "./core/storage";
+import { definirAvisoEnvio, puxarDoServidor, resolverConflito, retomarEnvios } from "./core/sync";
+import { confirmar } from "./components/ui/Confirm";
 
 // Telas carregadas só quando abertas
 const TelaAnalytics = lazy(() =>
@@ -53,6 +56,20 @@ function AppInner() {
         toast("Conexão de volta. Alterações enviadas.", "sucesso");
       } else if (aviso.tipo === "recusado") {
         toast(`O servidor recusou salvar "${aviso.nome}": ${aviso.motivo}`, "erro");
+      } else if (aviso.tipo === "conflito") {
+        (async () => {
+          const manter = await confirmar({
+            titulo: "⚠ Conflito entre aparelhos",
+            mensagem: `Outro aparelho alterou "${aviso.nome}" enquanto você também alterava.\n\nSó uma versão pode ficar. A outra será perdida.`,
+            textoOk: "Manter a deste aparelho",
+            textoCancelar: "Usar a do outro aparelho",
+          });
+          await resolverConflito(aviso.id, manter);
+          recarregar();
+          const t = listarTorneios().find((x) => x.id === aviso.id);
+          if (manter && t) publicarAoVivo(t);
+          toast(manter ? "Mantida a versão deste aparelho" : "Mantida a versão do outro aparelho", "info");
+        })();
       } else if (aviso.tipo === "ao-vivo-falhou") {
         toast(`Os jogadores podem não ver esta atualização ao vivo: ${aviso.motivo}`, "erro");
       } else {
