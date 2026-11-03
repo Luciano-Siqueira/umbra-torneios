@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Umbra — Identidade de marca</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#0a0a0a; font-family:'Inter',system-ui,sans-serif; color:#f5f5f5; min-height:100vh; padding:48px 24px; }
+  .wrap { max-width:1100px; margin:0 auto; }
+  h1 { color:#c9a648; font-size:11px; letter-spacing:0.3em; text-transform:uppercase; text-align:center; margin:0 0 4px; font-weight:500; }
+  .sub { color:#5a5a5a; font-size:10px; letter-spacing:0.2em; text-align:center; margin-bottom:40px; text-transform:uppercase; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .card { background:#111; border:1px solid #222; border-radius:16px; padding:40px 32px; display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .card .label { color:#5a5a5a; font-size:9px; letter-spacing:0.3em; text-transform:uppercase; align-self:flex-start; }
+  .inverted { background:#f5f5f5; }
+  .inverted .label { color:#5a5a5a; }
+  h2 { color:#5a5a5a; font-size:9px; letter-spacing:0.3em; text-transform:uppercase; font-weight:500; margin:48px 0 16px; }
+  .sub-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  .sub-card { background:#1a1a1a; border:1px solid #333; border-radius:12px; padding:22px; text-align:center; }
+  .sub-desc { color:#5a5a5a; font-size:9px; letter-spacing:0.2em; text-transform:uppercase; margin-top:8px; }
+  .paleta { display:flex; gap:24px; flex-wrap:wrap; background:#111; border:1px solid #222; border-radius:16px; padding:24px 28px; }
+  .cor { display:flex; align-items:center; gap:12px; }
+  .swatch { width:40px; height:40px; border-radius:8px; border:1px solid #333; }
+  .cor-info { display:flex; flex-direction:column; }
+  .cor-nome { font-size:12px; font-weight:500; color:#f5f5f5; }
+  .cor-hex { font-size:10px; color:#8a8a8a; font-family:monospace; letter-spacing:1px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Umbra — Identidade de marca</h1>
+<div class="sub">Logo oficial · variações · sub-marcas · paleta</div>
+
+<div class="grid">
+
+  <div class="card">
+    <div class="label">Principal · fundo escuro</div>
+    <svg class="logo-full" width="340" height="82" viewBox="0 0 320 82" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="90"  cy="38" r="26" fill="#f5f5f5"/>
+      <circle cx="106" cy="38" r="26" fill="#111"/>
+      <text class="umbra-text" x="124" y="53" fill="#f5f5f5" font-family="Inter,sans-serif" font-size="42" font-weight="700" letter-spacing="3">UMBRA</text>
+      <text class="umbra-tagline" x="200" y="68" text-anchor="middle" fill="#8a8a8a" font-family="Inter,sans-serif" font-size="10" font-weight="400" letter-spacing="3">IN UMBRA VERITAS</text>
+    </svg>
+  </div>
+
+  <div class="card inverted">
+    <div class="label">Invertido · fundo claro</div>
+    <svg class="logo-full" width="340" height="82" viewBox="0 0 320 82" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="90"  cy="38" r="26" fill="#0a0a0a"/>
+      <circle cx="106" cy="38" r="26" fill="#f5f5f5"/>
+      <text class="umbra-text" x="124" y="53" fill="#0a0a0a" font-family="Inter,sans-serif" font-size="42" font-weight="700" letter-spacing="3">UMBRA</text>
+      <text class="umbra-tagline" x="200" y="68" text-anchor="middle" fill="#5a5a5a" font-family="Inter,sans-serif" font-size="10" font-weight="400" letter-spacing="3">IN UMBRA VERITAS</text>
+    </svg>
+  </div>
+
+  <div class="card">
+    <div class="label">Com acento · sangue</div>
+    <svg class="logo-full" width="340" height="82" viewBox="0 0 320 82" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="90"  cy="38" r="26" fill="#f5f5f5"/>
+      <circle cx="106" cy="38" r="26" fill="#111"/>
+      <path d="M 106 12 A 26 26 0 0 1 106 64" fill="none" stroke="#8b0000" stroke-width="1.4" opacity="0.9"/>
+      <text class="umbra-text" x="124" y="53" fill="#f5f5f5" font-family="Inter,sans-serif" font-size="42" font-weight="700" letter-spacing="3">UMBRA</text>
+      <text class="umbra-tagline" x="200" y="68" text-anchor="middle" fill="#8b0000" font-family="Inter,sans-serif" font-size="10" font-weight="400" letter-spacing="3">IN UMBRA VERITAS</text>
+    </svg>
+  </div>
+
+  <div class="card">
+    <div class="label">Com acento · ouro antigo</div>
+    <svg class="logo-full" width="340" height="82" viewBox="0 0 320 82" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="90"  cy="38" r="26" fill="#c9a648"/>
+      <circle cx="106" cy="38" r="26" fill="#111"/>
+      <text class="umbra-text" x="124" y="53" fill="#f5f5f5" font-family="Inter,sans-serif" font-size="42" font-weight="700" letter-spacing="3">UMBRA</text>
+      <text class="umbra-tagline" x="200" y="68" text-anchor="middle" fill="#c9a648" font-family="Inter,sans-serif" font-size="10" font-weight="400" letter-spacing="3">IN UMBRA VERITAS</text>
+    </svg>
+  </div>
+
+</div>
+
+<h2>Sub-marcas</h2>
+<div class="sub-grid">
+
+  <div class="sub-card">
+    <svg width="200" height="40" viewBox="0 0 200 40" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="30" cy="20" r="11" fill="#f5f5f5"/>
+      <circle cx="37" cy="20" r="11" fill="#1a1a1a"/>
+      <text x="51" y="26" fill="#f5f5f5" font-family="Inter,sans-serif" font-size="15" font-weight="700" letter-spacing="1.5">UMBRA</text>
+      <text x="124" y="26" fill="#c9a648" font-family="Inter,sans-serif" font-size="15" font-weight="300" letter-spacing="1">Cards</text>
+    </svg>
+    <div class="sub-desc">TCG · Board games</div>
+  </div>
+
+  <div class="sub-card">
+    <svg width="200" height="40" viewBox="0 0 200 40" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="30" cy="20" r="11" fill="#f5f5f5"/>
+      <circle cx="37" cy="20" r="11" fill="#1a1a1a"/>
+      <text x="51" y="26" fill="#f5f5f5" font-family="Inter,sans-serif" font-size="15" font-weight="700" letter-spacing="1.5">UMBRA</text>
+      <text x="124" y="26" fill="#c9a648" font-family="Inter,sans-serif" font-size="15" font-weight="300" letter-spacing="1">Data</text>
+    </svg>
+    <div class="sub-desc">Consultoria · Analytics</div>
+  </div>
+
+  <div class="sub-card">
+    <svg width="200" height="40" viewBox="0 0 200 40" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="30" cy="20" r="11" fill="#f5f5f5"/>
+      <circle cx="37" cy="20" r="11" fill="#1a1a1a"/>
+      <text x="51" y="26" fill="#f5f5f5" font-family="Inter,sans-serif" font-size="15" font-weight="700" letter-spacing="1.5">UMBRA</text>
+      <text x="124" y="26" fill="#c9a648" font-family="Inter,sans-serif" font-size="15" font-weight="300" letter-spacing="1">Brews</text>
+    </svg>
+    <div class="sub-desc">Sommelier · Cerveja</div>
+  </div>
+
+  <div class="sub-card">
+    <svg width="200" height="40" viewBox="0 0 200 40" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="30" cy="20" r="11" fill="#f5f5f5"/>
+      <circle cx="37" cy="20" r="11" fill="#1a1a1a"/>
+      <text x="51" y="26" fill="#f5f5f5" font-family="Inter,sans-serif" font-size="15" font-weight="700" letter-spacing="1.5">UMBRA</text>
+      <text x="124" y="26" fill="#c9a648" font-family="Inter,sans-serif" font-size="15" font-weight="300" letter-spacing="1">Nights</text>
+    </svg>
+    <div class="sub-desc">Torneios · Eventos</div>
+  </div>
+
+</div>
+
+<h2>Paleta</h2>
+<div class="paleta">
+  <div class="cor"><div class="swatch" style="background:#0a0a0a;"></div><div class="cor-info"><div class="cor-nome">Noir</div><div class="cor-hex">#0a0a0a</div></div></div>
+  <div class="cor"><div class="swatch" style="background:#f5f5f5;"></div><div class="cor-info"><div class="cor-nome">Luz</div><div class="cor-hex">#f5f5f5</div></div></div>
+  <div class="cor"><div class="swatch" style="background:#c9a648;"></div><div class="cor-info"><div class="cor-nome">Ouro antigo</div><div class="cor-hex">#c9a648</div></div></div>
+  <div class="cor"><div class="swatch" style="background:#8b0000;"></div><div class="cor-info"><div class="cor-nome">Sangue</div><div class="cor-hex">#8b0000</div></div></div>
+</div>
+
+</div>
+
+<script>
+// Centraliza cada tagline exatamente sob o UMBRA correspondente, após a fonte carregar
+(function(){
+  function ajustar(){
+    document.querySelectorAll('.logo-full').forEach(function(svg){
+      var t = svg.querySelector('.umbra-text');
+      var tag = svg.querySelector('.umbra-tagline');
+      if (!t || !tag) return;
+      try {
+        var bb = t.getBBox();
+        tag.setAttribute('x', bb.x + bb.width/2);
+      } catch(e){}
+    });
+  }
+  ajustar();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustar);
+  setTimeout(ajustar, 200);
+  setTimeout(ajustar, 800);
+})();
+</script>
+
+</body>
+</html>

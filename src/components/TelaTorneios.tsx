@@ -12,6 +12,7 @@ import { calcularMetricas, metricasRecentes } from "../core/metricas";
 import { ranking } from "../core/resultados";
 import { podeEditarTorneios, torneioParado, torneiosVisiveis } from "../core/visibilidade";
 import { BANNER_IMAGE } from "../banner-image";
+import { SimboloUmbra } from "./ui/LogoUmbra";
 
 const CORES_MTG = [
   { hex: "#f9f5e3", nome: "PLAINS", simbolo: "☀" },
@@ -147,6 +148,8 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             boxShadow: "0 20px 60px -20px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.08)",
           }}
         >
+          <span className="flex items-center pl-2 pr-1"><SimboloUmbra tamanho={26} /></span>
+
           {/* CTA principal — só admin vê */}
           {podeEditar && (
             <>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { ajustarSelecaoPorDrop } from "../../core/sorteios";
 import type { Torneio } from "../../core/types";
 import { SorteioRoda, type RodaHandle } from "../sorteios/SorteioRoda";
 import { CorridaPatinhos, type PatinhosHandle } from "../sorteios/CorridaPatinhos";
@@ -13,33 +14,52 @@ interface EstadoSorteio {
   restantesRoda: string[];
   rankingCorrida: string[];
   participantesCorrida: string[];
+  dropsConhecidos: string[];
 }
 const estadoPorTorneio = new Map<string, EstadoSorteio>();
 
 export function AbaSorteios({ torneio }: { torneio: Torneio }) {
   const nomes = torneio.jogadores.map((j) => j.nome);
+  const ativos = torneio.jogadores.filter((j) => j.ativo).map((j) => j.nome);
+  const dropados = torneio.jogadores.filter((j) => !j.ativo).map((j) => j.nome);
+  const chaveDropados = dropados.join("|");
   const salvo = estadoPorTorneio.get(torneio.id);
   const [modo, setModo] = useState<Modo>(salvo?.modo ?? "roda");
-  const [selecionados, setSelecionados] = useState<Set<string>>(
-    () => new Set(salvo?.selecionados ?? nomes)
-  );
+  // O drop pode ter sido dado com esta aba fechada
+  const [selecionados, setSelecionados] = useState<Set<string>>(() => new Set(
+    salvo?.selecionados
+      ? ajustarSelecaoPorDrop(salvo.selecionados, salvo.dropsConhecidos ?? [], dropados)
+      : ativos
+  ));
+  const dropsConhecidos = useRef(dropados);
   const [expandido, setExpandido] = useState(false);
   const rodaRef = useRef<RodaHandle>(null);
   const patinhosRef = useRef<PatinhosHandle>(null);
+
+  // Drop dado com a aba aberta, em outro aparelho
+  useEffect(() => {
+    const conhecidos = dropsConhecidos.current;
+    dropsConhecidos.current = dropados;
+    setSelecionados((prev) => new Set(ajustarSelecaoPorDrop(Array.from(prev), conhecidos, dropados)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chaveDropados]);
 
   // Salva quando muda
   useEffect(() => {
     const atual = estadoPorTorneio.get(torneio.id) ?? {
       modo, selecionados: [], sorteadosRoda: [], restantesRoda: [],
-      rankingCorrida: [], participantesCorrida: [],
+      rankingCorrida: [], participantesCorrida: [], dropsConhecidos: [],
     };
     atual.modo = modo;
     atual.selecionados = Array.from(selecionados);
+    atual.dropsConhecidos = dropados;
     estadoPorTorneio.set(torneio.id, atual);
-  }, [modo, selecionados, torneio.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modo, selecionados, torneio.id, chaveDropados]);
 
+  // "Todos" não inclui quem deu drop: esses só entram marcados um a um
   const toggleTodos = (marcar: boolean) =>
-    setSelecionados(new Set(marcar ? nomes : []));
+    setSelecionados(new Set(marcar ? ativos : []));
   const toggle = (n: string) =>
     setSelecionados((prev) => {
       const s = new Set(prev);
@@ -113,6 +133,9 @@ export function AbaSorteios({ torneio }: { torneio: Torneio }) {
                   className="w-4 h-4"
                 />
                 <span className="truncate">{n}</span>
+                {dropados.includes(n) && (
+                  <span className="text-[10px] bg-perigo/20 text-perigo px-1.5 rounded flex-shrink-0">DROP</span>
+                )}
               </label>
             ))}
           </div>
