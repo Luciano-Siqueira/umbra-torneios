@@ -82,6 +82,8 @@ Três perfis não exclusivos:
 - **🎯 organizador** — tabela `organizadores` — pode criar e editar torneios
 - **👤 jogador** — tabela `usuarios_jogadores` (vincula user_id a `nome_jogador` único) — vê seus próprios resultados
 
+Dentro do torneio, o modo jogador vê só Mesas (leitura, com o cartão da própria mesa), Ranking e Histórico; admin e organizador veem todas as abas, sem o cartão.
+
 Mesmo usuário pode ter todos os papéis. O `modoView` (admin/organizador/jogador) é um seletor de visualização persistido em localStorage, validado contra permissões reais ao carregar o perfil (default = jogador).
 
 ### Sincronização

@@ -20,7 +20,11 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
   const [mesaSel, setMesaSel] = useState<{ mesa: Mesa; idx: number } | null>(null);
   const timer = useTimer(torneio.tempoRodadaMin, torneio.tempoExtraMin, torneio.timer, podeEditar);
   const { nomesJogador } = useAuth();
-  const minha = useMemo(() => encontrarMinhaMesa([torneio], nomesJogador), [torneio, nomesJogador]);
+  // O cartão da própria mesa é só do modo jogador
+  const minha = useMemo(
+    () => (podeEditar ? null : encontrarMinhaMesa([torneio], nomesJogador)),
+    [podeEditar, torneio, nomesJogador]
+  );
 
   useEffect(() => {
     timer.setOnFimNormal(() => toast("⏰ Tempo normal acabou! Iniciando tempo extra.", "aviso"));
@@ -210,7 +214,7 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
               <div className="flex flex-wrap justify-center gap-2">
                 {[
                   { label: "⭐ Ranking final", key: "ranking" },
-                  { label: "♛ Premiação", key: "premiacao" },
+                  ...(podeEditar ? [{ label: "♛ Premiação", key: "premiacao" }] : []),
                   { label: "◷ Histórico", key: "historico" },
                 ].map((atalho) => (
                   <div

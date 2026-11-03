@@ -39,6 +39,9 @@ const ABAS: { id: Aba; label: string; icone: string }[] = [
   { id: "historico", label: "Histórico", icone: "◷" },
 ];
 
+// Só controla a interface: quem participa ainda baixa o torneio inteiro
+const ABAS_JOGADOR: Aba[] = ["mesas", "ranking", "historico"];
+
 export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: () => void; onVincularNome?: () => void } = {}) {
   const torneio = useStore((s) => s.torneioAtivo());
   const voltar = useStore((s) => s.voltarParaLista);
@@ -49,19 +52,22 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
   const reabrir = useStore((s) => s.reabrirTorneio);
   const finalizar = useStore((s) => s.finalizarTorneio);
   const torneioId = useStore((s) => s.torneioId);
-  const [abaEscolhida, setAbaEscolhida] = useState<Aba>(() => {
+  const [abaEscolhida, setAbaEscolhida] = useState<Aba | null>(() => {
     try {
       const salva = sessionStorage.getItem(`mtg.aba.${torneioId}`);
       if (ABAS.some((a) => a.id === salva)) return salva as Aba;
     } catch { /* ignore */ }
-    return "jogadores";
+    return null;
   });
   const setAba = (nova: Aba) => {
     setAbaEscolhida(nova);
     try { sessionStorage.setItem(`mtg.aba.${torneioId}`, nova); } catch { /* ignore */ }
   };
-  // Financeiro é só de quem organiza: o F5 pode reabrir depois de trocar de modo
-  const aba: Aba = abaEscolhida === "financeiro" && !podeEditar ? "jogadores" : abaEscolhida;
+  const abasVisiveis = podeEditar ? ABAS : ABAS.filter((a) => ABAS_JOGADOR.includes(a.id));
+  // A aba salva pode não existir no modo atual: o F5 pode reabrir depois de trocar de modo
+  const aba: Aba = abasVisiveis.some((a) => a.id === abaEscolhida)
+    ? abaEscolhida!
+    : podeEditar ? "jogadores" : "mesas";
 
   // Quem organiza é a fonte dos dados; quem só acompanha recebe ao vivo
   useAoVivo(!podeEditar && torneio ? torneio.id : null);
@@ -128,7 +134,9 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
               style={{ color: "#c9a648" }}
             >TORNEIO FINALIZADO</div>
             <div className="text-sm md:text-base font-semibold truncate" style={{ color: "#fff" }}>
-              Confira o ranking final, premiação e histórico das rodadas.
+              {podeEditar
+                ? "Confira o ranking final, premiação e histórico das rodadas."
+                : "Confira o ranking final e o histórico das rodadas."}
             </div>
           </div>
           {podeEditar && (
@@ -153,7 +161,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
       {/* Tabs + ação (Reabrir/Finalizar) à direita */}
       <nav className="px-2 md:px-8 py-2 border-b border-bg-cardalt flex items-center gap-2 overflow-x-auto">
         <div className="flex gap-1 min-w-max flex-1">
-          {ABAS.filter((a) => podeEditar || a.id !== "financeiro").map((a) => (
+          {abasVisiveis.map((a) => (
             <button
               key={a.id}
               onClick={() => setAba(a.id)}
@@ -213,7 +221,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
         {aba === "jogadores" && <AbaJogadores torneio={torneio} podeEditar={podeEditar} />}
         {aba === "mesas" && <AbaMesas torneio={torneio} podeEditar={podeEditar} />}
         {aba === "ranking" && <AbaRanking torneio={torneio} />}
-        {aba === "financeiro" && podeEditar && <AbaFinanceiro torneio={torneio} />}
+        {aba === "financeiro" && <AbaFinanceiro torneio={torneio} />}
         {aba === "premiacao" && <AbaPremiacao torneio={torneio} />}
         {aba === "sorteios" && (
           <Suspense fallback={<div className="text-center py-12 text-fg-dim">Carregando...</div>}>
