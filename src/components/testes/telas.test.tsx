@@ -257,29 +257,87 @@ describe("rodadas e desempate", () => {
   });
 });
 
+describe("ações no card do torneio", () => {
+  const umTorneio = () => ({ ...torneioCom("Pessoa"), id: "um", nome: "Liga Um" });
+
+  it("clicar no card abre o torneio", () => {
+    preparar("jogador", { nomesJogador: ["Pessoa"] }, [umTorneio()]);
+    abrir(<TelaTorneios />);
+
+    fireEvent.click(screen.getByText("JOGADORES"));
+    expect(useStore.getState().tela).toBe("torneio");
+    expect(useStore.getState().torneioId).toBe("um");
+    useStore.getState().voltarParaLista();
+  });
+
+  it("o nome do torneio também abre, pelo teclado", () => {
+    preparar("jogador", { nomesJogador: ["Pessoa"] }, [umTorneio()]);
+    abrir(<TelaTorneios />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Liga Um" }));
+    expect(useStore.getState().tela).toBe("torneio");
+    useStore.getState().voltarParaLista();
+  });
+
+  it("jogador não vê os ícones de ação", () => {
+    preparar("jogador", { nomesJogador: ["Pessoa"] }, [umTorneio()]);
+    abrir(<TelaTorneios />);
+    for (const acao of ["Editar", "Exportar", "Excluir"]) {
+      expect(screen.queryByRole("button", { name: `${acao} Liga Um` })).toBeNull();
+    }
+  });
+
+  it("os ícones agem sem abrir o torneio", async () => {
+    preparar("admin", { isAdmin: true }, [umTorneio()]);
+    useStore.getState().voltarParaLista();
+    abrir(<TelaTorneios />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Editar Liga Um" }));
+    expect(screen.getByText("Editar Torneio")).toBeTruthy();
+    expect((screen.getByDisplayValue("Liga Um") as HTMLInputElement).value).toBe("Liga Um");
+    expect(useStore.getState().tela).toBe("torneios");
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Excluir Liga Um" }));
+    expect(await screen.findByText(/Excluir permanentemente o torneio "Liga Um"/)).toBeTruthy();
+    expect(useStore.getState().tela).toBe("torneios");
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(useStore.getState().torneios).toHaveLength(1);
+  });
+
+  it("exportar baixa o arquivo sem abrir o torneio", () => {
+    URL.createObjectURL = vi.fn(() => "blob:teste");
+    URL.revokeObjectURL = vi.fn();
+    const clicar = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    preparar("admin", { isAdmin: true }, [umTorneio()]);
+    useStore.getState().voltarParaLista();
+    abrir(<TelaTorneios />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Exportar Liga Um" }));
+    expect(clicar).toHaveBeenCalled();
+    expect(useStore.getState().tela).toBe("torneios");
+    clicar.mockRestore();
+  });
+});
+
 describe("barra da lista de torneios", () => {
-  it("quem edita tem os menus Torneio e Importar / Exportar", () => {
+  it("a barra não tem mais o menu Torneio, e Importar / Exportar continua para quem edita", () => {
     preparar("admin", { isAdmin: true });
     abrir(<TelaTorneios />);
 
-    expect(screen.queryByRole("menuitem", { name: "Editar" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /^Torneio/ }));
-    const menu = within(screen.getByRole("menu"));
-    expect(menu.getAllByRole("menuitem").map((i) => i.textContent)).toEqual(["Abrir", "Editar", "Excluir"]);
-
-    const outroMenu = screen.getByRole("button", { name: /Importar \/ Exportar/ });
-    fireEvent.pointerDown(outroMenu);
-    fireEvent.click(outroMenu);
+    expect(screen.queryByRole("button", { name: /^Torneio/ })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Importar \/ Exportar/ }));
     const textos = screen.getByRole("menu").textContent;
     expect(textos).toContain("Importar");
-    expect(textos).toContain("Exportar");
+    expect(textos).toContain("Backup completo");
     expect(textos).toContain("Torneio de teste");
+    expect(textos).not.toContain("Torneio selecionado");
   });
 
   it("o menu fecha ao clicar fora, com Esc e ao escolher um item", () => {
     preparar("admin", { isAdmin: true });
     abrir(<TelaTorneios />);
-    const botao = screen.getByRole("button", { name: /^Torneio/ });
+    const botao = screen.getByRole("button", { name: /Importar \/ Exportar/ });
 
     fireEvent.click(botao);
     fireEvent.pointerDown(document.body);
@@ -290,16 +348,15 @@ describe("barra da lista de torneios", () => {
     expect(screen.queryByRole("menu")).toBeNull();
 
     fireEvent.click(botao);
-    fireEvent.click(screen.getByRole("menuitem", { name: "Abrir" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /Torneio \(JSON\)/ }));
     expect(screen.queryByRole("menu")).toBeNull();
   });
 
-  it("jogador só tem Abrir, sem menus de edição", () => {
+  it("jogador não tem menus de edição nem botão Abrir na barra", () => {
     preparar("jogador", {});
     abrir(<TelaTorneios />);
 
-    expect(screen.getByRole("button", { name: "Abrir" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /^Torneio/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Abrir" })).toBeNull();
     expect(screen.queryByRole("button", { name: /Importar/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /Novo torneio/ })).toBeNull();
   });

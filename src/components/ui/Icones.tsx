@@ -43,7 +43,10 @@ export const IconeCifrao = criar(<>
   <circle cx="12" cy="12" r="9" />
   <path d="M15 9.2c-.5-1-1.6-1.7-3-1.7-1.8 0-3 .9-3 2.2 0 3 6 1.6 6 4.6 0 1.3-1.2 2.2-3 2.2-1.4 0-2.5-.7-3-1.7M12 6v12" />
 </>);
-export const IconeAnalytics =criar(<path d="M4 20h16M7 20v-7M12 20V5M17 20v-10" />);
+export const IconeLapis = criar(<path d="M4 20l1-4.5L16.5 4a2.1 2.1 0 0 1 3 0l.5.5a2.1 2.1 0 0 1 0 3L8.5 19zM14.5 6l3.5 3.5" />);
+export const IconeBaixar = criar(<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M4 20h16" />);
+export const IconeLixeira = criar(<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5M14 11v5" />);
+export const IconeAnalytics = criar(<path d="M4 20h16M7 20v-7M12 20V5M17 20v-10" />);
 export const IconeUsuarios = criar(<>
   <circle cx="9" cy="8" r="3.5" />
   <path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.5a6.5 6.5 0 0 1 3.5 5.5" />

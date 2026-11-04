@@ -14,10 +14,10 @@ import { ranking } from "../core/resultados";
 import { podeEditarTorneios, torneioParado, torneiosVisiveis } from "../core/visibilidade";
 import { BANNER_IMAGE } from "../banner-image";
 import { IconeDecks, SimboloUmbra } from "./ui/LogoUmbra";
-import { IconeAnalytics, IconeArena, IconeCaixa, IconeDado, IconeDocumento, IconePasta, IconeUsuarios } from "./ui/Icones";
+import { IconeAnalytics, IconeBaixar, IconeCaixa, IconeDado, IconeDocumento, IconeLapis, IconeLixeira, IconePasta, IconeUsuarios } from "./ui/Icones";
 import { SimboloMana, type CorMana } from "./ui/SimboloMana";
 import { ItemMenu, MenuBarra, TituloMenu } from "./ui/MenuBarra";
-import { contar, formatarReais } from "../core/formato";
+import { contar, formatarNumero, formatarReais } from "../core/formato";
 
 const CORES_MTG: { hex: string; nome: string; mana: CorMana }[] = [
   { hex: "#f9f5e3", nome: "PLAINS", mana: "w" },
@@ -93,30 +93,38 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
   })();
   const irPara = useStore((s) => s.irPara);
   const { toast } = useToast();
-  const [selecionadoId, setSelecionadoId] = useState<string | null>(null);
   const [dialogoAberto, setDialogoAberto] = useState<null | "novo" | "editar">(null);
+  const [editando, setEditando] = useState<Torneio | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const backupRef = useRef<HTMLInputElement>(null);
   const recarregar = useStore((s) => s.recarregar);
 
-  const torneioSelecionado = torneios.find((t) => t.id === selecionadoId) || null;
-
-  const abrirSelecionado = () => {
-    if (!selecionadoId) return toast("Selecione um torneio primeiro", "aviso");
-    abrirTorneio(selecionadoId);
+  const editar = (t: Torneio) => {
+    setEditando(t);
+    setDialogoAberto("editar");
   };
 
-  const excluirSelecionado = async () => {
-    if (!torneioSelecionado) return toast("Selecione um torneio primeiro", "aviso");
+  const exportar = (t: Torneio) => {
+    const json = JSON.stringify(t, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${t.id}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast("Torneio exportado", "sucesso");
+  };
+
+  const excluir = async (t: Torneio) => {
     const ok = await confirmar({
       titulo: "Confirmar exclusão",
-      mensagem: `Excluir permanentemente o torneio "${torneioSelecionado.nome}"?`,
+      mensagem: `Excluir permanentemente o torneio "${t.nome}"?`,
       perigo: true,
       textoOk: "Excluir",
     });
     if (ok) {
-      removerTorneio(torneioSelecionado.id);
-      setSelecionadoId(null);
+      removerTorneio(t.id);
       toast("Torneio excluído", "sucesso");
     }
   };
@@ -191,28 +199,6 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             </>
           )}
 
-          {/* Ações sobre o torneio selecionado; quem só acompanha tem apenas Abrir */}
-          {podeEditar ? (
-            <MenuBarra icone={<IconeArena tamanho={18} />} rotulo="Torneio">
-              <ItemMenu onClick={abrirSelecionado}>Abrir</ItemMenu>
-              <ItemMenu
-                onClick={() => {
-                  if (!torneioSelecionado) return toast("Selecione um torneio primeiro", "aviso");
-                  setDialogoAberto("editar");
-                }}
-              >Editar</ItemMenu>
-              <ItemMenu perigo onClick={excluirSelecionado}>Excluir</ItemMenu>
-            </MenuBarra>
-          ) : (
-            <button
-              className="rounded-full px-4 py-2 font-medium text-sm transition hover:bg-white/5 active:scale-95"
-              style={{ color: "var(--text-strong)" }}
-              onClick={abrirSelecionado}
-            >Abrir</button>
-          )}
-
-          <div className="w-px h-6 mx-1" style={{ background: "rgba(255,255,255,0.1)" }} />
-
           {/* Analytics — destaque sutil */}
           <button
             className="rounded-full px-4 py-2 font-semibold text-sm transition active:scale-95 flex items-center gap-1.5"
@@ -274,21 +260,6 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             ><IconeDado /> Torneio de teste</ItemMenu>
             <div className="border-t border-bg-cardalt mt-1" />
             <TituloMenu>Exportar</TituloMenu>
-            <ItemMenu
-              disabled={!torneioSelecionado}
-              onClick={() => {
-                if (!torneioSelecionado) return;
-                const json = JSON.stringify(torneioSelecionado, null, 2);
-                const blob = new Blob([json], { type: "application/json" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `${torneioSelecionado.id}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-                toast("Torneio exportado", "sucesso");
-              }}
-            ><IconeDocumento /> Torneio selecionado (JSON)</ItemMenu>
             <ItemMenu
               onClick={() => {
                 exportarTudo();
@@ -415,7 +386,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
               corLabel="var(--brand-1)"
               label="Jogadores únicos"
               valor={String(metricas.totalJogadoresUnicos)}
-              sub={`média ${metricas.mediaJogadoresPorTorneio.toFixed(1)} por torneio`}
+              sub={`média ${formatarNumero(metricas.mediaJogadoresPorTorneio, 1)} por torneio`}
             />
             <MiniKpi
               corFundo="rgba(201,166,72,0.1)"
@@ -486,9 +457,8 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
                 torneio={t}
                 cor={CORES_MTG[i % CORES_MTG.length]}
                 criadoPor={t.criadoPor ? nomesDasContas.get(t.criadoPor) : undefined}
-                selecionado={t.id === selecionadoId}
-                onSelect={() => setSelecionadoId(t.id)}
-                onDblClick={() => { setSelecionadoId(t.id); abrirTorneio(t.id); }}
+                onAbrir={() => abrirTorneio(t.id)}
+                acoes={podeEditar ? { editar: () => editar(t), exportar: () => exportar(t), excluir: () => excluir(t) } : undefined}
               />
             ))}
           </div>
@@ -503,7 +473,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
         maxW="max-w-lg"
       >
         <DialogoTorneio
-          torneioExistente={dialogoAberto === "editar" ? torneioSelecionado : null}
+          torneioExistente={dialogoAberto === "editar" ? editando : null}
           onFechar={() => setDialogoAberto(null)}
         />
       </Modal>
@@ -515,16 +485,14 @@ function CardTorneio({
   torneio,
   cor,
   criadoPor,
-  selecionado,
-  onSelect,
-  onDblClick,
+  onAbrir,
+  acoes,
 }: {
   torneio: Torneio;
   cor: typeof CORES_MTG[0];
   criadoPor?: string;
-  selecionado: boolean;
-  onSelect: () => void;
-  onDblClick: () => void;
+  onAbrir: () => void;
+  acoes?: { editar: () => void; exportar: () => void; excluir: () => void };
 }) {
   const data = torneio.dataCriacao
     ? new Date(torneio.dataCriacao).toLocaleString("pt-BR", {
@@ -550,17 +518,14 @@ function CardTorneio({
 
   return (
     <div
-      onClick={onSelect}
-      onDoubleClick={onDblClick}
+      onClick={onAbrir}
       className="group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1.5 border"
       style={{
         background: `linear-gradient(135deg, ${corRgba(0.22)} 0%, rgba(26,26,26,0.65) 55%, rgba(15,15,15,0.75) 100%)`,
         backdropFilter: "blur(16px) saturate(140%)",
         WebkitBackdropFilter: "blur(16px) saturate(140%)",
-        borderColor: selecionado ? cor.hex : "rgba(255,255,255,0.1)",
-        boxShadow: selecionado
-          ? `0 0 0 2px ${cor.hex}, 0 25px 50px -12px ${corRgba(0.5)}`
-          : `0 15px 35px -12px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)`,
+        borderColor: "rgba(255,255,255,0.1)",
+        boxShadow: `0 15px 35px -12px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)`,
       }}
     >
       {/* Glow colorido no fundo (visível no hover) */}
@@ -612,7 +577,9 @@ function CardTorneio({
         {/* Nome do torneio */}
         <h3 className={`font-semibold text-base leading-snug break-words tracking-tight ${criadoPor ? "" : "min-h-[3rem]"}`}
             style={{ color: "var(--text-strong)" }}>
-          {torneio.nome}
+          <button type="button" className="text-left break-words hover:underline" onClick={(e) => { e.stopPropagation(); onAbrir(); }}>
+            {torneio.nome}
+          </button>
         </h3>
         {criadoPor && (
           <div className="text-xs mt-0.5 min-h-[1.5rem] break-words" style={{ color: "var(--text-2)" }}>
@@ -640,8 +607,31 @@ function CardTorneio({
           <Stat label="TEMPO" valor={`${torneio.tempoRodadaMin}min`} cor={cor.hex} />
           <Stat label="TAXA" valor={formatarReais(torneio.taxaInscricao)} cor={cor.hex} />
         </div>
+
+        {acoes && (
+          <div className="flex justify-end gap-1 mt-3 -mb-1">
+            <AcaoDoCard titulo={`Editar ${torneio.nome}`} onClick={acoes.editar}><IconeLapis /></AcaoDoCard>
+            <AcaoDoCard titulo={`Exportar ${torneio.nome}`} onClick={acoes.exportar}><IconeBaixar /></AcaoDoCard>
+            <AcaoDoCard titulo={`Excluir ${torneio.nome}`} onClick={acoes.excluir}><IconeLixeira cor="var(--critical)" /></AcaoDoCard>
+          </div>
+        )}
       </div>
     </div>
+  );
+}
+
+// O clique não pode chegar ao card, que abriria o torneio
+function AcaoDoCard({ titulo, onClick, children }: { titulo: string; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      title={titulo}
+      aria-label={titulo}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      className="w-9 h-9 rounded-lg flex items-center justify-center transition hover:bg-white/10 active:scale-95"
+    >
+      {children}
+    </button>
   );
 }
 
