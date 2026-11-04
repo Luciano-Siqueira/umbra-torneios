@@ -533,7 +533,8 @@ describe("decks", () => {
     expect(titulos).not.toContain("Cartas");
     expect(titulos).not.toContain("Tokens");
     expect(screen.getAllByText(/Commander 2016/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("(C16)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("C16").length).toBeGreaterThan(0);
+    expect(titulos).toEqual(["Deck", "Comandante", "Cores", "Combinação", "Coleção", "Sigla", "Lançamento"]);
 
     fireEvent.change(screen.getByRole("combobox", { name: "Filtrar por cores" }), { target: { value: "WUB" } });
     const linhas = screen.getAllByRole("row").slice(1);

@@ -122,12 +122,13 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
             <table className="w-full text-sm">
               <thead>
                 <tr className="tabela-cab">
-                  <th className={`${ESTILO_TITULO} hidden md:table-cell`}>Lançamento</th>
-                  <th className={`${ESTILO_TITULO} hidden sm:table-cell`}>Coleção</th>
                   <th className={ESTILO_TITULO}>Deck</th>
                   <th className={`${ESTILO_TITULO} hidden sm:table-cell`}>Comandante</th>
                   <th className={`${ESTILO_TITULO} hidden sm:table-cell`}>Cores</th>
                   <th className={`${ESTILO_TITULO} hidden md:table-cell`}>Combinação</th>
+                  <th className={`${ESTILO_TITULO} hidden lg:table-cell`}>Coleção</th>
+                  <th className={`${ESTILO_TITULO} hidden md:table-cell`}>Sigla</th>
+                  <th className={`${ESTILO_TITULO} hidden lg:table-cell`}>Lançamento</th>
                 </tr>
               </thead>
               <tbody>
@@ -138,11 +139,6 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
                     style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
                     onClick={() => setAberto(d)}
                   >
-                    <td className="py-1.5 px-2 whitespace-nowrap tabular-nums hidden md:table-cell">{formatarData(d.lancamento)}</td>
-                    <td className="py-1.5 px-2 hidden sm:table-cell">
-                      {nomeDaColecao(d.colecao)}
-                      {colecaoConhecida(d.colecao) && <span style={{ color: "var(--text-2)" }}> ({d.colecao})</span>}
-                    </td>
                     <td className="py-1.5 px-2">
                       <button type="button" className="font-medium text-left hover:underline" style={{ color: "var(--text-strong)" }}>
                         {d.nome}
@@ -157,6 +153,9 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
                       <CoresMana cores={d.cores} tamanho={14} />
                     </td>
                     <td className="py-1.5 px-2 hidden md:table-cell whitespace-nowrap">{nomeDaCombinacao(d.cores)}</td>
+                    <td className="py-1.5 px-2 hidden lg:table-cell">{colecaoConhecida(d.colecao) ? nomeDaColecao(d.colecao) : "—"}</td>
+                    <td className="py-1.5 px-2 hidden md:table-cell">{d.colecao}</td>
+                    <td className="py-1.5 px-2 whitespace-nowrap tabular-nums hidden lg:table-cell">{formatarData(d.lancamento)}</td>
                   </tr>
                 ))}
               </tbody>
