@@ -10,7 +10,7 @@ Sistema web de gerenciamento de torneios de MTG multiplayer. Parte da marca **Um
 
 A identidade oficial está em `marca/umbra-identidade.html`: logo, variações, sub-marcas (Cards, Data, Brews e Nights), o lema "In umbra veritas" e a paleta Noir `#0a0a0a`, Luz `#f5f5f5`, Ouro antigo `#c9a648` e Sangue `#8b0000`.
 
-O site usa só o símbolo, com acento em ouro antigo, no menu (`src/components/ui/LogoUmbra.tsx`). O favicon e os ícones do app saem de `marca/simbolo-umbra.svg`. Cores fora da paleta só para avisos, símbolos de Magic, medalhas e participantes dos sorteios.
+O site usa só o símbolo, com acento em ouro antigo, no menu (`src/components/ui/LogoUmbra.tsx`). O favicon e os ícones do app saem de `marca/simbolo-umbra.svg`. Os cards de torneio usam os símbolos de mana do pacote `mana-font` (`src/components/ui/SimboloMana.tsx`). Cores fora da paleta só para avisos, símbolos de Magic, medalhas e participantes dos sorteios.
 
 ---
 

@@ -13,13 +13,14 @@ import { ranking } from "../core/resultados";
 import { podeEditarTorneios, torneioParado, torneiosVisiveis } from "../core/visibilidade";
 import { BANNER_IMAGE } from "../banner-image";
 import { SimboloUmbra } from "./ui/LogoUmbra";
+import { SimboloMana, type CorMana } from "./ui/SimboloMana";
 
-const CORES_MTG = [
-  { hex: "#f9f5e3", nome: "PLAINS", simbolo: "☀" },
-  { hex: "#5b9bd5", nome: "ISLAND", simbolo: "◈" },
-  { hex: "#6d5e7d", nome: "SWAMP", simbolo: "☠" },
-  { hex: "#e15b5b", nome: "MOUNTAIN", simbolo: "♨" },
-  { hex: "#7bc47f", nome: "FOREST", simbolo: "❦" },
+const CORES_MTG: { hex: string; nome: string; mana: CorMana }[] = [
+  { hex: "#f9f5e3", nome: "PLAINS", mana: "w" },
+  { hex: "#5b9bd5", nome: "ISLAND", mana: "u" },
+  { hex: "#6d5e7d", nome: "SWAMP", mana: "b" },
+  { hex: "#e15b5b", nome: "MOUNTAIN", mana: "r" },
+  { hex: "#7bc47f", nome: "FOREST", mana: "g" },
 ];
 
 function EsqueletoTorneios() {
@@ -570,15 +571,14 @@ function CardTorneio({
         {/* Header: símbolo grande + status pill */}
         <div className="flex items-start justify-between gap-2 mb-3">
           <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center text-3xl font-bold transition-transform group-hover:scale-110"
+            className="w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
             style={{
               background: `linear-gradient(135deg, ${corRgba(0.3)}, ${corRgba(0.1)})`,
-              color: cor.hex,
               border: `1px solid ${corRgba(0.3)}`,
               boxShadow: `0 4px 12px -2px ${corRgba(0.3)}, inset 0 1px 0 rgba(255,255,255,0.1)`,
             }}
           >
-            {cor.simbolo}
+            <SimboloMana cor={cor.mana} tamanho={34} />
           </div>
           <span
             className="text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-full border"
