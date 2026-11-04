@@ -355,9 +355,11 @@ export function AbaMesas({ torneio, podeEditar, onIrParaAba }: {
             🔀 Resortear mesas
           </button>
         )}
-        <button className="btn-info" onClick={copiarWhatsApp}>
-          📋 Copiar (WhatsApp)
-        </button>
+        {podeEditar && (
+          <button className="btn-info" onClick={copiarWhatsApp}>
+            📋 Copiar (WhatsApp)
+          </button>
+        )}
         {podeEditar && rodadaConcluida && torneio.rodadaAtual < torneio.qtdRodadas && (
           <button className="btn-success" onClick={iniciar} disabled={!podeIniciar}>
             ▶ Nova rodada ({torneio.rodadaAtual + 1}/{torneio.qtdRodadas})

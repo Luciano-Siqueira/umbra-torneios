@@ -122,6 +122,18 @@ describe("encerrar torneio", () => {
     expect(botao(/Finalizar torneio/)).toBeNull();
   });
 
+  it("copiar para o WhatsApp é só de quem organiza", () => {
+    const t = emAndamento(2, false);
+    preparar("jogador", {}, [t]);
+    abrir(<AbaMesas torneio={t} podeEditar={false} />);
+    expect(botao(/Copiar \(WhatsApp\)/)).toBeNull();
+    cleanup();
+
+    preparar("organizador", { isOrganizador: true }, [t]);
+    abrir(<AbaMesas torneio={t} podeEditar />);
+    expect(botao(/Copiar \(WhatsApp\)/)).toBeTruthy();
+  });
+
   it("no torneio finalizado, os atalhos levam para as abas", () => {
     const t = { ...torneioCom("Pessoa"), finalizado: true, rodadaAtual: 4 };
     preparar("admin", { isAdmin: true }, [t]);
