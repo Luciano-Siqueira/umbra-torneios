@@ -13,6 +13,7 @@ import { TelaDecks } from "../TelaDecks";
 import { TelaVincularNome } from "../TelaVincularNome";
 import { AbaJogadores } from "../abas/AbaJogadores";
 import { AbaMesas } from "../abas/AbaMesas";
+import { AbaRanking } from "../abas/AbaRanking";
 import { AuthChip } from "../AuthChip";
 
 const contas = vi.hoisted(() => ({
@@ -66,6 +67,33 @@ beforeEach(() => {
   sessionStorage.clear();
 });
 afterEach(cleanup);
+
+describe("rodadas e desempate", () => {
+  it("o card mostra a rodada atual, e o finalizado mostra só o total", () => {
+    const criar = (nome: string, rodada: number, finalizado: boolean) => ({
+      ...torneioCom("Pessoa"), id: nome, nome, qtdRodadas: 4, rodadaAtual: rodada, finalizado,
+    });
+    preparar("admin", { isAdmin: true }, [criar("Parado", 0, false), criar("Jogando", 2, false), criar("Acabou", 4, true)]);
+    abrir(<TelaTorneios />);
+
+    const rodadasDe = (nome: string) => {
+      const card = screen.getAllByRole("heading", { level: 3, name: nome })[0].parentElement!;
+      return within(card).getByText("RODADAS").parentElement!.textContent;
+    };
+    expect(rodadasDe("Parado")).toContain("0/4");
+    expect(rodadasDe("Jogando")).toContain("2/4");
+    expect(rodadasDe("Acabou")).toContain("4");
+    expect(rodadasDe("Acabou")).not.toContain("/");
+  });
+
+  it("a regra de desempate aparece em vermelho acima da tabela, para todos", () => {
+    render(<AbaRanking torneio={torneioCom("Pessoa")} />);
+
+    const aviso = screen.getByText(/Desempate oficial MTG/);
+    expect(aviso.style.color).toBe("var(--critical)");
+    expect(aviso.compareDocumentPosition(screen.getByRole("table")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});
 
 describe("barra da lista de torneios", () => {
   it("quem edita tem os menus Torneio e Importar / Exportar", () => {

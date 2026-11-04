@@ -597,7 +597,11 @@ function CardTorneio({
         {/* Stats grid 2x2 */}
         <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
           <Stat label="JOGADORES" valor={String(torneio.jogadores.length)} cor={cor.hex} />
-          <Stat label="RODADAS" valor={String(torneio.qtdRodadas)} cor={cor.hex} />
+          <Stat
+            label="RODADAS"
+            valor={torneio.finalizado ? String(torneio.qtdRodadas) : `${torneio.rodadaAtual}/${torneio.qtdRodadas}`}
+            cor={cor.hex}
+          />
           <Stat label="TEMPO" valor={`${torneio.tempoRodadaMin}min`} cor={cor.hex} />
           <Stat label="TAXA" valor={`R$ ${torneio.taxaInscricao.toFixed(0)}`} cor={cor.hex} />
         </div>

@@ -11,6 +11,9 @@ export function AbaRanking({ torneio }: { torneio: Torneio }) {
   return (
     <div className="w-full">
       <div className="card">
+        <div className="text-sm font-semibold text-center mb-3" style={{ color: "var(--critical)" }}>
+          Desempate oficial MTG: Pontos → OMW% → GW% → OGW% (piso 33%)
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -64,9 +67,6 @@ export function AbaRanking({ torneio }: { torneio: Torneio }) {
         {rank.length === 0 && (
           <div className="text-center py-8 text-fg-dim">Nenhum jogador ainda</div>
         )}
-      </div>
-      <div className="text-xs text-fg-muted mt-3 text-center">
-        Desempate oficial MTG: Pontos → OMW% → GW% → OGW% (piso 33%)
       </div>
     </div>
   );
