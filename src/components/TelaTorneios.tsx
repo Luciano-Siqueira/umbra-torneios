@@ -15,6 +15,7 @@ import { BANNER_IMAGE } from "../banner-image";
 import { SimboloUmbra } from "./ui/LogoUmbra";
 import { SimboloMana, type CorMana } from "./ui/SimboloMana";
 import { ItemMenu, MenuBarra, TituloMenu } from "./ui/MenuBarra";
+import { comandanteDoDeck } from "../core/decks";
 
 const CORES_MTG: { hex: string; nome: string; mana: CorMana }[] = [
   { hex: "#f9f5e3", nome: "PLAINS", mana: "w" },
@@ -409,6 +410,39 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
               valorPequeno
             />
           </div>
+        )}
+
+        {metricas.topDecks.length > 0 && (
+          <section
+            aria-label="Decks mais usados"
+            className="px-4 py-3 rounded-2xl border"
+            style={{
+              background: "rgba(15,15,15,0.6)",
+              borderColor: "rgba(201,166,72,0.25)",
+              backdropFilter: "blur(14px)",
+              WebkitBackdropFilter: "blur(14px)",
+            }}
+          >
+            <div className="text-[11px] font-bold tracking-widest uppercase mb-2" style={{ color: "#c9a648" }}>
+              🎴 Decks mais usados
+            </div>
+            <ol className="flex flex-wrap gap-2">
+              {metricas.topDecks.slice(0, 5).map((d, i) => (
+                <li
+                  key={d.nome}
+                  title={comandanteDoDeck(d.nome) || undefined}
+                  className="flex items-center gap-2 px-3 py-1 rounded-full text-sm min-w-0"
+                  style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-strong)" }}
+                >
+                  <span className="font-bold tabular-nums" style={{ color: "#c9a648" }}>{i + 1}º</span>
+                  <span className="break-words min-w-0">{d.nome}</span>
+                  <span className="text-xs tabular-nums whitespace-nowrap" style={{ color: "var(--text-2)" }}>
+                    {d.usos} {d.usos === 1 ? "uso" : "usos"}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </section>
         )}
       </div>
 

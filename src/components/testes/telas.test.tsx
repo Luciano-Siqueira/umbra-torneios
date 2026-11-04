@@ -95,6 +95,30 @@ describe("rodadas e desempate", () => {
   });
 });
 
+describe("decks mais usados na lista de torneios", () => {
+  it("mostra os 5 primeiros acima dos cards, com a quantidade de usos", () => {
+    const t = torneioCom("Pessoa");
+    const decks = ["Breed Lethality", "Breed Lethality", "A", "B", "C", "D", "E"];
+    t.jogadores = decks.map((d, i) => novoJogador(i + 1, `J${i}`, d, true));
+    preparar("admin", { isAdmin: true }, [t]);
+    abrir(<TelaTorneios />);
+
+    const secao = screen.getByRole("region", { name: "Decks mais usados" });
+    const itens = within(secao).getAllByRole("listitem");
+    expect(itens).toHaveLength(5);
+    expect(itens[0].textContent).toContain("Breed Lethality");
+    expect(itens[0].textContent).toContain("2 usos");
+    expect(itens[1].textContent).toContain("1 uso");
+    expect(secao.compareDocumentPosition(screen.getByRole("heading", { level: 3, name: "Liga" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("sem decks informados, a seção não aparece", () => {
+    preparar("admin", { isAdmin: true }, [torneioCom("Pessoa")]);
+    abrir(<TelaTorneios />);
+    expect(screen.queryByRole("region", { name: "Decks mais usados" })).toBeNull();
+  });
+});
+
 describe("barra da lista de torneios", () => {
   it("quem edita tem os menus Torneio e Importar / Exportar", () => {
     preparar("admin", { isAdmin: true });
