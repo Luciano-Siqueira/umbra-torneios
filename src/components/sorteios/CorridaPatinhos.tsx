@@ -386,7 +386,9 @@ export const CorridaPatinhos = forwardRef<PatinhosHandle, Props>(function Corrid
           vencedor = { ...p, x: novoX, wobble: p.wobble + 0.15, posicaoFinal: 1 };
           return vencedor;
         }
-        return { ...p, x: Math.min(novoX, linhaChegada - 5), wobble: p.wobble + 0.15 };
+        // Só quem alcançou a linha no mesmo quadro do vencedor fica logo atrás dela.
+        // Limitar os demais prenderia um pato lento, cujo passo não vence essa distância.
+        return { ...p, x: novoX >= linhaChegada ? linhaChegada - 5 : novoX, wobble: p.wobble + 0.15 };
       });
       patosRef.current = nova;
       setPatos(nova);
