@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ANOS_DECKS, comandanteDoDeck, coresDoDeck, DECKS, filtrarDecks, opcoesDeCores, sugerirDecks } from "../decks";
 import { COMBINACOES, nomeDaCombinacao } from "../coresMagic";
+import { colecaoConhecida, nomeDaColecao } from "../colecoes";
 import { calcularMetricas } from "../metricas";
 import { novoJogador, novoTorneio, type Torneio } from "../types";
 
@@ -41,6 +42,24 @@ describe("cores dos comandantes", () => {
     expect(coresDoDeck("Eldrazi Unbound")).toBe("");
     expect(coresDoDeck("Meu deck de elfos")).toBeNull();
     expect(coresDoDeck("Breed Lethality")).toBe("WUBG");
+  });
+});
+
+describe("nomes das coleções", () => {
+  it("toda coleção da lista tem o nome completo", () => {
+    for (const d of DECKS) expect(colecaoConhecida(d.colecao), d.colecao).toBe(true);
+    expect(nomeDaColecao("C16")).toBe("Commander 2016");
+  });
+
+  it("coleção desconhecida continua com a sigla", () => {
+    expect(nomeDaColecao("XYZ")).toBe("XYZ");
+    expect(colecaoConhecida("XYZ")).toBe(false);
+  });
+
+  it("a busca encontra pelo nome da coleção", () => {
+    const decks = filtrarDecks("bloomburrow");
+    expect(decks).toHaveLength(4);
+    expect(decks.every((d) => d.colecao === "BLC")).toBe(true);
   });
 });
 

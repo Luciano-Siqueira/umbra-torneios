@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { atualizarDecks, sincronizarDecks } from "../atualizarDecks";
-import { aplicarDecksExtras, comandanteDoDeck, coresDoDeck, DECKS } from "../decks";
+import { aplicarDecksExtras, comandanteDoDeck, coresDoDeck, DECKS, filtrarDecks } from "../decks";
+import { nomeDaColecao } from "../colecoes";
 
 const json = (dados: unknown, status = 200) =>
   new Response(JSON.stringify(dados), { status, headers: { "content-type": "application/json" } });
@@ -121,6 +122,28 @@ describe("sincronizar decks", () => {
     expect(comandanteDoDeck("Do Banco")).toBe("Alguém");
     expect(coresDoDeck("Do Banco")).toBe("");
     expect(JSON.parse(localStorage.getItem("mtg.decks.extras")!)).toHaveLength(1);
+  });
+
+  it("busca o nome de uma coleção nova e guarda neste aparelho", async () => {
+    localStorage.removeItem("mtg.colecoes.extras");
+    (globalThis as any).__rede = async (url: string) => url.includes("SetList.json")
+      ? json({ data: [{ code: "NOVA", name: "Coleção Nova Commander" }, { code: "OUTRA", name: "Não deve guardar" }] })
+      : json([{ colecao: "NOVA", nome: "Deck Novo", lancamento: "2027-03-01", comandantes: "Alguém", cartas: 100, tokens: 0, cores: "W" }]);
+    await sincronizarDecks();
+
+    expect(nomeDaColecao("NOVA")).toBe("Coleção Nova Commander");
+    expect(filtrarDecks("coleção nova").map((d) => d.nome)).toEqual(["Deck Novo"]);
+    expect(JSON.parse(localStorage.getItem("mtg.colecoes.extras")!)).toEqual({ NOVA: "Coleção Nova Commander" });
+  });
+
+  it("se os nomes falharem, o deck novo entra com a sigla", async () => {
+    (globalThis as any).__rede = async (url: string) => url.includes("SetList.json")
+      ? json({}, 500)
+      : json([{ colecao: "SEMNOME", nome: "Outro Deck", lancamento: "2027-03-01", comandantes: "Alguém", cartas: 100, tokens: 0, cores: "W" }]);
+    await sincronizarDecks();
+
+    expect(nomeDaColecao("SEMNOME")).toBe("SEMNOME");
+    expect(comandanteDoDeck("Outro Deck")).toBe("Alguém");
   });
 
   it("sem a tabela, mantém a lista que acompanha o site", async () => {

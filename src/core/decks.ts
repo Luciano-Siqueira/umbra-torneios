@@ -1,4 +1,5 @@
 import { COMBINACOES, nomeDaCombinacao, type CombinacaoDeCores } from "./coresMagic";
+import { nomeDaColecao } from "./colecoes";
 
 // Decks de Commander lançados. Cada linha: lançamento|coleção|nome|comandante(s)|cartas|tokens|cores
 // Cores: identidade de cor do comandante segundo a Scryfall (WUBRG; vazio = incolor)
@@ -247,7 +248,7 @@ export function aplicarDecksExtras(extras: DeckCommander[]) {
   // Mais recentes primeiro
   const lista = Array.from(unicos.values()).sort((a, b) => b.lancamento.localeCompare(a.lancamento));
   const busca = new Map(
-    lista.map((d) => [d, normalizar(`${d.nome} ${d.comandantes} ${d.colecao} ${d.lancamento.slice(0, 4)} ${nomeDaCombinacao(d.cores)}`)])
+    lista.map((d) => [d, normalizar(`${d.nome} ${d.comandantes} ${d.colecao} ${nomeDaColecao(d.colecao)} ${d.lancamento.slice(0, 4)} ${nomeDaCombinacao(d.cores)}`)])
   );
 
   DECKS = lista;

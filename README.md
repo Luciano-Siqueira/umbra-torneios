@@ -117,8 +117,10 @@ Mesmo usuário pode ter todos os papéis. O `modoView` (admin/organizador/jogado
 - `src/core/decks.ts` traz a lista de decks de Commander, com as cores dos comandantes. Os lançamentos novos ficam na tabela `decks_commander` (`supabase/decks_commander.sql`) e são somados a ela
 - O botão "Atualizar decks" (só admin, no modo admin) roda no navegador: compara com o `DeckList.json` do MTGJSON, baixa só os decks novos, busca as cores na Scryfall e grava na tabela (`src/core/atualizarDecks.ts`)
 - A página de decks é só do admin, no modo admin. Ao abrir um deck, `src/core/deckCompleto.ts` baixa as cartas do MTGJSON e separa por tipo; as imagens vêm da Scryfall. O cadastro de jogadores continua sugerindo decks para quem organiza
+- O MTGJSON só lista os tokens da caixa de parte dos decks. Sem eles, o detalhe mostra os que as cartas do deck criam, consultados na Scryfall (`all_parts`), sem quantidade
 - `scripts/atualizar_decks.py` mantém um acervo local com as listas completas e as imagens. Não é usado pelo site
 - `src/core/coresMagic.ts` traz os nomes das combinações de cores (guildas, fragmentos, cunhas), usados no filtro de decks e no Analytics
+- `src/core/colecoes.ts` traz o nome completo das coleções. As lançadas depois são buscadas no `SetList.json` do MTGJSON ao sincronizar
 - O torneio guarda só o nome do deck; comandante e cores vêm da lista. Um deck fora dela é tratado como próprio
 ### Supabase
 

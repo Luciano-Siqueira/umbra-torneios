@@ -2,6 +2,9 @@
 import type { DeckCommander } from "./decks";
 
 const MTGJSON = "https://mtgjson.com/api/v5";
+const SCRYFALL_COLECAO = "https://api.scryfall.com/cards/collection";
+const LOTE_SCRYFALL = 75; // limite da API
+const INTERVALO_SCRYFALL = 100; // a Scryfall pede de 50 a 100 ms entre as chamadas
 
 export interface CartaDoDeck {
   nome: string;
@@ -26,6 +29,8 @@ export interface DeckCompleto {
   totalCartas: number;
   tokens: CartaDoDeck[];
   totalTokens: number;
+  // "deck": os que vêm na caixa, com quantidade. "cartas": os que as cartas criam, sem quantidade
+  tokensOrigem: "deck" | "cartas" | null;
 }
 
 const GRUPOS: { id: IdGrupo; titulo: string }[] = [
@@ -114,6 +119,7 @@ export function montarDeckCompleto(deck: any): DeckCompleto {
     grupos,
     tokens,
     totalTokens: tokens.reduce((soma, t) => soma + t.quantidade, 0),
+    tokensOrigem: tokens.length > 0 ? "deck" : null,
     totalCartas: grupos.reduce((soma, g) => soma + g.total, 0)
       + comandantes.reduce((soma: number, c: CartaDoDeck) => soma + c.quantidade, 0),
   };
@@ -123,6 +129,57 @@ async function baixarJson(url: string): Promise<any> {
   const resposta = await fetch(url);
   if (!resposta.ok) throw new Error(`O MTGJSON respondeu ${resposta.status}`);
   return resposta.json();
+}
+
+async function consultarScryfall(ids: string[]): Promise<any[]> {
+  const cartas: any[] = [];
+  for (let i = 0; i < ids.length; i += LOTE_SCRYFALL) {
+    if (i > 0) await new Promise((fim) => setTimeout(fim, INTERVALO_SCRYFALL));
+    const resposta = await fetch(SCRYFALL_COLECAO, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identifiers: ids.slice(i, i + LOTE_SCRYFALL).map((id) => ({ id })) }),
+    });
+    if (!resposta.ok) throw new Error(`A Scryfall respondeu ${resposta.status}`);
+    cartas.push(...(await resposta.json()).data);
+  }
+  return cartas;
+}
+
+// Sem tokens na lista do deck, mostra os que as cartas dele criam. "Copy" não é um token específico
+export async function tokensPelasCartas(deck: any): Promise<CartaDoDeck[]> {
+  const ids = Array.from(new Set<string>(
+    [...(deck.commander ?? []), ...(deck.mainBoard ?? [])]
+      .map((c: any) => c.identifiers?.scryfallId)
+      .filter(Boolean)
+  ));
+  const tokens = new Map<string, any>();
+  for (const carta of await consultarScryfall(ids)) {
+    for (const parte of carta.all_parts ?? []) {
+      if (parte.component === "token" && parte.name !== "Copy") tokens.set(parte.id, parte);
+    }
+  }
+  if (tokens.size === 0) return [];
+
+  // Poder e resistência só vêm na carta do próprio token; sem eles, a lista continua válida
+  const detalhes = new Map<string, any>();
+  try {
+    await new Promise((fim) => setTimeout(fim, INTERVALO_SCRYFALL));
+    for (const t of await consultarScryfall(Array.from(tokens.keys()))) detalhes.set(t.id, t);
+  } catch { /* segue sem esses dados */ }
+
+  return Array.from(tokens.values())
+    .map((parte): CartaDoDeck => {
+      const d = detalhes.get(parte.id);
+      return {
+        nome: parte.name,
+        quantidade: 0,
+        tipo: parte.type_line ?? "",
+        imagem: imagemDaCarta(parte.id),
+        forca: d?.power !== undefined ? `${d.power}/${d.toughness}` : undefined,
+      };
+    })
+    .sort((a, b) => a.nome.localeCompare(b.nome) || (a.forca ?? "").localeCompare(b.forca ?? ""));
 }
 
 let indice: Promise<Map<string, string>> | null = null;
@@ -143,10 +200,19 @@ export function buscarDeckCompleto(deck: Pick<DeckCommander, "colecao" | "nome">
   if (guardado) return guardado;
 
   const busca = (async () => {
-    const arquivo = await nomeDoArquivo(deck.colecao, deck.nome);
+    let arquivo = await nomeDoArquivo(deck.colecao, deck.nome);
+    if (!arquivo) {
+      // Um lançamento adicionado depois de baixar a lista ainda não está nela
+      indice = null;
+      arquivo = await nomeDoArquivo(deck.colecao, deck.nome);
+    }
     if (!arquivo) throw new Error("Este deck não foi encontrado no MTGJSON");
     const { data } = await baixarJson(`${MTGJSON}/decks/${encodeURIComponent(arquivo)}.json`);
-    return montarDeckCompleto(data);
+    const completo = montarDeckCompleto(data);
+    if (completo.tokensOrigem) return completo;
+    // Sem esta consulta o deck continua abrindo, só sem os tokens
+    const tokens = await tokensPelasCartas(data).catch(() => []);
+    return tokens.length > 0 ? { ...completo, tokens, tokensOrigem: "cartas" as const } : completo;
   })();
   abertos.set(chave, busca);
   busca.catch(() => abertos.delete(chave));

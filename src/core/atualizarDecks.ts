@@ -3,10 +3,12 @@
 import { create } from "zustand";
 import { aplicarDecksExtras, DECKS, type DeckCommander } from "./decks";
 import { supabase } from "./supabaseClient";
+import { colecaoConhecida, guardarNomesDeColecoes } from "./colecoes";
 
 const MTGJSON = "https://mtgjson.com/api/v5";
 const SCRYFALL_COLECAO = "https://api.scryfall.com/cards/collection";
 const KEY_CACHE = "mtg.decks.extras";
+const KEY_COLECOES = "mtg.colecoes.extras";
 const LOTE_SCRYFALL = 75; // limite da API
 
 export interface ResultadoAtualizacao {
@@ -24,6 +26,7 @@ function aplicar(extras: DeckCommander[]) {
 
 // Mostra na hora os decks já baixados neste aparelho, antes de consultar o banco
 try {
+  guardarNomesDeColecoes(JSON.parse(localStorage.getItem(KEY_COLECOES) || "{}"));
   const cache = JSON.parse(localStorage.getItem(KEY_CACHE) || "null");
   if (Array.isArray(cache)) aplicarDecksExtras(cache);
 } catch { /* ignore */ }
@@ -38,12 +41,30 @@ const daLinha = (r: any): DeckCommander => ({
   cores: r.cores,
 });
 
+// Coleção lançada depois da lista do site. Se falhar, ela continua aparecendo só com a sigla
+async function buscarNomesDeColecoes(extras: DeckCommander[]): Promise<void> {
+  const faltando = new Set(extras.map((d) => d.colecao).filter((c) => !colecaoConhecida(c)));
+  if (faltando.size === 0) return;
+  try {
+    const resposta = await fetch(`${MTGJSON}/SetList.json`);
+    if (!resposta.ok) return;
+    const { data } = await resposta.json();
+    const nomes: Record<string, string> = JSON.parse(localStorage.getItem(KEY_COLECOES) || "{}");
+    for (const colecao of data ?? []) {
+      if (faltando.has(colecao.code)) nomes[colecao.code] = colecao.name;
+    }
+    guardarNomesDeColecoes(nomes);
+    localStorage.setItem(KEY_COLECOES, JSON.stringify(nomes));
+  } catch { /* segue com a sigla */ }
+}
+
 // Enquanto a tabela não existir, ou sem conexão, segue com a lista que acompanha o site
 export async function sincronizarDecks(): Promise<void> {
   const { data, error } = await supabase.from("decks_commander").select("*");
   if (error || !data) return;
   const extras = data.map(daLinha);
   localStorage.setItem(KEY_CACHE, JSON.stringify(extras));
+  await buscarNomesDeColecoes(extras);
   aplicar(extras);
 }
 

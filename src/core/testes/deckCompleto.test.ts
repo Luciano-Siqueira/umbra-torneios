@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { grupoDaCarta, imagemDaCarta, montarDeckCompleto } from "../deckCompleto";
+import { grupoDaCarta, imagemDaCarta, montarDeckCompleto, tokensPelasCartas } from "../deckCompleto";
 
 describe("grupo de cada carta", () => {
   it("separa pelos tipos pedidos", () => {
@@ -91,6 +91,7 @@ describe("montar o deck", () => {
     });
     expect(d.totalCartas).toBe(1);
     expect(d.totalTokens).toBe(11);
+    expect(d.tokensOrigem).toBe("deck");
     expect(d.tokens.map((t) => [t.nome, t.quantidade, t.forca])).toEqual([
       ["Bird", 4, "1/1"],
       ["Bird", 2, "3/3"],
@@ -99,6 +100,71 @@ describe("montar o deck", () => {
   });
 
   it("deck sem dados não quebra a tela", () => {
-    expect(montarDeckCompleto({})).toEqual({ comandantes: [], grupos: [], totalCartas: 0, tokens: [], totalTokens: 0 });
+    expect(montarDeckCompleto({})).toEqual({ comandantes: [], grupos: [], totalCartas: 0, tokens: [], totalTokens: 0, tokensOrigem: null });
+  });
+});
+
+describe("tokens que as cartas criam", () => {
+  const json = (dados: unknown, status = 200) =>
+    new Response(JSON.stringify(dados), { status, headers: { "content-type": "application/json" } });
+  const deck = {
+    commander: [{ name: "A", identifiers: { scryfallId: "c1" } }],
+    mainBoard: [
+      { name: "B", identifiers: { scryfallId: "c2" } },
+      { name: "B outra", identifiers: { scryfallId: "c2" } },
+      { name: "Sem id" },
+    ],
+  };
+  const cartas = [
+    { id: "c1", all_parts: [
+      { id: "c1", component: "combo_piece", name: "A" },
+      { id: "t2", component: "token", name: "Zombie", type_line: "Token Creature — Zombie" },
+      { id: "t1", component: "token", name: "Elf", type_line: "Token Creature — Elf" },
+    ] },
+    { id: "c2", all_parts: [
+      { id: "t1", component: "token", name: "Elf", type_line: "Token Creature — Elf" },
+      { id: "t3", component: "token", name: "Copy", type_line: "Token" },
+    ] },
+  ];
+
+  it("junta os tokens sem repetir, ignora Copy e traz poder e resistência", async () => {
+    const pedidos: string[][] = [];
+    (globalThis as any).__rede = async (_url: string, init: RequestInit) => {
+      const ids = JSON.parse(String(init.body)).identifiers.map((i: any) => i.id);
+      pedidos.push(ids);
+      return json({ data: ids.includes("c1") ? cartas : [{ id: "t1", power: "1", toughness: "1" }, { id: "t2", power: "2", toughness: "2" }] });
+    };
+    const tokens = await tokensPelasCartas(deck);
+    expect(pedidos[0]).toEqual(["c1", "c2"]);
+    expect(tokens.map((t) => [t.nome, t.forca, t.tipo])).toEqual([
+      ["Elf", "1/1", "Token Creature — Elf"],
+      ["Zombie", "2/2", "Token Creature — Zombie"],
+    ]);
+    expect(tokens[0].imagem).toContain("/t/1/t1.jpg");
+  });
+
+  it("se a segunda consulta falhar, a lista sai sem poder e resistência", async () => {
+    let chamada = 0;
+    (globalThis as any).__rede = async () => (++chamada === 1 ? json({ data: cartas }) : json({}, 500));
+    const tokens = await tokensPelasCartas(deck);
+    expect(tokens.map((t) => [t.nome, t.forca])).toEqual([["Elf", undefined], ["Zombie", undefined]]);
+  });
+
+  it("sem tokens nas cartas, não faz a segunda consulta", async () => {
+    let chamadas = 0;
+    (globalThis as any).__rede = async () => { chamadas++; return json({ data: [{ id: "c1" }] }); };
+    expect(await tokensPelasCartas(deck)).toEqual([]);
+    expect(chamadas).toBe(1);
+  });
+
+  it("divide em lotes de 75 cartas", async () => {
+    const tamanhos: number[] = [];
+    (globalThis as any).__rede = async (_url: string, init: RequestInit) => {
+      tamanhos.push(JSON.parse(String(init.body)).identifiers.length);
+      return json({ data: [] });
+    };
+    const mainBoard = Array.from({ length: 90 }, (_, i) => ({ identifiers: { scryfallId: `id${i}` } }));
+    await tokensPelasCartas({ mainBoard });
+    expect(tamanhos).toEqual([75, 15]);
   });
 });

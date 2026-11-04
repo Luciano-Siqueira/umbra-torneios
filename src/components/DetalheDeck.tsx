@@ -4,6 +4,7 @@ import { IconeEngrenagem, IconeEspiral, IconeEstrela, IconeGarra, IconeMoeda, Ic
 import type { DeckCommander } from "../core/decks";
 import { contar } from "../core/formato";
 import { nomeDaCombinacao } from "../core/coresMagic";
+import { colecaoConhecida, nomeDaColecao } from "../core/colecoes";
 import { CoresMana } from "./ui/SimboloMana";
 
 const ICONE_DO_GRUPO: Record<IdGrupo, (props: { tamanho?: number }) => JSX.Element> = {
@@ -75,7 +76,7 @@ export function DetalheDeck({ deck, onVoltar }: { deck: DeckCommander; onVoltar:
       <div className="card">
         <h2 className="text-xl md:text-2xl font-bold" style={{ color: "var(--text-strong)" }}>{deck.nome}</h2>
         <div className="text-sm mt-1" style={{ color: "var(--text-2)" }}>
-          <CoresMana cores={deck.cores} tamanho={16} /> {nomeDaCombinacao(deck.cores)} · {deck.colecao} · {formatarData(deck.lancamento)}
+          <CoresMana cores={deck.cores} tamanho={16} /> {nomeDaCombinacao(deck.cores)} · {colecaoConhecida(deck.colecao) ? `${nomeDaColecao(deck.colecao)} (${deck.colecao})` : deck.colecao} · {formatarData(deck.lancamento)}
           {dados && ` · ${contar(dados.totalCartas, "carta")}`}
         </div>
       </div>
@@ -129,10 +130,17 @@ export function DetalheDeck({ deck, onVoltar }: { deck: DeckCommander; onVoltar:
               <h3 className="font-semibold mb-2 flex items-center gap-2" style={{ color: "var(--text-strong)" }}>
                 <IconeMoeda tamanho={18} />
                 <span className="flex-1">Tokens</span>
-                <span className="text-sm tabular-nums" style={{ color: "var(--brand-1)" }}>{dados.totalTokens}</span>
+                {dados.tokensOrigem === "deck" && (
+                  <span className="text-sm tabular-nums" style={{ color: "var(--brand-1)" }}>{dados.totalTokens}</span>
+                )}
               </h3>
+              {dados.tokensOrigem === "cartas" && (
+                <div className="text-xs mb-2" style={{ color: "var(--text-2)" }}>
+                  A lista deste deck não informa os tokens da caixa. Estes são os que as cartas dele criam, segundo a Scryfall.
+                </div>
+              )}
               {dados.tokens.length === 0 ? (
-                <div className="text-xs" style={{ color: "var(--text-2)" }}>O MTGJSON não lista tokens para este deck.</div>
+                <div className="text-xs" style={{ color: "var(--text-2)" }}>Não encontramos tokens para este deck.</div>
               ) : (
                 <ul className="text-sm">
                   {dados.tokens.map((t) => (
@@ -141,9 +149,11 @@ export function DetalheDeck({ deck, onVoltar }: { deck: DeckCommander; onVoltar:
                       className="flex gap-2 py-1"
                       style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
                     >
-                      <span className="tabular-nums w-5 text-right flex-shrink-0" style={{ color: "var(--text-2)" }}>
-                        {t.quantidade}
-                      </span>
+                      {dados.tokensOrigem === "deck" && (
+                        <span className="tabular-nums w-5 text-right flex-shrink-0" style={{ color: "var(--text-2)" }}>
+                          {t.quantidade}
+                        </span>
+                      )}
                       <span className="min-w-0 break-words flex-1" title={t.tipo}>{t.nome}</span>
                       {t.forca && <span className="tabular-nums" style={{ color: "var(--text-2)" }}>{t.forca}</span>}
                     </li>

@@ -486,6 +486,30 @@ describe("decks", () => {
       expect(screen.getByRole("searchbox")).toBeTruthy();
     });
 
+    it("sem tokens na lista do deck, mostra os que as cartas criam, sem quantidade", async () => {
+      const semTokens = { data: {
+        commander: [{ name: "Comandante", count: 1, types: ["Creature"], identifiers: { scryfallId: "c1" } }],
+        mainBoard: [{ name: "Bicho", count: 1, types: ["Creature"], identifiers: { scryfallId: "c2" } }],
+      } };
+      (globalThis as any).__rede = async (url: string, init: RequestInit) => {
+        if (url.endsWith("DeckList.json")) return json({ data: [{ code: "CMD", name: "Counterpunch", fileName: "Counterpunch_CMD", type: "Commander Deck" }] });
+        if (url.includes("scryfall")) {
+          const ids = JSON.parse(String(init.body)).identifiers.map((i: any) => i.id);
+          return ids.includes("c1")
+            ? json({ data: [{ id: "c2", all_parts: [{ id: "t1", component: "token", name: "Saproling", type_line: "Token Creature" }] }] })
+            : json({ data: [{ id: "t1", power: "1", toughness: "1" }] });
+        }
+        return json(semTokens);
+      };
+      abrirDeck(/^Counterpunch$/);
+
+      const tokens = within(await screen.findByRole("region", { name: "Tokens" }));
+      expect(tokens.getByText("Saproling")).toBeTruthy();
+      expect(tokens.getByText("1/1")).toBeTruthy();
+      expect(tokens.getByText(/que as cartas dele criam/)).toBeTruthy();
+      expect(tokens.queryByText("0")).toBeNull();
+    });
+
     it("sem conexão, avisa e permite tentar de novo", async () => {
       (globalThis as any).__rede = async (url: string) =>
         url.endsWith("DeckList.json") ? json(lista) : json({}, 503);
@@ -507,6 +531,9 @@ describe("decks", () => {
     expect(titulos).toContain("Cores");
     expect(titulos).toContain("Combinação");
     expect(titulos).not.toContain("Cartas");
+    expect(titulos).not.toContain("Tokens");
+    expect(screen.getAllByText(/Commander 2016/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("(C16)").length).toBeGreaterThan(0);
 
     fireEvent.change(screen.getByRole("combobox", { name: "Filtrar por cores" }), { target: { value: "WUB" } });
     const linhas = screen.getAllByRole("row").slice(1);
