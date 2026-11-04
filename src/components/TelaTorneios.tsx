@@ -600,7 +600,7 @@ function CardTorneio({
           <Stat label="JOGADORES" valor={String(torneio.jogadores.length)} cor={cor.hex} />
           <Stat
             label="RODADAS"
-            valor={torneio.finalizado ? String(torneio.qtdRodadas) : `${torneio.rodadaAtual}/${torneio.qtdRodadas}`}
+            valor={`${torneio.rodadaAtual}/${torneio.qtdRodadas}`}
             cor={cor.hex}
           />
           <Stat label="TEMPO" valor={`${torneio.tempoRodadaMin}min`} cor={cor.hex} />

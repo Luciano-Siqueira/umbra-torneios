@@ -69,7 +69,7 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("rodadas e desempate", () => {
-  it("o card mostra a rodada atual, e o finalizado mostra só o total", () => {
+  it("o card mostra a rodada atual e o total, inclusive no finalizado", () => {
     const criar = (nome: string, rodada: number, finalizado: boolean) => ({
       ...torneioCom("Pessoa"), id: nome, nome, qtdRodadas: 4, rodadaAtual: rodada, finalizado,
     });
@@ -82,8 +82,7 @@ describe("rodadas e desempate", () => {
     };
     expect(rodadasDe("Parado")).toContain("0/4");
     expect(rodadasDe("Jogando")).toContain("2/4");
-    expect(rodadasDe("Acabou")).toContain("4");
-    expect(rodadasDe("Acabou")).not.toContain("/");
+    expect(rodadasDe("Acabou")).toContain("4/4");
   });
 
   it("a regra de desempate aparece em vermelho acima da tabela, para todos", () => {
