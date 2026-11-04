@@ -189,6 +189,48 @@ describe("padrões das telas", () => {
   });
 });
 
+describe("criado por no card", () => {
+  const contasNaRede = () => {
+    const pedidos: string[] = [];
+    (globalThis as any).__rede = async (url: string) => {
+      pedidos.push(url);
+      return new Response(JSON.stringify([
+        { user_id: "dono", email: "dono@teste.local", nomes_jogador: ["Nome Vinculado", "Outro Nome"] },
+        { user_id: "sem-nome", email: "semnome@teste.local", nomes_jogador: [] },
+      ]), { status: 200, headers: { "content-type": "application/json" } });
+    };
+    return pedidos;
+  };
+  const criado = (criadoPor: string) => ({ ...torneioCom("Pessoa"), id: criadoPor, nome: `De ${criadoPor}`, criadoPor });
+  afterEach(() => { delete (globalThis as any).__rede; });
+
+  it("o admin vê o primeiro nome vinculado de quem criou", async () => {
+    contasNaRede();
+    preparar("admin", { isAdmin: true }, [criado("dono")]);
+    abrir(<TelaTorneios />);
+    expect(await screen.findByText("Criado por Nome Vinculado")).toBeTruthy();
+  });
+
+  it("conta sem nome vinculado não mostra a linha nem o email", async () => {
+    const pedidos = contasNaRede();
+    preparar("admin", { isAdmin: true }, [criado("sem-nome")]);
+    abrir(<TelaTorneios />);
+    await waitFor(() => expect(pedidos.some((u) => u.includes("listar_usuarios"))).toBe(true));
+    await new Promise((fim) => setTimeout(fim, 20));
+    expect(screen.queryByText(/Criado por/)).toBeNull();
+    expect(screen.queryByText(/semnome/)).toBeNull();
+  });
+
+  it("fora do modo admin, nem consulta a lista de contas", async () => {
+    const pedidos = contasNaRede();
+    preparar("organizador", { isAdmin: true, isOrganizador: true }, [criado("dono")]);
+    abrir(<TelaTorneios />);
+    await new Promise((fim) => setTimeout(fim, 20));
+    expect(screen.queryByText(/Criado por/)).toBeNull();
+    expect(pedidos.some((u) => u.includes("listar_usuarios"))).toBe(false);
+  });
+});
+
 describe("rodadas e desempate", () => {
   it("o card mostra a rodada atual e o total, inclusive no finalizado", () => {
     const criar = (nome: string, rodada: number, finalizado: boolean) => ({

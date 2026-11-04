@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
+import { listarUsuarios } from "../core/admin";
 import { useStore } from "../core/store";
 import { Modal } from "./ui/Modal";
 import { useToast } from "./ui/Toast";
@@ -59,6 +60,26 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
     .filter((t) => !t.finalizado && t.rodadaAtual > 0 && !torneioParado(t))
     .sort((a, b) => (b.dataCriacao || "").localeCompare(a.dataCriacao || ""))[0];
   const torneiosParados = podeEditar ? torneios.filter((t) => torneioParado(t)) : [];
+  const verCriador = auth.isAdmin && modoView === "admin";
+  const [nomesDasContas, setNomesDasContas] = useState<Map<string, string>>(new Map());
+  // Só o admin consulta a lista de contas. Conta sem nome vinculado fica sem a linha "Criado por"
+  useEffect(() => {
+    if (!verCriador) {
+      setNomesDasContas(new Map());
+      return;
+    }
+    let ativo = true;
+    listarUsuarios().then(
+      (contas) => {
+        if (!ativo) return;
+        setNomesDasContas(new Map(
+          contas.filter((c) => c.nomes_jogador.length > 0).map((c) => [c.user_id, c.nomes_jogador[0]])
+        ));
+      },
+      () => { /* sem a lista, os cards seguem sem essa informação */ }
+    );
+    return () => { ativo = false; };
+  }, [verCriador]);
   const metricas = calcularMetricas(torneios);
   const ult30 = metricasRecentes(torneios, 30);
   const ultimoCampeao = (() => {
@@ -464,6 +485,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
                 key={t.id}
                 torneio={t}
                 cor={CORES_MTG[i % CORES_MTG.length]}
+                criadoPor={t.criadoPor ? nomesDasContas.get(t.criadoPor) : undefined}
                 selecionado={t.id === selecionadoId}
                 onSelect={() => setSelecionadoId(t.id)}
                 onDblClick={() => { setSelecionadoId(t.id); abrirTorneio(t.id); }}
@@ -492,12 +514,14 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
 function CardTorneio({
   torneio,
   cor,
+  criadoPor,
   selecionado,
   onSelect,
   onDblClick,
 }: {
   torneio: Torneio;
   cor: typeof CORES_MTG[0];
+  criadoPor?: string;
   selecionado: boolean;
   onSelect: () => void;
   onDblClick: () => void;
@@ -586,10 +610,15 @@ function CardTorneio({
         </div>
 
         {/* Nome do torneio */}
-        <h3 className="font-semibold text-base leading-snug break-words min-h-[3rem] tracking-tight"
+        <h3 className={`font-semibold text-base leading-snug break-words tracking-tight ${criadoPor ? "" : "min-h-[3rem]"}`}
             style={{ color: "var(--text-strong)" }}>
           {torneio.nome}
         </h3>
+        {criadoPor && (
+          <div className="text-xs mt-0.5 min-h-[1.5rem] break-words" style={{ color: "var(--text-2)" }}>
+            Criado por {criadoPor}
+          </div>
+        )}
 
         {/* Data */}
         <div className="text-xs mt-1.5 flex items-center gap-1.5" style={{ color: "var(--text-2)" }}>
