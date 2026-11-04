@@ -1,6 +1,6 @@
 // Agrega métricas de todos os torneios (visão semanal/global)
 import type { Torneio, Mesa } from "./types";
-import { ranking, vitorias, partidasJogadas, gameWinrate } from "./resultados";
+import { ranking, vitorias, partidasJogadas } from "./resultados";
 import { comandanteDoDeck, coresDoDeck } from "./decks";
 import { nomeDaCombinacao } from "./coresMagic";
 

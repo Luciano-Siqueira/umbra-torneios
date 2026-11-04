@@ -170,7 +170,7 @@ O prefixo `VITE_` é obrigatório e coloca o valor no JavaScript enviado ao nave
 - **Deletar admin**: bloquear auto-delete (`user_id === auth.session?.user?.id`)
 - **Idioma**: português brasileiro em labels e código
 - **Commits**: em inglês, no padrão Conventional Commits (`fix(auth): ...`)
-- **Emojis** nos papéis: 👑 admin, 🎯 organizador, 👤 jogador
+- **Ícones**: a barra e os títulos usam `components/ui/Icones.tsx`, em ouro antigo. Coroa é admin, alvo é organizador e pessoa é jogador. Emojis ficam nas conquistas, nas medalhas e nas mensagens
 
 ---
 

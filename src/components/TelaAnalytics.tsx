@@ -5,6 +5,11 @@ import { AuthChip } from "./AuthChip";
 import { calcularMetricas, metricasRecentes, type MetricasGlobais } from "../core/metricas";
 import { comandanteDoDeck, coresDoDeck } from "../core/decks";
 import { CoresMana } from "./ui/SimboloMana";
+import { IconeDecks } from "./ui/LogoUmbra";
+import {
+  IconeAnalytics, IconeCombinacoes, IconeCoroa, IconeDado, IconeEspadas, IconeGota,
+  IconeGrafico, IconeHistorico, IconePessoa, IconeRaio, IconeTrofeu,
+} from "./ui/Icones";
 import {
   calcularDesempenho, listarNomesJogadores, mesmoJogador,
   type Conquista, type DesempenhoJogador, type EvolucaoJogador, type ResultadoMesa, type TorneioDoJogador,
@@ -44,8 +49,8 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
     >
       <div className="px-4 md:px-8 py-4 flex items-center gap-3">
         <button className="btn-ghost" onClick={voltar}>← Voltar</button>
-        <h1 className="text-2xl md:text-3xl font-bold" style={{ color: "var(--text-strong)" }}>
-          📊 {podeEditar ? "Analytics" : "Meu desempenho"}
+        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2" style={{ color: "var(--text-strong)" }}>
+          <IconeAnalytics tamanho={28} /> {podeEditar ? "Analytics" : "Meu desempenho"}
         </h1>
         <div className="flex-1" />
         <AuthChip auth={auth} onLoginClick={onPedirLogin} onVincularNome={onVincularNome} onSair={voltar} />
@@ -72,8 +77,8 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
           <>
             <nav className="flex gap-1 border-b border-bg-cardalt">
               {([
-                { id: "geral", icone: "📊", label: "Visão geral" },
-                { id: "jogador", icone: "👤", label: "Desempenho do jogador" },
+                { id: "geral", icone: <IconeAnalytics />, label: "Visão geral" },
+                { id: "jogador", icone: <IconePessoa />, label: "Desempenho do jogador" },
               ] as const).map((a) => (
                 <button
                   key={a.id}
@@ -147,7 +152,7 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
             <section className="ds-grid ds-g2">
               <div className="ds-card">
                 <div className="ds-card-h">
-                  <h3>🏆 Top jogadores (por campeonatos)</h3>
+                  <h3><IconeTrofeu /> Top jogadores (por campeonatos)</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
@@ -155,7 +160,7 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
                       <tr className="tabela-cab">
                         <th className="text-left py-2">#</th>
                         <th className="text-left py-2">Jogador</th>
-                        <th className="text-right py-2">🏆</th>
+                        <th className="text-right py-2"><IconeTrofeu tamanho={13} /></th>
                         <th className="text-right py-2">Torn.</th>
                         <th className="text-right py-2">V</th>
                         <th className="text-right py-2">WR</th>
@@ -185,7 +190,7 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
 
               <div className="ds-card">
                 <div className="ds-card-h">
-                  <h3>🎴 Decks mais usados</h3>
+                  <h3><IconeDecks tamanho={16} /> Decks mais usados</h3>
                 </div>
                 {metricas.topDecks.length === 0 ? (
                   <div style={{ color: "var(--text-muted-ds)" }} className="text-sm py-4 text-center">
@@ -267,7 +272,7 @@ function KpisDeCores({ metricas }: { metricas: MetricasGlobais }) {
 function CartaoCombinacoes({ metricas }: { metricas: MetricasGlobais }) {
   return (
     <div className="ds-card">
-      <div className="ds-card-h"><h3>🌈 Combinações de cores</h3></div>
+      <div className="ds-card-h"><h3><IconeCombinacoes /> Combinações de cores</h3></div>
       {metricas.combinacoes.length === 0 ? (
         <SemDados texto={SEM_LISTA} />
       ) : (
@@ -275,10 +280,11 @@ function CartaoCombinacoes({ metricas }: { metricas: MetricasGlobais }) {
           <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
             <thead>
               <tr className="tabela-cab">
+                <th className="text-left py-2">Cores</th>
                 <th className="text-left py-2">Combinação</th>
                 <th className="text-right py-2">Usos</th>
                 <th className="text-right py-2">% dos decks</th>
-                <th className="text-right py-2">🏆</th>
+                <th className="text-right py-2"><IconeTrofeu tamanho={13} /></th>
                 <th className="text-right py-2">V</th>
                 <th className="text-right py-2">WR</th>
               </tr>
@@ -286,9 +292,8 @@ function CartaoCombinacoes({ metricas }: { metricas: MetricasGlobais }) {
             <tbody>
               {metricas.combinacoes.map((c) => (
                 <tr key={c.cores} style={{ borderTop: "0.8px solid var(--line-soft)" }}>
-                  <td className="py-1.5" style={{ color: "var(--text-strong)" }}>
-                    {c.nome} <CoresMana cores={c.cores} tamanho={14} />
-                  </td>
+                  <td className="py-1.5 whitespace-nowrap"><CoresMana cores={c.cores} tamanho={14} /></td>
+                  <td className="py-1.5" style={{ color: "var(--text-strong)" }}>{c.nome}</td>
                   <td className="py-1.5 text-right tabular-nums">{c.usos}</td>
                   <td className="py-1.5 text-right tabular-nums">{(c.participacao * 100).toFixed(0)}%</td>
                   <td className="py-1.5 text-right tabular-nums" style={{ color: "var(--warn)" }}>{c.campeonatos || "—"}</td>
@@ -307,7 +312,7 @@ function CartaoCombinacoes({ metricas }: { metricas: MetricasGlobais }) {
 function CartaoCores({ metricas }: { metricas: MetricasGlobais }) {
   return (
     <div className="ds-card">
-      <div className="ds-card-h"><h3>🎨 Cores dos comandantes</h3></div>
+      <div className="ds-card-h"><h3><IconeGota /> Cores dos comandantes</h3></div>
       {metricas.cores.length === 0 ? (
         <SemDados texto={SEM_LISTA} />
       ) : (
@@ -354,7 +359,7 @@ function CartaoCores({ metricas }: { metricas: MetricasGlobais }) {
 function CartaoComandantes({ metricas }: { metricas: MetricasGlobais }) {
   return (
     <div className="ds-card">
-      <div className="ds-card-h"><h3>👑 Comandantes que mais ganham</h3></div>
+      <div className="ds-card-h"><h3><IconeCoroa /> Comandantes que mais ganham</h3></div>
       {metricas.comandantes.length === 0 ? (
         <SemDados texto={SEM_LISTA} />
       ) : (
@@ -364,7 +369,7 @@ function CartaoComandantes({ metricas }: { metricas: MetricasGlobais }) {
               <tr className="tabela-cab">
                 <th className="text-left py-2">Comandante</th>
                 <th className="text-right py-2">Usos</th>
-                <th className="text-right py-2">🏆</th>
+                <th className="text-right py-2"><IconeTrofeu tamanho={13} /></th>
                 <th className="text-right py-2">V</th>
                 <th className="text-right py-2">WR</th>
               </tr>
@@ -449,7 +454,7 @@ function PainelJogador({ torneios, metricas, meusNomes, escolherJogador, carrega
         )}
         {escolherJogador && meuNome && !mesmoJogador(meuNome, selecionado) && (
           <button className="btn-ghost text-sm" onClick={() => setEscolhido(meuNome)}>
-            👤 Ver meu desempenho
+            <IconePessoa /> Ver meu desempenho
           </button>
         )}
       </section>
@@ -556,7 +561,7 @@ function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
 
       <section className="ds-grid ds-g2">
         <div className="ds-card">
-          <div className="ds-card-h"><h3>⚡ Partidas recentes</h3></div>
+          <div className="ds-card-h"><h3><IconeRaio /> Partidas recentes</h3></div>
           {d.forma.length === 0 ? (
             <SemDados texto="Nenhuma mesa finalizada ainda." />
           ) : (
@@ -574,7 +579,7 @@ function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
         </div>
 
         <div className="ds-card">
-          <div className="ds-card-h"><h3>🎲 Como terminam as mesas</h3></div>
+          <div className="ds-card-h"><h3><IconeDado /> Como terminam as mesas</h3></div>
           {d.partidas === 0 ? (
             <SemDados texto="Nenhuma mesa finalizada ainda." />
           ) : (
@@ -585,7 +590,7 @@ function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
 
       <section>
         <div className="ds-card">
-          <div className="ds-card-h"><h3>🎴 Decks mais usados</h3></div>
+          <div className="ds-card-h"><h3><IconeDecks tamanho={16} /> Decks mais usados</h3></div>
           {d.decks.length === 0 ? (
             <SemDados texto="Nenhum deck registrado para este jogador." />
           ) : (
@@ -596,7 +601,7 @@ function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
                     <th className="text-left py-2">Deck</th>
                     <th className="text-left py-2">Comandante</th>
                     <th className="text-right py-2">Torn.</th>
-                    <th className="text-right py-2">🏆</th>
+                    <th className="text-right py-2"><IconeTrofeu tamanho={13} /></th>
                     <th className="text-right py-2">V</th>
                     <th className="text-right py-2">WR</th>
                   </tr>
@@ -636,7 +641,7 @@ function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
 
       <section>
         <div className="ds-card">
-          <div className="ds-card-h"><h3>🗂 Histórico de torneios</h3></div>
+          <div className="ds-card-h"><h3><IconeHistorico /> Histórico de torneios</h3></div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
               <thead>
@@ -678,7 +683,7 @@ function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
 
       <section>
         <div className="ds-card">
-          <div className="ds-card-h"><h3>📈 Evolução nos torneios</h3></div>
+          <div className="ds-card-h"><h3><IconeGrafico /> Evolução nos torneios</h3></div>
           {d.evolucao.length === 0 ? (
             <SemDados texto="Aparece quando o jogador tiver um torneio finalizado." />
           ) : (
@@ -689,7 +694,7 @@ function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
 
       <section>
         <div className="ds-card">
-          <div className="ds-card-h"><h3>⚔️ Rivais</h3></div>
+          <div className="ds-card-h"><h3><IconeEspadas /> Rivais</h3></div>
           {d.rivais.length === 0 ? (
             <SemDados texto="Nenhuma mesa finalizada ainda." />
           ) : (

@@ -9,6 +9,7 @@ import {
 } from "../core/admin";
 import { useToast } from "./ui/Toast";
 import { confirmar } from "./ui/Confirm";
+import { IconeAlvo, IconeCoroa, IconePessoa, IconeUsuarios } from "./ui/Icones";
 import { FUNDO_DE_TELA } from "../banner-image";
 import { AuthChip } from "./AuthChip";
 
@@ -182,8 +183,8 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
     >
       <div className="px-4 md:px-8 py-4 flex items-center gap-3 flex-wrap">
         <button className="btn-ghost" onClick={voltar}>← Voltar</button>
-        <h1 className="text-2xl md:text-3xl font-bold" style={{ color: "var(--text-strong)" }}>
-          👥 Gerenciar Usuários
+        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2" style={{ color: "var(--text-strong)" }}>
+          <IconeUsuarios tamanho={28} /> Gerenciar Usuários
         </h1>
         <div className="flex-1" />
         <AuthChip auth={auth} onLoginClick={onPedirLogin} onVincularNome={onVincularNome} onSair={voltar} />
@@ -192,9 +193,9 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
       <main className="px-4 md:px-8 pb-12 space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <KpiMini label="TOTAL" valor={String(total)} cor="#c4c4c4" />
-          <KpiMini label="👑 ADMINS" valor={String(totAdmin)} cor="#c9a648" />
-          <KpiMini label="🎯 ORGANIZADORES" valor={String(totOrg)} cor="#f5f5f5" />
-          <KpiMini label="👤 JOGADORES" valor={String(totJog)} cor="#c4c4c4" />
+          <KpiMini label={<><IconeCoroa tamanho={12} cor="currentColor" /> ADMINS</>} valor={String(totAdmin)} cor="#c9a648" />
+          <KpiMini label={<><IconeAlvo tamanho={12} cor="currentColor" /> ORGANIZADORES</>} valor={String(totOrg)} cor="#f5f5f5" />
+          <KpiMini label={<><IconePessoa tamanho={12} cor="currentColor" /> JOGADORES</>} valor={String(totJog)} cor="#c4c4c4" />
         </div>
 
         <div className="flex gap-2 items-center">
@@ -251,9 +252,9 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                 <thead>
                   <tr className="tabela-cab">
                     <th className="text-left py-3 px-4">Email</th>
-                    <th className="text-left py-3 px-4">👤 Jogador</th>
-                    <th className="text-center py-3 px-2">👑 Admin</th>
-                    <th className="text-center py-3 px-2">🎯 Organizador</th>
+                    <th className="text-left py-3 px-4"><IconePessoa tamanho={13} /> Jogador</th>
+                    <th className="text-center py-3 px-2"><IconeCoroa tamanho={13} /> Admin</th>
+                    <th className="text-center py-3 px-2"><IconeAlvo tamanho={13} /> Organizador</th>
                     <th className="text-right py-3 px-4">Ações</th>
                   </tr>
                 </thead>
@@ -587,7 +588,7 @@ function ModalEditarNomes({ usuario, onFechar, onAtualizado, toast }: {
   );
 }
 
-function KpiMini({ label, valor, cor }: { label: string; valor: string; cor: string }) {
+function KpiMini({ label, valor, cor }: { label: React.ReactNode; valor: string; cor: string }) {
   return (
     <div className="p-3 rounded-xl border" style={{
       background: `${cor}10`, borderColor: `${cor}30`, backdropFilter: "blur(10px)",

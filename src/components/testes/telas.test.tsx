@@ -505,6 +505,7 @@ describe("decks", () => {
 
     const titulos = within(screen.getAllByRole("row")[0]).getAllByRole("columnheader").map((c) => c.textContent);
     expect(titulos).toContain("Cores");
+    expect(titulos).toContain("Combinação");
     expect(titulos).not.toContain("Cartas");
 
     fireEvent.change(screen.getByRole("combobox", { name: "Filtrar por cores" }), { target: { value: "WUB" } });

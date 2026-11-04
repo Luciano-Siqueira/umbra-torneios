@@ -4,12 +4,18 @@ import { temEnviosPendentes } from "../core/sync";
 import { useStore, type ModoView } from "../core/store";
 import { useToast } from "./ui/Toast";
 import { confirmar } from "./ui/Confirm";
+import { IconeAlvo, IconeCadeado, IconeCoroa, IconePessoa } from "./ui/Icones";
 
 interface Props {
   auth: AuthState;
   onLoginClick?: () => void;
   onSair?: () => void;
   onVincularNome?: () => void;
+}
+
+function IconeDoModo({ modo, cor }: { modo: ModoView; cor: string }) {
+  const Icone = modo === "admin" ? IconeCoroa : modo === "organizador" ? IconeAlvo : IconePessoa;
+  return <Icone tamanho={14} cor={cor} />;
 }
 
 export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) {
@@ -27,7 +33,7 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
   }
 
   const labelModo = (m: ModoView) => (
-    m === "admin" ? "👑 Admin" : m === "organizador" ? "🎯 Organizador" : "👤 Jogador"
+    <><IconeDoModo modo={m} cor="currentColor" /> {m === "admin" ? "Admin" : m === "organizador" ? "Organizador" : "Jogador"}</>
   );
   const corModo = (m: ModoView) => (
     m === "admin" ? "var(--brand-1)" : m === "organizador" ? "var(--text-strong)" : "var(--text-label)"
@@ -66,7 +72,7 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
           color: "#fff",
         }}
       >
-        🔐 <span className="hidden sm:inline">Login</span>
+        <IconeCadeado cor="currentColor" /> <span className="hidden sm:inline">Login</span>
       </button>
     );
   }
@@ -85,7 +91,7 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
         }}
       >
         <span className="text-xs">
-          {modoView === "admin" ? "👑" : modoView === "organizador" ? "🎯" : "👤"}
+          <IconeDoModo modo={modoView} cor={corModo(modoView)} />
         </span>
         <span
           className="text-[10px] font-bold tracking-widest uppercase hidden sm:inline"
@@ -110,10 +116,10 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
             <div className="px-3 py-2 border-b" style={{ borderColor: "var(--line)" }}>
               <div className="text-[10px] uppercase tracking-widest font-bold flex items-center gap-1.5"
                    style={{ color: auth.isAdmin ? "var(--brand-1)" : "var(--text-label)" }}>
-                {auth.isAdmin && <span>👑 Administrador</span>}
-                {!auth.isAdmin && <span>👤 Jogador</span>}
+                {auth.isAdmin && <span><IconeCoroa cor="currentColor" /> Administrador</span>}
+                {!auth.isAdmin && <span><IconePessoa cor="currentColor" /> Jogador</span>}
                 {auth.isAdmin && auth.nomesJogador.length > 0 && (
-                  <span style={{ color: "var(--text-label)" }}>+ 👤 Jogador</span>
+                  <span style={{ color: "var(--text-label)" }}>+ <IconePessoa cor="currentColor" /> Jogador</span>
                 )}
               </div>
               <div className="text-xs mt-0.5 truncate" style={{ color: "var(--text-label)" }}>

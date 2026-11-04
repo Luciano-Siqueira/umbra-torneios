@@ -16,7 +16,6 @@ export type IdGrupo = "criaturas" | "encantamentos" | "magicas" | "artefatos" | 
 export interface GrupoDeCartas {
   id: IdGrupo;
   titulo: string;
-  icone: string;
   total: number;
   cartas: CartaDoDeck[];
 }
@@ -29,13 +28,13 @@ export interface DeckCompleto {
   totalTokens: number;
 }
 
-const GRUPOS: { id: IdGrupo; titulo: string; icone: string }[] = [
-  { id: "criaturas", titulo: "Criaturas", icone: "🐉" },
-  { id: "encantamentos", titulo: "Encantamentos", icone: "✨" },
-  { id: "magicas", titulo: "Mágicas", icone: "⚡" },
-  { id: "artefatos", titulo: "Artefatos", icone: "⚙️" },
-  { id: "terrenos", titulo: "Terrenos", icone: "⛰️" },
-  { id: "outros", titulo: "Planeswalkers e outros", icone: "🌀" },
+const GRUPOS: { id: IdGrupo; titulo: string }[] = [
+  { id: "criaturas", titulo: "Criaturas" },
+  { id: "encantamentos", titulo: "Encantamentos" },
+  { id: "magicas", titulo: "Mágicas" },
+  { id: "artefatos", titulo: "Artefatos" },
+  { id: "terrenos", titulo: "Terrenos" },
+  { id: "outros", titulo: "Planeswalkers e outros" },
 ];
 
 // Uma carta entra em um só grupo: criatura artefato conta como criatura, e terreno criatura como terreno

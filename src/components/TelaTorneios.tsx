@@ -12,7 +12,8 @@ import { calcularMetricas, metricasRecentes } from "../core/metricas";
 import { ranking } from "../core/resultados";
 import { podeEditarTorneios, torneioParado, torneiosVisiveis } from "../core/visibilidade";
 import { BANNER_IMAGE } from "../banner-image";
-import { SimboloUmbra } from "./ui/LogoUmbra";
+import { IconeDecks, SimboloUmbra } from "./ui/LogoUmbra";
+import { IconeAnalytics, IconeCaixa, IconeDado, IconeDocumento, IconePasta, IconeUsuarios } from "./ui/Icones";
 import { SimboloMana, type CorMana } from "./ui/SimboloMana";
 import { ItemMenu, MenuBarra, TituloMenu } from "./ui/MenuBarra";
 import { contar, formatarReais } from "../core/formato";
@@ -201,7 +202,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             }}
             onClick={() => irPara("analytics")}
           >
-            <span>📊</span>
+            <IconeAnalytics tamanho={18} />
             <span>Analytics</span>
           </button>
 
@@ -216,7 +217,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
               }}
               onClick={() => irPara("decks")}
             >
-              <span>🃏</span>
+              <IconeDecks tamanho={18} />
               <span>Decks</span>
             </button>
           )}
@@ -232,24 +233,24 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
               }}
               onClick={() => irPara("usuarios")}
             >
-              <span>👥</span>
+              <IconeUsuarios tamanho={18} />
               <span>Usuários</span>
             </button>
           )}
 
         {/* Importar e exportar — só edição liberada */}
         {podeEditar && (
-          <MenuBarra icone="📂" rotulo="Importar / Exportar">
+          <MenuBarra icone={<IconePasta tamanho={18} />} rotulo="Importar / Exportar">
             <TituloMenu>Importar</TituloMenu>
-            <ItemMenu onClick={importar}>📄 Torneio (JSON)</ItemMenu>
-            <ItemMenu onClick={() => backupRef.current?.click()}>📦 Backup completo</ItemMenu>
+            <ItemMenu onClick={importar}><IconeDocumento /> Torneio (JSON)</ItemMenu>
+            <ItemMenu onClick={() => backupRef.current?.click()}><IconeCaixa /> Backup completo</ItemMenu>
             <ItemMenu
               onClick={() => {
                 const t = criarTorneioTeste();
                 toast(`Torneio teste criado: 29 jogadores`, "sucesso");
                 abrirTorneio(t.id);
               }}
-            >🎲 Torneio de teste</ItemMenu>
+            ><IconeDado /> Torneio de teste</ItemMenu>
             <div className="border-t border-bg-cardalt mt-1" />
             <TituloMenu>Exportar</TituloMenu>
             <ItemMenu
@@ -266,13 +267,13 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
                 URL.revokeObjectURL(url);
                 toast("Torneio exportado", "sucesso");
               }}
-            >📄 Torneio selecionado (JSON)</ItemMenu>
+            ><IconeDocumento /> Torneio selecionado (JSON)</ItemMenu>
             <ItemMenu
               onClick={() => {
                 exportarTudo();
                 toast("Backup baixado", "sucesso");
               }}
-            >📦 Backup completo</ItemMenu>
+            ><IconeCaixa /> Backup completo</ItemMenu>
           </MenuBarra>
         )}
         <input
@@ -437,7 +438,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             </div>
             <div className="text-sm mb-6" style={{ color: "var(--text-2)" }}>
               {auth.isAdmin
-                ? "Clique em + Novo torneio ou 📂 Importar / Exportar para começar."
+                ? "Clique em + Novo torneio ou em Importar / Exportar para começar."
                 : auth.session && auth.nomesPendentes.length > 0 && auth.nomesJogador.length === 0
                   ? <>O nome <b style={{color: "var(--brand-1)"}}>{auth.nomesPendentes.join(", ")}</b> está aguardando a aprovação do admin.<br/>Seus torneios aparecem aqui depois disso.</>
                 : auth.session && auth.nomesJogador.length > 0

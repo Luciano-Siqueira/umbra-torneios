@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 
 // Menu suspenso da barra superior. Fecha ao escolher um item, ao clicar fora ou com Esc.
-export function MenuBarra({ icone, rotulo, children }: { icone?: string; rotulo: string; children: ReactNode }) {
+export function MenuBarra({ icone, rotulo, children }: { icone?: ReactNode; rotulo: string; children: ReactNode }) {
   const [aberto, setAberto] = useState(false);
   const raiz = useRef<HTMLDivElement>(null);
 
@@ -31,7 +31,7 @@ export function MenuBarra({ icone, rotulo, children }: { icone?: string; rotulo:
         style={{ color: "var(--text-strong)" }}
         onClick={() => setAberto((v) => !v)}
       >
-        {icone && <span>{icone}</span>}
+        {icone}
         <span>{rotulo}</span>
         <span className="text-xs opacity-60">▾</span>
       </button>

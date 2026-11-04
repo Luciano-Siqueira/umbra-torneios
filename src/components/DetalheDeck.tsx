@@ -1,9 +1,19 @@
 import { useEffect, useState } from "react";
-import { buscarDeckCompleto, type CartaDoDeck, type DeckCompleto } from "../core/deckCompleto";
+import { buscarDeckCompleto, type CartaDoDeck, type DeckCompleto, type IdGrupo } from "../core/deckCompleto";
+import { IconeEngrenagem, IconeEspiral, IconeEstrela, IconeGarra, IconeMoeda, IconeMontanha, IconeRaio } from "./ui/Icones";
 import type { DeckCommander } from "../core/decks";
 import { contar } from "../core/formato";
 import { nomeDaCombinacao } from "../core/coresMagic";
 import { CoresMana } from "./ui/SimboloMana";
+
+const ICONE_DO_GRUPO: Record<IdGrupo, (props: { tamanho?: number }) => JSX.Element> = {
+  criaturas: IconeGarra,
+  encantamentos: IconeEstrela,
+  magicas: IconeRaio,
+  artefatos: IconeEngrenagem,
+  terrenos: IconeMontanha,
+  outros: IconeEspiral,
+};
 
 function formatarData(iso: string) {
   const [ano, mes, dia] = iso.split("-");
@@ -88,10 +98,12 @@ export function DetalheDeck({ deck, onVoltar }: { deck: DeckCommander; onVoltar:
 
           {/* Em colunas, os grupos curtos não deixam buracos ao lado dos longos */}
           <div className="md:columns-2 gap-4">
-            {dados.grupos.map((g) => (
+            {dados.grupos.map((g) => {
+              const Icone = ICONE_DO_GRUPO[g.id];
+              return (
               <section key={g.id} aria-label={g.titulo} className="card min-w-0 mb-4 break-inside-avoid">
                 <h3 className="font-semibold mb-2 flex items-center gap-2" style={{ color: "var(--text-strong)" }}>
-                  <span>{g.icone}</span>
+                  <Icone tamanho={18} />
                   <span className="flex-1">{g.titulo}</span>
                   <span className="text-sm tabular-nums" style={{ color: "var(--brand-1)" }}>{g.total}</span>
                 </h3>
@@ -110,11 +122,12 @@ export function DetalheDeck({ deck, onVoltar }: { deck: DeckCommander; onVoltar:
                   ))}
                 </ul>
               </section>
-            ))}
+              );
+            })}
 
             <section aria-label="Tokens" className="card min-w-0 mb-4 break-inside-avoid">
               <h3 className="font-semibold mb-2 flex items-center gap-2" style={{ color: "var(--text-strong)" }}>
-                <span>🪙</span>
+                <IconeMoeda tamanho={18} />
                 <span className="flex-1">Tokens</span>
                 <span className="text-sm tabular-nums" style={{ color: "var(--brand-1)" }}>{dados.totalTokens}</span>
               </h3>

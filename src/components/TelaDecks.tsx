@@ -9,6 +9,7 @@ import { FUNDO_DE_TELA } from "../banner-image";
 import { AuthChip } from "./AuthChip";
 import { useToast } from "./ui/Toast";
 import { CoresMana } from "./ui/SimboloMana";
+import { IconeDecks } from "./ui/LogoUmbra";
 
 const ESTILO_TITULO = "text-left py-2 px-2";
 const TODAS_AS_CORES = "todas";
@@ -72,7 +73,9 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
     >
       <div className="px-4 md:px-8 py-4 flex items-center gap-3">
         <button className="btn-ghost" onClick={voltar}>← Voltar</button>
-        <h1 className="text-2xl md:text-3xl font-bold" style={{ color: "var(--text-strong)" }}>🃏 Decks</h1>
+        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2" style={{ color: "var(--text-strong)" }}>
+          <IconeDecks tamanho={32} /> Decks
+        </h1>
         <div className="flex-1" />
         <AuthChip auth={auth} onLoginClick={onPedirLogin} onVincularNome={onVincularNome} onSair={voltar} />
       </div>
@@ -123,6 +126,7 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
                   <th className={ESTILO_TITULO}>Deck</th>
                   <th className={`${ESTILO_TITULO} hidden sm:table-cell`}>Comandante</th>
                   <th className={`${ESTILO_TITULO} hidden sm:table-cell`}>Cores</th>
+                  <th className={`${ESTILO_TITULO} hidden md:table-cell`}>Combinação</th>
                   <th className={`${ESTILO_TITULO} !text-right hidden md:table-cell`}>Tokens</th>
                 </tr>
               </thead>
@@ -147,8 +151,9 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
                     </td>
                     <td className="py-1.5 px-2 hidden sm:table-cell">{d.comandantes}</td>
                     <td className="py-1.5 px-2 hidden sm:table-cell whitespace-nowrap">
-                      <CoresMana cores={d.cores} tamanho={14} /> {nomeDaCombinacao(d.cores)}
+                      <CoresMana cores={d.cores} tamanho={14} />
                     </td>
+                    <td className="py-1.5 px-2 hidden md:table-cell whitespace-nowrap">{nomeDaCombinacao(d.cores)}</td>
                     <td className="py-1.5 px-2 text-right tabular-nums hidden md:table-cell">{d.tokens}</td>
                   </tr>
                 ))}
