@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import type { Torneio } from "../../core/types";
 import { useStore } from "../../core/store";
+import { contar, formatarReais } from "../../core/formato";
+import { CaixaPago } from "../ui/CaixaPago";
 
 export function AbaFinanceiro({ torneio }: { torneio: Torneio }) {
   const marcarTodosPagos = useStore((s) => s.marcarTodosPagos);
@@ -19,15 +21,15 @@ export function AbaFinanceiro({ torneio }: { torneio: Torneio }) {
   return (
     <div className="w-full space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="TAXA" valor={`R$ ${torneio.taxaInscricao.toFixed(2)}`} cor="text-info" />
-        <StatCard label="ESPERADO" valor={`R$ ${esperado.toFixed(2)}`} cor="text-atencao" />
-        <StatCard label="PENDENTE" valor={`R$ ${(esperado - arrecadado).toFixed(2)}`} cor="text-perigo" />
-        <StatCard label="ARRECADADO" valor={`R$ ${arrecadado.toFixed(2)}`} cor="text-sucesso" />
+        <StatCard label="TAXA" valor={formatarReais(torneio.taxaInscricao)} cor="text-info" />
+        <StatCard label="ESPERADO" valor={formatarReais(esperado)} cor="text-atencao" />
+        <StatCard label="PENDENTE" valor={formatarReais(esperado - arrecadado)} cor="text-perigo" />
+        <StatCard label="ARRECADADO" valor={formatarReais(arrecadado)} cor="text-sucesso" />
       </div>
 
       <div className="flex justify-between items-center">
         <div className="text-sm text-fg-dim">
-          {pagos.length} pagos · {pendentes.length} pendentes
+          {contar(pagos.length, "pago")} · {contar(pendentes.length, "pendente")}
         </div>
         <button className="btn-info" onClick={() => marcarTodosPagos()}>Marcar todos pagos</button>
       </div>
@@ -39,16 +41,11 @@ export function AbaFinanceiro({ torneio }: { torneio: Torneio }) {
         ) : (
           <div className="space-y-1">
             {pendentes.map((j) => (
-              <label key={j.id} className="flex items-center gap-3 p-2 hover:bg-bg-cardalt rounded cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={false}
-                  onChange={() => editarJogador(j.id, { pago: true })}
-                  className="w-4 h-4"
-                />
+              <div key={j.id} className="flex items-center gap-3 p-2 hover:bg-bg-cardalt rounded">
+                <CaixaPago pago={false} nome={j.nome} onClick={() => editarJogador(j.id, { pago: true })} />
                 <span className="flex-1">{j.nome}</span>
-                <span className="text-xs text-perigo">R$ {torneio.taxaInscricao.toFixed(2)}</span>
-              </label>
+                <span className="text-xs text-perigo">{formatarReais(torneio.taxaInscricao)}</span>
+              </div>
             ))}
           </div>
         )}
@@ -61,16 +58,11 @@ export function AbaFinanceiro({ torneio }: { torneio: Torneio }) {
         ) : (
           <div className="space-y-1">
             {pagos.map((j) => (
-              <label key={j.id} className="flex items-center gap-3 p-2 hover:bg-bg-cardalt rounded cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={true}
-                  onChange={() => editarJogador(j.id, { pago: false })}
-                  className="w-4 h-4"
-                />
+              <div key={j.id} className="flex items-center gap-3 p-2 hover:bg-bg-cardalt rounded">
+                <CaixaPago pago nome={j.nome} onClick={() => editarJogador(j.id, { pago: false })} />
                 <span className="flex-1">{j.nome}</span>
-                <span className="text-xs text-sucesso">✓ R$ {torneio.taxaInscricao.toFixed(2)}</span>
-              </label>
+                <span className="text-xs text-sucesso">{formatarReais(torneio.taxaInscricao)}</span>
+              </div>
             ))}
           </div>
         )}

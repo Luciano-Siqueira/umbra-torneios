@@ -49,7 +49,7 @@ export function DialogoTorneio({ torneioExistente, onFechar }: Props) {
     <div className="space-y-4">
       <Field label="Nome do torneio">
         <input
-          className="input"
+          className="input w-full"
           value={nome}
           onChange={(e) => setNome(e.target.value)}
           autoFocus
@@ -60,7 +60,7 @@ export function DialogoTorneio({ torneioExistente, onFechar }: Props) {
       <div className="grid grid-cols-2 gap-3">
         <Field label="Taxa de inscrição (R$)">
           <input
-            className="input"
+            className="input w-full"
             type="number" min="0" step="1"
             value={taxa}
             onChange={(e) => setTaxa(e.target.value)}
@@ -68,7 +68,7 @@ export function DialogoTorneio({ torneioExistente, onFechar }: Props) {
         </Field>
         <Field label="Quantidade de rodadas">
           <input
-            className="input"
+            className="input w-full"
             type="number" min="1" step="1"
             value={rodadas}
             onChange={(e) => setRodadas(e.target.value)}
@@ -79,7 +79,7 @@ export function DialogoTorneio({ torneioExistente, onFechar }: Props) {
       <div className="grid grid-cols-2 gap-3">
         <Field label="Tempo normal (min)">
           <input
-            className="input"
+            className="input w-full"
             type="number" min="1" step="1"
             value={tempoMin}
             onChange={(e) => setTempoMin(e.target.value)}
@@ -87,7 +87,7 @@ export function DialogoTorneio({ torneioExistente, onFechar }: Props) {
         </Field>
         <Field label="Tempo extra (min)">
           <input
-            className="input"
+            className="input w-full"
             type="number" min="0" step="1"
             value={tempoExtra}
             onChange={(e) => setTempoExtra(e.target.value)}

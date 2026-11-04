@@ -4,17 +4,18 @@ import { calcularPremiacao, descricaoFaixa } from "../../core/premiacao";
 import { rankingPremiavel } from "../../core/resultados";
 import { useStore } from "../../core/store";
 import { useToast } from "../ui/Toast";
+import { formatarNumero, formatarPercentual, formatarReais } from "../../core/formato";
 
 function RegistroPremio({ jogador, sugerido }: { jogador: Jogador; sugerido: number }) {
   const registrarPremio = useStore((s) => s.registrarPremio);
   const { toast } = useToast();
-  const [valor, setValor] = useState(sugerido.toFixed(2));
+  const [valor, setValor] = useState(formatarNumero(sugerido, 2).replace(/\./g, ""));
 
   if (jogador.premioPago) {
     return (
       <div className="flex items-center justify-end gap-2 text-xs mt-1">
         <span className="text-sucesso">
-          ✓ Pago R$ {jogador.premioPago.valor.toFixed(2)} em {new Date(jogador.premioPago.em).toLocaleDateString("pt-BR")}
+          ✓ Pago {formatarReais(jogador.premioPago.valor)} em {new Date(jogador.premioPago.em).toLocaleDateString("pt-BR")}
         </span>
         <button className="text-fg-dim hover:text-fg underline" onClick={() => registrarPremio(jogador.id, null)}>
           Desfazer
@@ -67,7 +68,7 @@ export function AbaPremiacao({ torneio }: { torneio: Torneio }) {
           </div>
           <div>
             <div className="text-xs text-fg-dim">ARRECADADO</div>
-            <div className="text-2xl font-black text-sucesso">R$ {arrecadado.toFixed(2)}</div>
+            <div className="text-2xl font-black text-sucesso">{formatarReais(arrecadado)}</div>
           </div>
           <div>
             <div className="text-xs text-fg-dim">FAIXA</div>
@@ -79,7 +80,7 @@ export function AbaPremiacao({ torneio }: { torneio: Torneio }) {
       <div className="card">
         <h3 className="label mb-3">Distribuição da premiação</h3>
         {torneio.finalizado && (
-          <div className="text-sm text-fg-dim mb-3">Pago até agora: R$ {totalPago.toFixed(2)}</div>
+          <div className="text-sm text-fg-dim mb-3">Pago até agora: {formatarReais(totalPago)}</div>
         )}
         {premios.length === 0 ? (
           <div className="text-fg-dim text-sm text-center py-4">
@@ -102,10 +103,10 @@ export function AbaPremiacao({ torneio }: { torneio: Torneio }) {
                     <div className="font-semibold truncate">
                       {torneio.finalizado && j ? j.nome : "(a definir)"}
                     </div>
-                    <div className="text-xs text-fg-dim">{(p.percentual * 100).toFixed(1)}% do prêmio</div>
+                    <div className="text-xs text-fg-dim">{formatarPercentual(p.percentual)} do prêmio</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xl font-black text-sucesso">R$ {p.valor.toFixed(2)}</div>
+                    <div className="text-xl font-black text-sucesso">{formatarReais(p.valor)}</div>
                     {torneio.finalizado && j && <RegistroPremio key={j.id} jogador={j} sugerido={p.valor} />}
                   </div>
                 </div>

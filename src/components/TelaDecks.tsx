@@ -1,14 +1,15 @@
 import { useMemo, useState } from "react";
 import { useStore } from "../core/store";
 import { useAuth } from "../core/auth";
-import { ANOS_DECKS, DECKS, filtrarDecks } from "../core/decks";
+import { ANOS_DECKS, DECKS, filtrarDecks, type DeckCommander } from "../core/decks";
+import { DetalheDeck } from "./DetalheDeck";
 import { atualizarDecks, useVersaoDecks } from "../core/atualizarDecks";
-import { BANNER_IMAGE } from "../banner-image";
+import { FUNDO_DE_TELA } from "../banner-image";
 import { AuthChip } from "./AuthChip";
 import { useToast } from "./ui/Toast";
 import { CoresMana } from "./ui/SimboloMana";
 
-const ESTILO_TITULO = "text-left py-2 px-2 text-[10px] font-bold tracking-widest uppercase";
+const ESTILO_TITULO = "text-left py-2 px-2";
 
 function formatarData(iso: string) {
   const [ano, mes, dia] = iso.split("-");
@@ -25,6 +26,7 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
   const modoView = useStore((s) => s.modoView);
   const { toast } = useToast();
   const [progresso, setProgresso] = useState<string | null>(null);
+  const [aberto, setAberto] = useState<DeckCommander | null>(null);
 
   const atualizar = async () => {
     setProgresso("Procurando lançamentos...");
@@ -47,28 +49,32 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
     }
   };
 
+  if (auth.perfilErro || (auth.perfilCarregado && (!auth.isAdmin || modoView !== "admin"))) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-fg p-6">
+        <div className="text-center">
+          <div className="text-2xl mb-2">{auth.perfilErro ? "⚠️ Erro ao carregar seu perfil" : "🔒 Acesso restrito"}</div>
+          <div className="text-sm text-fg-dim mb-4">{auth.perfilErro || "Essa página é só para administradores."}</div>
+          <button className="btn-primary" onClick={voltar}>Voltar</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="min-h-screen text-fg"
-      style={{
-        backgroundImage: `linear-gradient(to bottom,
-          rgba(10,10,10,0.65) 0%,
-          rgba(10,10,10,0.75) 20%,
-          rgba(10,10,10,0.85) 45%,
-          rgba(10,10,10,0.94) 100%), url(${BANNER_IMAGE})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundAttachment: "fixed",
-      }}
+      style={FUNDO_DE_TELA}
     >
-      <div className="px-4 md:px-10 py-4 flex items-center gap-3">
+      <div className="px-4 md:px-8 py-4 flex items-center gap-3">
         <button className="btn-ghost" onClick={voltar}>← Voltar</button>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: "var(--text-strong)" }}>🃏 Decks</h1>
         <div className="flex-1" />
         <AuthChip auth={auth} onLoginClick={onPedirLogin} onVincularNome={onVincularNome} onSair={voltar} />
       </div>
 
-      <main className="px-4 md:px-10 pb-12 space-y-4">
+      <main className="px-4 md:px-8 pb-12 space-y-4">
+        {aberto ? <DetalheDeck deck={aberto} onVoltar={() => setAberto(null)} /> : <>
         <div className="card grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-2">
           <input
             type="search"
@@ -82,11 +88,9 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
             <option value="">Todos os anos</option>
             {ANOS_DECKS.map((a) => <option key={a} value={a}>{a}</option>)}
           </select>
-          {auth.isAdmin && modoView === "admin" && (
-            <button className="btn-info whitespace-nowrap" onClick={atualizar} disabled={progresso !== null}>
-              {progresso ?? "⟳ Atualizar decks"}
-            </button>
-          )}
+          <button className="btn-info whitespace-nowrap" onClick={atualizar} disabled={progresso !== null}>
+            {progresso ?? "⟳ Atualizar decks"}
+          </button>
         </div>
 
         <div className="card">
@@ -99,7 +103,7 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr style={{ color: "var(--text-muted-ds)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                <tr className="tabela-cab">
                   <th className={`${ESTILO_TITULO} hidden md:table-cell`}>Lançamento</th>
                   <th className={`${ESTILO_TITULO} hidden sm:table-cell`}>Coleção</th>
                   <th className={ESTILO_TITULO}>Deck</th>
@@ -110,11 +114,18 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
               </thead>
               <tbody>
                 {decks.map((d) => (
-                  <tr key={`${d.colecao}|${d.nome}`} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <tr
+                    key={`${d.colecao}|${d.nome}`}
+                    className="cursor-pointer hover:bg-white/5 transition"
+                    style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+                    onClick={() => setAberto(d)}
+                  >
                     <td className="py-1.5 px-2 whitespace-nowrap tabular-nums hidden md:table-cell">{formatarData(d.lancamento)}</td>
                     <td className="py-1.5 px-2 hidden sm:table-cell">{d.colecao}</td>
                     <td className="py-1.5 px-2">
-                      <span className="font-medium" style={{ color: "var(--text-strong)" }}>{d.nome}</span>
+                      <button type="button" className="font-medium text-left hover:underline" style={{ color: "var(--text-strong)" }}>
+                        {d.nome}
+                      </button>
                       {/* No celular, o comandante e a coleção ficam junto do nome */}
                       <span className="block text-xs sm:hidden" style={{ color: "var(--text-2)" }}>
                         {d.comandantes} <CoresMana cores={d.cores} tamanho={13} /> · {d.colecao} · {d.lancamento.slice(0, 4)}
@@ -131,6 +142,7 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
             </table>
           )}
         </div>
+        </>}
       </main>
     </div>
   );

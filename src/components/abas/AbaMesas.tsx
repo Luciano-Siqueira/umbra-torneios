@@ -13,8 +13,13 @@ import { torneioParado } from "../../core/visibilidade";
 import { useTimer, formatarTempo } from "../../core/useTimer";
 import { comandanteDoDeck, coresDoDeck } from "../../core/decks";
 import { CoresMana } from "../ui/SimboloMana";
+import { contar } from "../../core/formato";
 
-export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar: boolean }) {
+export function AbaMesas({ torneio, podeEditar, onIrParaAba }: {
+  torneio: Torneio;
+  podeEditar: boolean;
+  onIrParaAba?: (aba: "ranking" | "premiacao" | "historico") => void;
+}) {
   const iniciarRodada = useStore((s) => s.iniciarRodada);
   const resortearMesas = useStore((s) => s.resortearMesas);
   const finalizarTorneio = useStore((s) => s.finalizarTorneio);
@@ -66,6 +71,9 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
     !torneio.finalizado &&
     torneio.rodadaAtual === torneio.qtdRodadas &&
     rodadaConcluida;
+  // Último caminho para quando o torneio precisa terminar antes da hora
+  const podeEncerrarAntes = podeEditar && !torneio.finalizado && !podeFinalizar && torneio.rodadaAtual > 0
+    && !(semMesas && torneio.rodadaAtual >= torneio.qtdRodadas);
 
   const iniciar = async () => {
     if (!podeIniciar) {
@@ -124,13 +132,36 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
   const finalizar = async () => {
     const ok = await confirmar({
       titulo: "Finalizar torneio",
-      mensagem: "Confirmar encerramento definitivo?",
+      mensagem: "O torneio será encerrado e o ranking ficará fechado. Se precisar, dá para reabrir depois.",
+      textoOk: "Finalizar",
     });
     if (ok) {
       finalizarTorneio();
       toast("Torneio finalizado!", "sucesso");
     }
   };
+
+  const encerrarAntes = async () => {
+    const semResultado = pendentes.length > 0
+      ? `\n\n${contar(pendentes.length, "mesa")} sem resultado ${pendentes.length === 1 ? "ficará" : "ficarão"} sem pontos.`
+      : "";
+    const ok = await confirmar({
+      titulo: "Encerrar antes do previsto",
+      mensagem: `O torneio está na rodada ${torneio.rodadaAtual} de ${torneio.qtdRodadas}.${semResultado}\n\nSe precisar, dá para reabrir depois.`,
+      textoOk: "Encerrar",
+      perigo: true,
+    });
+    if (ok) {
+      finalizarTorneio();
+      toast("Torneio encerrado", "sucesso");
+    }
+  };
+
+  const botaoEncerrarAntes = podeEncerrarAntes && (
+    <button className="btn-ghost !bg-transparent border border-white/20 text-sm" onClick={encerrarAntes}>
+      Encerrar antes do previsto
+    </button>
+  );
 
   // Sem rodada em andamento → tela de "iniciar rodada"
   if (semMesas) {
@@ -152,11 +183,11 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
             {/* Glow decorativo */}
             <div
               className="absolute -top-20 -right-20 w-64 h-64 opacity-40 pointer-events-none"
-              style={{ background: "radial-gradient(circle, #c9a648, transparent 65%)" }}
+              style={{ background: "radial-gradient(circle, var(--brand-1), transparent 65%)" }}
             />
             <div
               className="absolute -bottom-16 -left-16 w-48 h-48 opacity-30 pointer-events-none"
-              style={{ background: "radial-gradient(circle, #8b0000, transparent 65%)" }}
+              style={{ background: "radial-gradient(circle, var(--brand-2), transparent 65%)" }}
             />
 
             <div className="relative text-center">
@@ -165,7 +196,7 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
                 className="inline-block px-4 py-1 rounded-full text-[11px] font-bold tracking-[0.3em] mb-4"
                 style={{
                   background: "rgba(201,166,72,0.2)",
-                  color: "#c9a648",
+                  color: "var(--brand-1)",
                   border: "1px solid rgba(201,166,72,0.4)",
                 }}
               >
@@ -175,8 +206,8 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
                   style={{ color: "#fff" }}>
                 {torneio.nome}
               </h2>
-              <div className="text-sm mb-6" style={{ color: "#c4c4c4" }}>
-                {torneio.jogadores.length} jogadores · {torneio.rodadasFinalizadas.length} rodada{torneio.rodadasFinalizadas.length !== 1 ? "s" : ""} jogada{torneio.rodadasFinalizadas.length !== 1 ? "s" : ""}
+              <div className="text-sm mb-6" style={{ color: "var(--text-label)" }}>
+                {contar(torneio.jogadores.length, "jogador", "jogadores")} · {contar(torneio.rodadasFinalizadas.length, "rodada jogada", "rodadas jogadas")}
               </div>
 
               {/* Pódio inline */}
@@ -205,7 +236,7 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
                         <div className="text-xs font-bold truncate" style={{ color: "#fff" }}>
                           {j.nome}
                         </div>
-                        <div className="text-[11px] mt-1" style={{ color: "#c9a648" }}>
+                        <div className="text-[11px] mt-1" style={{ color: "var(--brand-1)" }}>
                           {j.pontos} pts
                         </div>
                       </div>
@@ -215,30 +246,29 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
               )}
 
               {/* Atalhos pras outras abas */}
-              <div className="text-xs mb-3" style={{ color: "#8a8a8a" }}>
+              <div className="text-xs mb-3" style={{ color: "var(--text-2)" }}>
                 Confira os detalhes completos:
               </div>
               <div className="flex flex-wrap justify-center gap-2">
                 {[
-                  { label: "⭐ Ranking final", key: "ranking" },
-                  ...(podeEditar ? [{ label: "♛ Premiação", key: "premiacao" }] : []),
-                  { label: "◷ Histórico", key: "historico" },
+                  { label: "⭐ Ranking final", key: "ranking" as const },
+                  ...(podeEditar ? [{ label: "♛ Premiação", key: "premiacao" as const }] : []),
+                  { label: "◷ Histórico", key: "historico" as const },
                 ].map((atalho) => (
-                  <div
+                  <button
                     key={atalho.key}
-                    className="px-4 py-2 rounded-full border text-xs md:text-sm font-semibold"
+                    type="button"
+                    onClick={() => onIrParaAba?.(atalho.key)}
+                    className="px-4 py-2 rounded-full border text-xs md:text-sm font-semibold transition hover:brightness-125 active:scale-95"
                     style={{
                       background: "rgba(255,255,255,0.04)",
                       borderColor: "rgba(201,166,72,0.25)",
-                      color: "#f5f5f5",
+                      color: "var(--text-strong)",
                     }}
                   >
                     {atalho.label}
-                  </div>
+                  </button>
                 ))}
-              </div>
-              <div className="text-[11px] mt-3" style={{ color: "#6b6b6b" }}>
-                ↑ clique nas abas acima
               </div>
             </div>
           </div>
@@ -248,8 +278,8 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
             {podeEditar ? (
               <>
                 <div className="text-fg-dim text-sm">Finalize o torneio quando quiser.</div>
-                <button className="btn-gold text-lg font-black" onClick={finalizar}>
-                  ♛ FINALIZAR TORNEIO ♛
+                <button className="btn-primary text-lg font-black" onClick={finalizar}>
+                  ♛ Finalizar torneio
                 </button>
               </>
             ) : (
@@ -262,7 +292,7 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
               Rodada {torneio.rodadaAtual + 1} de {torneio.qtdRodadas}
             </div>
             <div className="text-fg-dim">
-              {ativos} jogadores ativos · {torneio.tempoRodadaMin}min + {torneio.tempoExtraMin}min extra
+              {contar(ativos, "jogador ativo", "jogadores ativos")} · {torneio.tempoRodadaMin}min + {torneio.tempoExtraMin}min extra
             </div>
             {podeEditar ? (
               <button
@@ -270,7 +300,7 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
                 onClick={iniciar}
                 disabled={!podeIniciar}
               >
-                ▶ INICIAR RODADA {torneio.rodadaAtual + 1}
+                ▶ Iniciar rodada {torneio.rodadaAtual + 1}
               </button>
             ) : (
               <div className="text-fg-dim text-sm">Aguardando o organizador iniciar a rodada.</div>
@@ -278,6 +308,7 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
             {podeEditar && ativos < 3 && (
               <div className="text-perigo text-sm">Adicione pelo menos 3 jogadores ativos.</div>
             )}
+            {botaoEncerrarAntes}
           </div>
         )}
       </div>
@@ -329,14 +360,15 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
         </button>
         {podeEditar && rodadaConcluida && torneio.rodadaAtual < torneio.qtdRodadas && (
           <button className="btn-success" onClick={iniciar} disabled={!podeIniciar}>
-            ▶ NOVA RODADA ({torneio.rodadaAtual + 1}/{torneio.qtdRodadas})
+            ▶ Nova rodada ({torneio.rodadaAtual + 1}/{torneio.qtdRodadas})
           </button>
         )}
         {podeEditar && podeFinalizar && (
-          <button className="btn-gold font-black" onClick={finalizar}>
-            ♛ FINALIZAR TORNEIO
+          <button className="btn-primary font-black" onClick={finalizar}>
+            ♛ Finalizar torneio
           </button>
         )}
+        {botaoEncerrarAntes}
       </div>
 
       {pendentes.length > 0 && (
@@ -415,10 +447,9 @@ function CardMesa({
     <button
       onClick={onClick}
       disabled={!onClick}
-      className={`text-left rounded-xl p-4 border-2 transition
-                  ${finalizada
-                    ? "border-sucesso/40 bg-sucesso/5 hover:bg-sucesso/10"
-                    : "border-info/40 bg-info/5 hover:bg-info/10"}`}
+      className={`text-left rounded-xl p-4 border-2 transition hover:brightness-125
+                  ${finalizada ? "border-sucesso/40" : "border-info/40"}`}
+      style={{ background: "var(--card-fundo)" }}
     >
       <div className="flex items-center justify-between mb-2">
         <div className="font-black text-lg">Mesa {mesa.numero}</div>

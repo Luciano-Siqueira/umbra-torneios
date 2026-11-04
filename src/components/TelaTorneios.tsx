@@ -15,6 +15,7 @@ import { BANNER_IMAGE } from "../banner-image";
 import { SimboloUmbra } from "./ui/LogoUmbra";
 import { SimboloMana, type CorMana } from "./ui/SimboloMana";
 import { ItemMenu, MenuBarra, TituloMenu } from "./ui/MenuBarra";
+import { contar, formatarReais } from "../core/formato";
 
 const CORES_MTG: { hex: string; nome: string; mana: CorMana }[] = [
   { hex: "#f9f5e3", nome: "PLAINS", mana: "w" },
@@ -133,7 +134,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
       }}
     >
       {/* Topbar fixa estilo navbar */}
-      <div className="sticky top-0 z-30 px-4 md:px-6 py-3"
+      <div className="sticky top-0 z-30 px-4 md:px-8 py-3"
         style={{
           background: "linear-gradient(to bottom, rgba(10,10,10,0.85) 0%, rgba(10,10,10,0.0) 100%)",
         }}
@@ -204,18 +205,21 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             <span>Analytics</span>
           </button>
 
-          <button
-            className="rounded-full px-4 py-2 font-semibold text-sm transition active:scale-95 flex items-center gap-1.5"
-            style={{
-              background: "rgba(201,166,72,0.12)",
-              color: "var(--action)",
-              border: "1px solid rgba(201,166,72,0.25)"
-            }}
-            onClick={() => irPara("decks")}
-          >
-            <span>🃏</span>
-            <span>Decks</span>
-          </button>
+          {/* Decks — só admin, no modo admin */}
+          {auth.isAdmin && modoView === "admin" && (
+            <button
+              className="rounded-full px-4 py-2 font-semibold text-sm transition active:scale-95 flex items-center gap-1.5"
+              style={{
+                background: "rgba(201,166,72,0.12)",
+                color: "var(--action)",
+                border: "1px solid rgba(201,166,72,0.25)"
+              }}
+              onClick={() => irPara("decks")}
+            >
+              <span>🃏</span>
+              <span>Decks</span>
+            </button>
+          )}
 
           {/* Botão Gerenciar Usuários — só admin, no modo admin */}
           {auth.isAdmin && modoView === "admin" && (
@@ -223,7 +227,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
               className="rounded-full px-4 py-2 font-semibold text-sm transition active:scale-95 flex items-center gap-1.5"
               style={{
                 background: "rgba(201,166,72,0.12)",
-                color: "#c9a648",
+                color: "var(--brand-1)",
                 border: "1px solid rgba(201,166,72,0.3)"
               }}
               onClick={() => irPara("usuarios")}
@@ -309,7 +313,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
       </div>
 
       {/* Faixa "Em andamento" + KPIs rápidos — colados abaixo do menu */}
-      <div className="px-6 md:px-10 space-y-4 mb-4 mt-2">
+      <div className="px-4 md:px-8 space-y-4 mb-4 mt-2">
         {torneioEmAndamento && (
           <div
             className="flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition hover:brightness-110"
@@ -339,14 +343,14 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
                 {torneioEmAndamento.nome} · Rodada {torneioEmAndamento.rodadaAtual} de {torneioEmAndamento.qtdRodadas}
               </div>
               <div className="text-xs mt-0.5" style={{ color: "var(--text-2)" }}>
-                {torneioEmAndamento.mesas.length} mesas · {torneioEmAndamento.jogadores.length} jogadores
+                {contar(torneioEmAndamento.mesas.length, "mesa")} · {contar(torneioEmAndamento.jogadores.length, "jogador", "jogadores")}
               </div>
             </div>
             <button
               className="rounded-xl px-5 py-2.5 font-bold text-sm transition active:scale-95 flex-shrink-0"
               style={{
                 background: "var(--warn)",
-                color: "#0a0a0a",
+                color: "var(--page-1)",
                 boxShadow: "0 4px 16px -4px rgba(252,211,77,0.5)",
               }}
               onClick={(e) => { e.stopPropagation(); abrirTorneio(torneioEmAndamento.id); }}
@@ -378,7 +382,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             <MiniKpi
               corFundo="rgba(201,166,72,0.1)"
               corBorda="rgba(201,166,72,0.25)"
-              corLabel="#c9a648"
+              corLabel="var(--brand-1)"
               label="Torneios"
               valor={String(torneios.length)}
               sub={`${ult30.qtd} nos últimos 30 dias`}
@@ -386,7 +390,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             <MiniKpi
               corFundo="rgba(201,166,72,0.1)"
               corBorda="rgba(201,166,72,0.25)"
-              corLabel="#c9a648"
+              corLabel="var(--brand-1)"
               label="Jogadores únicos"
               valor={String(metricas.totalJogadoresUnicos)}
               sub={`média ${metricas.mediaJogadoresPorTorneio.toFixed(1)} por torneio`}
@@ -394,7 +398,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             <MiniKpi
               corFundo="rgba(201,166,72,0.1)"
               corBorda="rgba(201,166,72,0.25)"
-              corLabel="#c9a648"
+              corLabel="var(--brand-1)"
               label="Partidas"
               valor={String(metricas.totalPartidas)}
               sub="no histórico"
@@ -402,7 +406,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             <MiniKpi
               corFundo="rgba(201,166,72,0.1)"
               corBorda="rgba(201,166,72,0.25)"
-              corLabel="#c9a648"
+              corLabel="var(--brand-1)"
               label="Último campeão"
               valor={ultimoCampeao ? `🏆 ${ultimoCampeao.nome}` : "—"}
               sub={ultimoCampeao ? ultimoCampeao.torneio : "nenhum torneio finalizado"}
@@ -414,7 +418,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
       </div>
 
       {/* Grid de cards — ocupa toda a tela */}
-      <main className="px-6 md:px-10 pb-12">
+      <main className="px-4 md:px-8 pb-12">
         {torneios.length === 0 && (sincronizando || (!auth.perfilCarregado && !auth.perfilErro)) ? (
           <EsqueletoTorneios />
         ) : torneios.length === 0 ? (
@@ -429,15 +433,15 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
           >
             <div className="text-5xl mb-4">🏆</div>
             <div className="text-xl font-bold mb-2" style={{ color: "var(--text-strong)" }}>
-              {auth.isAdmin ? "Nenhum torneio ainda" : "Sem torneios públicos no momento"}
+              {auth.isAdmin ? "Nenhum torneio ainda" : "Nenhum torneio para mostrar"}
             </div>
             <div className="text-sm mb-6" style={{ color: "var(--text-2)" }}>
               {auth.isAdmin
                 ? "Clique em + Novo torneio ou 📂 Importar / Exportar para começar."
                 : auth.session && auth.nomesPendentes.length > 0 && auth.nomesJogador.length === 0
-                  ? <>O nome <b style={{color: "#c9a648"}}>{auth.nomesPendentes.join(", ")}</b> está aguardando a aprovação do admin.<br/>Seus torneios aparecem aqui depois disso.</>
+                  ? <>O nome <b style={{color: "var(--brand-1)"}}>{auth.nomesPendentes.join(", ")}</b> está aguardando a aprovação do admin.<br/>Seus torneios aparecem aqui depois disso.</>
                 : auth.session && auth.nomesJogador.length > 0
-                  ? <>Você está vinculado como <b style={{color: "#7bc47f"}}>{auth.nomesJogador.join(", ")}</b>.<br/>Peça pro admin adicionar você em algum torneio.</>
+                  ? <>Você está vinculado como <b style={{color: "var(--text-label)"}}>{auth.nomesJogador.join(", ")}</b>.<br/>Peça pro admin adicionar você em algum torneio.</>
                   : auth.session
                     ? "Volte mais tarde — você ainda não está vinculado a um nome."
                     : "Entre ou crie uma conta para começar."}
@@ -446,7 +450,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
               <button
                 onClick={() => window.location.reload()}
                 className="text-xs px-4 py-2 rounded-full border transition hover:bg-white/5"
-                style={{ color: "#c9a648", borderColor: "rgba(201,166,72,0.3)" }}
+                style={{ color: "var(--brand-1)", borderColor: "rgba(201,166,72,0.3)" }}
               >
                 ↻ Atualizar
               </button>
@@ -604,7 +608,7 @@ function CardTorneio({
             cor={cor.hex}
           />
           <Stat label="TEMPO" valor={`${torneio.tempoRodadaMin}min`} cor={cor.hex} />
-          <Stat label="TAXA" valor={`R$ ${torneio.taxaInscricao.toFixed(0)}`} cor={cor.hex} />
+          <Stat label="TAXA" valor={formatarReais(torneio.taxaInscricao)} cor={cor.hex} />
         </div>
       </div>
     </div>

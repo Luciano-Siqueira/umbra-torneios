@@ -116,6 +116,7 @@ Mesmo usuário pode ter todos os papéis. O `modoView` (admin/organizador/jogado
 
 - `src/core/decks.ts` traz a lista de decks de Commander, com as cores dos comandantes. Os lançamentos novos ficam na tabela `decks_commander` (`supabase/decks_commander.sql`) e são somados a ela
 - O botão "Atualizar decks" (só admin, no modo admin) roda no navegador: compara com o `DeckList.json` do MTGJSON, baixa só os decks novos, busca as cores na Scryfall e grava na tabela (`src/core/atualizarDecks.ts`)
+- A página de decks é só do admin, no modo admin. Ao abrir um deck, `src/core/deckCompleto.ts` baixa as cartas do MTGJSON e separa por tipo; as imagens vêm da Scryfall. O cadastro de jogadores continua sugerindo decks para quem organiza
 - `scripts/atualizar_decks.py` mantém um acervo local com as listas completas e as imagens. Não é usado pelo site
 - O torneio guarda só o nome do deck; comandante e cores vêm da lista. Um deck fora dela é tratado como próprio
 ### Supabase
@@ -159,7 +160,12 @@ O prefixo `VITE_` é obrigatório e coloca o valor no JavaScript enviado ao nave
 
 - **Autocomplete**: usar `onMouseDown` (NÃO `onClick`) com `e.preventDefault()` + lógica de seleção DENTRO do mesmo handler — evita conflito com blur do input
 - **Importar backup**: 3 casos — ID novo adiciona; mesmo ID+nome sobrescreve; mesmo ID+nome diferente vira novo ID com sufixo `_imp_timestamp`
-- **Confirmações destrutivas**: usar helper `confirmar()` de `components/ui`
+- **Confirmações**: sempre o helper `confirmar()` de `components/ui`, nunca a janela do navegador
+- **Valores e contagens**: `core/formato.ts` (`formatarReais`, `formatarPercentual`, `contar`)
+- **Botões**: texto só com a inicial maiúscula. Primário (dourado) para a ação principal, sucesso para iniciar ou aprovar, aviso para refazer, perigo para apagar, `btn-info` para ação secundária e `btn-ghost` para neutra
+- **Termos**: "Excluir" apaga de vez (torneio, usuário); "Remover" tira de uma lista (jogador, nome)
+- **Cores**: usar as variáveis de `index.css`. Valores fixos só para símbolos de Magic, sorteios e onde a cor recebe transparência no código
+- **Tabelas**: cabeçalho com a classe `tabela-cab`
 - **Deletar admin**: bloquear auto-delete (`user_id === auth.session?.user?.id`)
 - **Idioma**: português brasileiro em labels e código
 - **Commits**: em inglês, no padrão Conventional Commits (`fix(auth): ...`)

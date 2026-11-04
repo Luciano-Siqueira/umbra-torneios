@@ -94,7 +94,7 @@ export function AbaSorteios({ torneio }: { torneio: Torneio }) {
         {modo === "roda" ? (
           <>
             <button className="btn-success" onClick={() => rodaRef.current?.girar()}>
-              ◈ GIRAR
+              ◈ Girar
             </button>
             <button className="btn-ghost" onClick={() => rodaRef.current?.resetar()}>
               ↺ Resetar
@@ -103,7 +103,7 @@ export function AbaSorteios({ torneio }: { torneio: Torneio }) {
         ) : (
           <>
             <button className="btn-success" onClick={() => patinhosRef.current?.iniciar()}>
-              ▶ LARGAR
+              ▶ Largar
             </button>
             <button className="btn-warning" onClick={() => patinhosRef.current?.proximaCorrida()}>
               → Próxima

@@ -14,6 +14,7 @@ import { TelaVincularNome } from "../TelaVincularNome";
 import { AbaJogadores } from "../abas/AbaJogadores";
 import { AbaMesas } from "../abas/AbaMesas";
 import { AbaRanking } from "../abas/AbaRanking";
+import { AbaFinanceiro } from "../abas/AbaFinanceiro";
 import { AuthChip } from "../AuthChip";
 
 const contas = vi.hoisted(() => ({
@@ -67,6 +68,114 @@ beforeEach(() => {
   sessionStorage.clear();
 });
 afterEach(cleanup);
+
+describe("encerrar torneio", () => {
+  const emAndamento = (rodada: number, finalizada: boolean) => {
+    const t = torneioCom("Pessoa");
+    t.jogadores.push(novoJogador(3, "Terceira Pessoa", "", true));
+    t.qtdRodadas = 4;
+    t.rodadaAtual = rodada;
+    t.mesas = [{
+      numero: 1, rodada, jogadoresIds: [1, 2, 3], finalizada, vencedorId: finalizada ? 1 : null,
+      eliminacoes: finalizada ? [[3], [2]] : [], empateTopoIds: [],
+    } as unknown as Torneio["mesas"][number]];
+    return t;
+  };
+  const botao = (nome: RegExp) => screen.queryByRole("button", { name: nome });
+
+  it("a tela do torneio não tem mais botão de encerrar fora da aba Mesas", () => {
+    const t = emAndamento(2, false);
+    preparar("admin", { isAdmin: true }, [t]);
+    sessionStorage.setItem(`mtg.aba.${t.id}`, "ranking");
+    abrir(<TelaTorneio />);
+    expect(botao(/Finalizar torneio/)).toBeNull();
+    expect(botao(/Encerrar antes/)).toBeNull();
+  });
+
+  it("antes do fim, a aba Mesas oferece encerrar e avisa das mesas sem resultado", async () => {
+    const t = emAndamento(2, false);
+    preparar("admin", { isAdmin: true }, [t]);
+    abrir(<AbaMesas torneio={t} podeEditar />);
+
+    expect(botao(/Finalizar torneio/)).toBeNull();
+    fireEvent.click(botao(/Encerrar antes do previsto/)!);
+    expect(await screen.findByText(/rodada 2 de 4/)).toBeTruthy();
+    expect(screen.getByText(/1 mesa sem resultado ficará sem pontos/)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(useStore.getState().torneios[0].finalizado).toBe(false);
+  });
+
+  it("com a última rodada concluída, aparece só Finalizar torneio", () => {
+    const t = emAndamento(4, true);
+    preparar("admin", { isAdmin: true }, [t]);
+    abrir(<AbaMesas torneio={t} podeEditar />);
+    expect(botao(/Finalizar torneio/)).toBeTruthy();
+    expect(botao(/Encerrar antes/)).toBeNull();
+  });
+
+  it("jogador não vê nenhum dos dois", () => {
+    const t = emAndamento(2, false);
+    preparar("jogador", {}, [t]);
+    abrir(<AbaMesas torneio={t} podeEditar={false} />);
+    expect(botao(/Encerrar antes/)).toBeNull();
+    expect(botao(/Finalizar torneio/)).toBeNull();
+  });
+
+  it("no torneio finalizado, os atalhos levam para as abas", () => {
+    const t = { ...torneioCom("Pessoa"), finalizado: true, rodadaAtual: 4 };
+    preparar("admin", { isAdmin: true }, [t]);
+    const irPara = vi.fn();
+    abrir(<AbaMesas torneio={t} podeEditar onIrParaAba={irPara} />);
+    fireEvent.click(screen.getByRole("button", { name: /Ranking final/ }));
+    expect(irPara).toHaveBeenCalledWith("ranking");
+  });
+});
+
+describe("padrões das telas", () => {
+  it("valores e contagens em português, no singular quando é um", () => {
+    const t = { ...torneioCom("Pessoa"), taxaInscricao: 25 };
+    t.jogadores = [novoJogador(1, "Pessoa", "", true)];
+    preparar("admin", { isAdmin: true }, [t]);
+    abrir(<AbaFinanceiro torneio={t} />);
+    expect(screen.getByText("1 pago · 0 pendentes")).toBeTruthy();
+    expect(screen.getAllByText(/25,00/).length).toBeGreaterThan(0);
+    expect(document.body.textContent).not.toMatch(/d.d{2}/);
+    cleanup();
+
+    abrir(<AbaJogadores torneio={t} podeEditar />);
+    expect(screen.getByText(/1 jogador · 1 pago · 1 ativo/)).toBeTruthy();
+  });
+
+  it("marcar pagamento usa o mesmo controle em Financeiro e Jogadores", () => {
+    const t = torneioCom("Pessoa");
+    preparar("admin", { isAdmin: true }, [t]);
+    abrir(<AbaFinanceiro torneio={t} />);
+    expect(screen.getAllByRole("button", { name: /Pessoa: pago/ }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("checkbox")).toBeNull();
+    cleanup();
+
+    abrir(<AbaJogadores torneio={t} podeEditar />);
+    expect(screen.getAllByRole("button", { name: /Pessoa: pago/ }).length).toBeGreaterThan(0);
+  });
+
+  it("o menu da conta fecha ao clicar fora, mesmo dentro da barra", () => {
+    preparar("admin", { isAdmin: true });
+    abrir(<TelaTorneios />);
+    fireEvent.click(screen.getByRole("button", { name: /ADMIN/ }));
+    expect(screen.getByText("Ver como:")).toBeTruthy();
+
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByText("Ver como:")).toBeNull();
+  });
+
+  it("a mensagem da lista vazia não fala de torneios públicos", () => {
+    preparar("jogador", {});
+    abrir(<TelaTorneios />);
+    expect(screen.queryByText(/públicos/)).toBeNull();
+    expect(screen.getByText("Nenhum torneio para mostrar")).toBeTruthy();
+  });
+});
 
 describe("rodadas e desempate", () => {
   it("o card mostra a rodada atual e o total, inclusive no finalizado", () => {
@@ -164,7 +273,7 @@ describe("trocar nome", () => {
 
     expect(screen.queryByRole("button", { name: "Cancelar" })).toBeNull();
     digitar("Novo Nome");
-    fireEvent.click(screen.getByRole("button", { name: "VINCULAR E CONTINUAR" }));
+    fireEvent.click(screen.getByRole("button", { name: "Vincular e continuar" }));
 
     await waitFor(() => expect(concluido).toHaveBeenCalled());
     expect(contas.vincularNome).toHaveBeenCalledWith("Novo Nome");
@@ -178,7 +287,7 @@ describe("trocar nome", () => {
 
     expect(screen.getByText(/precisa ser aprovado pelo admin/)).toBeTruthy();
     digitar("Nome Novo");
-    fireEvent.click(screen.getByRole("button", { name: "TROCAR NOME" }));
+    fireEvent.click(screen.getByRole("button", { name: "Trocar nome" }));
 
     await waitFor(() => expect(concluido).toHaveBeenCalled());
     expect(contas.trocarNome).toHaveBeenCalledWith("Nome Antigo", "Nome Novo");
@@ -192,7 +301,7 @@ describe("trocar nome", () => {
 
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "Segundo" } });
     digitar("Terceiro");
-    fireEvent.click(screen.getByRole("button", { name: "TROCAR NOME" }));
+    fireEvent.click(screen.getByRole("button", { name: "Trocar nome" }));
 
     await waitFor(() => expect(concluido).toHaveBeenCalled());
     expect(contas.trocarNome).toHaveBeenCalledWith("Segundo", "Terceiro");
@@ -261,7 +370,7 @@ describe("cores depois do comandante", () => {
   };
 
   it("na aba Decks", () => {
-    preparar("jogador", {});
+    preparar("admin", { isAdmin: true });
     abrir(<TelaDecks />);
     expect(coresVemDepois("Lathliss, Dragon Queen")).toBe(true);
   });
@@ -292,16 +401,91 @@ describe("cores depois do comandante", () => {
 });
 
 describe("decks", () => {
-  it("todos os papéis abrem a tela de decks", () => {
-    preparar("jogador", {});
-    abrir(<TelaTorneios />);
-    fireEvent.click(screen.getByRole("button", { name: /Decks/ }));
-    expect(useStore.getState().tela).toBe("decks");
-    useStore.getState().voltarParaLista();
+  it("só o admin no modo admin vê o botão e a página de decks", () => {
+    const entra = (modo: ModoView, auth: Partial<AuthState>) => {
+      preparar(modo, auth);
+      abrir(<TelaTorneios />);
+      const temBotao = !!screen.queryByRole("button", { name: /Decks/ });
+      cleanup();
+      abrir(<TelaDecks />);
+      const restrito = !!screen.queryByText("🔒 Acesso restrito");
+      const temLista = !!screen.queryByRole("searchbox");
+      cleanup();
+      return { temBotao, restrito, temLista };
+    };
+    const bloqueado = { temBotao: false, restrito: true, temLista: false };
+    expect(entra("jogador", {})).toEqual(bloqueado);
+    expect(entra("organizador", { isOrganizador: true })).toEqual(bloqueado);
+    expect(entra("organizador", { isAdmin: true, isOrganizador: true })).toEqual(bloqueado);
+    expect(entra("admin", { isAdmin: true })).toEqual({ temBotao: true, restrito: false, temLista: true });
+  });
+
+  it("organizador continua buscando decks no cadastro de jogadores", () => {
+    const t = torneioCom("Pessoa");
+    preparar("organizador", { isOrganizador: true }, [t]);
+    abrir(<AbaJogadores torneio={t} podeEditar />);
+    fireEvent.change(screen.getByPlaceholderText(/Deck ou comandante/), { target: { value: "atraxa" } });
+    expect(screen.getByRole("option", { name: /Breed Lethality/ })).toBeTruthy();
+  });
+
+  describe("detalhe do deck", () => {
+    const json = (dados: unknown, status = 200) =>
+      new Response(JSON.stringify(dados), { status, headers: { "content-type": "application/json" } });
+    const lista = { data: [{ code: "CM2", name: "Breed Lethality", fileName: "Arquivo_C16", type: "Commander Deck" }] };
+    const deck = { data: {
+      commander: [{ name: "Atraxa, Praetors' Voice", count: 1, type: "Legendary Creature", types: ["Creature"], identifiers: { scryfallId: "abcd1234" } }],
+      mainBoard: [
+        { name: "Bicho", count: 1, type: "Creature", types: ["Creature"] },
+        { name: "Floresta", count: 30, type: "Basic Land", types: ["Land"] },
+        { name: "Raio", count: 1, type: "Instant", types: ["Instant"] },
+      ],
+    } };
+
+    beforeEach(() => { window.scrollTo = (() => {}) as typeof window.scrollTo; });
+    afterEach(() => { delete (globalThis as any).__rede; });
+
+    const abrirDeck = (nome: RegExp) => {
+      preparar("admin", { isAdmin: true });
+      abrir(<TelaDecks />);
+      fireEvent.click(screen.getAllByRole("button", { name: nome })[0]);
+    };
+
+    it("clicar no deck mostra o comandante em destaque e as cartas por tipo", async () => {
+      (globalThis as any).__rede = async (url: string) =>
+        url.endsWith("DeckList.json") ? json(lista) : url.includes("Arquivo_C16") ? json(deck) : json({}, 404);
+      abrirDeck(/^Breed Lethality$/);
+
+      const comandante = within(await screen.findByRole("region", { name: "Comandante" }));
+      const imagem = comandante.getByRole("img", { name: "Atraxa, Praetors' Voice" }) as HTMLImageElement;
+      expect(imagem.src).toBe("https://cards.scryfall.io/large/front/a/b/abcd1234.jpg");
+
+      expect(within(screen.getByRole("region", { name: "Criaturas" })).getByText("Bicho")).toBeTruthy();
+      expect(within(screen.getByRole("region", { name: "Mágicas" })).getByText("Raio")).toBeTruthy();
+      const terrenos = within(screen.getByRole("region", { name: "Terrenos" }));
+      expect(terrenos.getByText("Floresta")).toBeTruthy();
+      expect(terrenos.getAllByText("30").length).toBeGreaterThan(0);
+      expect(screen.queryByRole("region", { name: "Artefatos" })).toBeNull();
+      expect(screen.getByText(/33 cartas/)).toBeTruthy();
+
+      fireEvent.click(screen.getByRole("button", { name: /Todos os decks/ }));
+      expect(screen.getByRole("searchbox")).toBeTruthy();
+    });
+
+    it("sem conexão, avisa e permite tentar de novo", async () => {
+      (globalThis as any).__rede = async (url: string) =>
+        url.endsWith("DeckList.json") ? json(lista) : json({}, 503);
+      abrirDeck(/^Heavenly Inferno$/);
+      expect(await screen.findByText(/Não foi possível abrir o deck/)).toBeTruthy();
+
+      (globalThis as any).__rede = async (url: string) =>
+        url.endsWith("DeckList.json") ? json({ data: [{ code: "CMA", name: "Heavenly Inferno", fileName: "Inferno_CMA", type: "Commander Deck" }] }) : json(deck);
+      fireEvent.click(screen.getByRole("button", { name: "Tentar de novo" }));
+      expect(screen.getByText("Carregando as cartas do deck...")).toBeTruthy();
+    });
   });
 
   it("a tela busca e filtra a lista", () => {
-    preparar("jogador", {});
+    preparar("admin", { isAdmin: true });
     abrir(<TelaDecks />);
     const total = screen.getByText(/^\d+ decks$/).textContent!;
 
@@ -313,29 +497,6 @@ describe("decks", () => {
 
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "nada disso" } });
     expect(screen.getByText("Nenhum deck encontrado")).toBeTruthy();
-  });
-
-  it("o botão Atualizar decks é só do admin no modo admin", () => {
-    const botao = () => screen.queryByRole("button", { name: /Atualizar decks/ });
-
-    preparar("jogador", {});
-    abrir(<TelaDecks />);
-    expect(botao()).toBeNull();
-    cleanup();
-
-    preparar("organizador", { isOrganizador: true });
-    abrir(<TelaDecks />);
-    expect(botao()).toBeNull();
-    cleanup();
-
-    preparar("organizador", { isAdmin: true, isOrganizador: true });
-    abrir(<TelaDecks />);
-    expect(botao()).toBeNull();
-    cleanup();
-
-    preparar("admin", { isAdmin: true });
-    abrir(<TelaDecks />);
-    expect(botao()).toBeTruthy();
   });
 
   it("as mesas mostram o deck e o comandante de cada jogador", () => {

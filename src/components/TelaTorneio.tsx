@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useStore } from "../core/store";
 import { useAuth } from "../core/auth";
 import { useAoVivo } from "../core/useAoVivo";
@@ -9,7 +9,8 @@ import { podeEditarTorneios } from "../core/visibilidade";
 import { confirmar } from "./ui/Confirm";
 import { useToast } from "./ui/Toast";
 import { AuthChip } from "./AuthChip";
-import { BANNER_IMAGE } from "../banner-image";
+import { FUNDO_DE_TELA } from "../banner-image";
+import { contar } from "../core/formato";
 import { MTGDivider } from "./ui/Divider";
 import { AbaJogadores } from "./abas/AbaJogadores";
 import { AbaMesas } from "./abas/AbaMesas";
@@ -59,7 +60,6 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
   const podeEditar = podeEditarTorneios(modoView, auth);
   const { toast } = useToast();
   const reabrir = useStore((s) => s.reabrirTorneio);
-  const finalizar = useStore((s) => s.finalizarTorneio);
   const torneioId = useStore((s) => s.torneioId);
   const [abaEscolhida, setAbaEscolhida] = useState<Aba | null>(() => {
     try {
@@ -80,6 +80,18 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
 
   useAoVivo(torneio ? torneio.id : null, podeEditar);
 
+  // No celular as abas passam da largura: mantém a aba aberta à vista
+  const abaAberta = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const botao = abaAberta.current;
+    const barra = botao?.closest("nav");
+    if (!botao || !barra) return;
+    // Só na horizontal, para não mover a página
+    const b = botao.getBoundingClientRect();
+    const n = barra.getBoundingClientRect();
+    barra.scrollLeft += b.left - n.left - (n.width - b.width) / 2;
+  }, [aba]);
+
   if (!torneio) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] text-fg flex items-center justify-center">
@@ -94,12 +106,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
   return (
     <div
       className="min-h-screen text-fg flex flex-col"
-      style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0.65) 100%), url(${BANNER_IMAGE})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundAttachment: "fixed",
-      }}
+      style={FUNDO_DE_TELA}
     >
       <header className="px-4 md:px-8 pt-4 pb-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
@@ -111,7 +118,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
           <div className="min-w-0">
             <h1 className="text-xl md:text-2xl font-black truncate">{torneio.nome}</h1>
             <div className="text-xs text-fg-dim">
-              {torneio.jogadores.length} jogadores ·
+              {contar(torneio.jogadores.length, "jogador", "jogadores")} ·
               {torneio.finalizado
                 ? " FINALIZADO"
                 : ` Rodada ${Math.max(torneio.rodadaAtual, 1)} de ${torneio.qtdRodadas}`}
@@ -124,7 +131,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
       {/* Banner de torneio finalizado — fixo e visível em TODAS as abas */}
       {torneio.finalizado && (
         <div
-          className="relative mx-2 md:mx-6 my-2 rounded-xl p-3 md:p-4 flex items-center gap-3 overflow-hidden"
+          className="relative mx-4 md:mx-8 my-2 rounded-xl p-3 md:p-4 flex items-center gap-3 overflow-hidden"
           style={{
             background: "linear-gradient(90deg, rgba(201,166,72,0.22), rgba(139,0,0,0.1), rgba(201,166,72,0.15))",
             border: "1.5px solid rgba(201,166,72,0.5)",
@@ -133,13 +140,13 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
         >
           <div
             className="absolute -top-10 -right-10 w-32 h-32 opacity-40 pointer-events-none"
-            style={{ background: "radial-gradient(circle, #c9a648, transparent 65%)" }}
+            style={{ background: "radial-gradient(circle, var(--brand-1), transparent 65%)" }}
           />
           <div className="text-3xl md:text-4xl flex-shrink-0 relative">♛</div>
           <div className="flex-1 min-w-0 relative">
             <div
               className="text-[10px] md:text-[11px] font-bold tracking-[0.3em] uppercase"
-              style={{ color: "#c9a648" }}
+              style={{ color: "var(--brand-1)" }}
             >TORNEIO FINALIZADO</div>
             <div className="text-sm md:text-base font-semibold truncate" style={{ color: "#fff" }}>
               {podeEditar
@@ -150,7 +157,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
           {podeEditar && (
             <button
               className="text-xs md:text-sm px-3 py-1.5 rounded-full border transition hover:bg-white/5 flex-shrink-0 relative"
-              style={{ color: "#c9a648", borderColor: "rgba(201,166,72,0.4)" }}
+              style={{ color: "var(--brand-1)", borderColor: "rgba(201,166,72,0.4)" }}
               onClick={async () => {
                 const ok = await confirmar({
                   titulo: "Reabrir torneio",
@@ -166,12 +173,17 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
 
       <MTGDivider />
 
-      {/* Tabs + ação (Reabrir/Finalizar) à direita */}
-      <nav className="px-2 md:px-8 py-2 border-b border-bg-cardalt flex items-center gap-2 overflow-x-auto">
+      {/* O degradê à direita indica no celular que há mais abas */}
+      <div className="relative">
+      <nav
+        className="px-4 md:px-8 py-2 border-b border-bg-cardalt flex items-center gap-2 overflow-x-auto"
+        style={{ background: "rgba(10,10,10,0.82)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
+      >
         <div className="flex gap-1 min-w-max flex-1">
           {abasVisiveis.map((a) => (
             <button
               key={a.id}
+              ref={aba === a.id ? abaAberta : undefined}
               onClick={() => setAba(a.id)}
               className={`px-3 md:px-4 py-2 rounded-t-lg text-sm font-semibold transition
                           ${aba === a.id
@@ -183,9 +195,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
           ))}
         </div>
 
-        {/* Ação à direita: Reabrir (se finalizado) ou Finalizar (se aberto) — só admin */}
-        {podeEditar && (
-          torneio.finalizado ? (
+        {podeEditar && torneio.finalizado && (
             <button
               className="btn-warning !py-2 text-xs md:text-sm flex-shrink-0"
               onClick={async () => {
@@ -203,34 +213,20 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
             >
               ↺ <span className="hidden sm:inline">Reabrir torneio</span>
             </button>
-          ) : torneio.rodadaAtual > 0 ? (
-            <button
-              className="btn-gold !py-2 text-xs md:text-sm flex-shrink-0"
-              onClick={async () => {
-                const ok = await confirmar({
-                  titulo: "Finalizar torneio",
-                  mensagem: `Tem certeza que deseja finalizar o torneio "${torneio.nome}"?\n\nIsso encerra o torneio definitivamente (mas você pode reabrir depois se precisar).`,
-                  textoOk: "Finalizar",
-                });
-                if (ok) {
-                  finalizar();
-                  toast("Torneio finalizado!", "sucesso");
-                }
-              }}
-              title="Encerra o torneio"
-            >
-              ♛ <span className="hidden sm:inline">Finalizar torneio</span>
-            </button>
-          ) : null
         )}
       </nav>
+      <div
+        className="sm:hidden absolute inset-y-0 right-0 w-8 pointer-events-none"
+        style={{ background: "linear-gradient(to right, transparent, rgba(10,10,10,0.95))" }}
+      />
+      </div>
 
       <main className="flex-1 px-4 md:px-8 py-4 overflow-y-auto">
         {!podeEditar && encontrarMinhaMesa([torneio], auth.nomesJogador)?.mesa && (
           <VibracaoFimDaRodada torneio={torneio} />
         )}
         {aba === "jogadores" && <AbaJogadores torneio={torneio} podeEditar={podeEditar} />}
-        {aba === "mesas" && <AbaMesas torneio={torneio} podeEditar={podeEditar} />}
+        {aba === "mesas" && <AbaMesas torneio={torneio} podeEditar={podeEditar} onIrParaAba={setAba} />}
         {aba === "ranking" && <AbaRanking torneio={torneio} />}
         {aba === "financeiro" && <AbaFinanceiro torneio={torneio} />}
         {aba === "premiacao" && <AbaPremiacao torneio={torneio} />}

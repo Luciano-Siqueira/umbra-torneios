@@ -63,7 +63,7 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
         <div
           className="text-xs md:text-sm font-mono tracking-[0.5em] mb-4 md:mb-6 opacity-0"
           style={{
-            color: "#c9a648",
+            color: "var(--brand-1)",
             animation: "fadeInUp 0.6s ease-out 0.4s forwards",
           }}
         >
@@ -86,7 +86,7 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
             className="relative px-14 py-5 md:px-20 md:py-6 font-black text-xl md:text-2xl tracking-[0.4em] border-2"
             style={{
               background: "linear-gradient(135deg, rgba(201,166,72,0.1) 0%, rgba(139,0,0,0.1) 100%)",
-              borderImage: "linear-gradient(135deg, #c9a648, #8b0000) 1",
+              borderImage: "linear-gradient(135deg, var(--brand-1), var(--brand-2)) 1",
               clipPath: "polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px))",
               color: "#fff",
               backdropFilter: "blur(10px)",
@@ -95,7 +95,7 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
           >
             <span
               style={{
-                background: "linear-gradient(90deg, #c9a648, #f5f5f5, #c9a648)",
+                background: "linear-gradient(90deg, var(--brand-1), var(--text-strong), var(--brand-1))",
                 backgroundSize: "200% auto",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
@@ -114,17 +114,17 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
           style={{ animation: "fadeInUp 0.6s ease-out 1s forwards" }}
         >
           {auth.loading ? (
-            <div className="text-xs" style={{ color: "#8a8a8a" }}>...</div>
+            <div className="text-xs" style={{ color: "var(--text-2)" }}>...</div>
           ) : auth.session ? (
-            <div className="text-xs" style={{ color: "#c9a648" }}>
+            <div className="text-xs" style={{ color: "var(--brand-1)" }}>
               {auth.isAdmin ? "👑 ADMIN · " : ""}{auth.session.user.email}
             </div>
           ) : (
-            <div className="text-xs" style={{ color: "#8a8a8a" }}>
+            <div className="text-xs" style={{ color: "var(--text-2)" }}>
               🔐 Login necessário
             </div>
           )}
-          <div className="text-[11px]" style={{ color: "#6b6b6b" }}>
+          <div className="text-[11px]" style={{ color: "var(--text-muted-ds)" }}>
             {auth.session
               ? (temTorneios ? `${torneios.length} torneio${torneios.length > 1 ? "s" : ""} salvo${torneios.length > 1 ? "s" : ""}` : "Nenhum torneio ainda")
               : "Clique em ENTRAR para fazer login"}
@@ -147,7 +147,7 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
                 background: "rgba(15,15,15,0.5)",
                 borderColor: "rgba(201,166,72,0.15)",
                 backdropFilter: "blur(10px)",
-                color: "#f5f5f5",
+                color: "var(--text-strong)",
                 animation: `fadeInUp 0.4s ease-out ${1.3 + i * 0.08}s forwards`,
               }}
             >
@@ -222,7 +222,7 @@ function ManaFlutuante({
             boxShadow: `0 0 30px ${cor}cc, 0 0 60px ${cor}66, inset 0 2px 10px rgba(255,255,255,0.3)`,
           }}
         >
-          <svg viewBox="0 0 32 32" width="60%" height="60%" fill="#0a0a0a">
+          <svg viewBox="0 0 32 32" width="60%" height="60%" fill="var(--page-1)">
             <path d={MANA_PATHS[sym]} />
           </svg>
         </div>

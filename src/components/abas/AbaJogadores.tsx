@@ -5,6 +5,8 @@ import { useToast } from "../ui/Toast";
 import { confirmar } from "../ui/Confirm";
 import { CampoDeck } from "../ui/CampoDeck";
 import { CoresMana } from "../ui/SimboloMana";
+import { CaixaPago } from "../ui/CaixaPago";
+import { contar } from "../../core/formato";
 import { comandanteDoDeck, coresDoDeck } from "../../core/decks";
 import { sugerirNomes } from "../../core/storage";
 
@@ -173,7 +175,7 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
             if (torneio.jogadores.length === 0) return;
             const ok = await confirmar({
               titulo: "Remover todos",
-              mensagem: `Remover TODOS os ${torneio.jogadores.length} jogadores deste torneio?`,
+              mensagem: `Remover todos os jogadores deste torneio (${torneio.jogadores.length})?`,
               perigo: true,
               textoOk: "Remover tudo",
             });
@@ -189,10 +191,10 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
       <div className="card">
         <div className="flex items-center justify-between mb-3">
           <div className="text-sm text-fg-dim">
-            {torneio.jogadores.length} jogadores
-            {podeEditar && ` · ${torneio.jogadores.filter((j) => j.pago).length} pagos`}
+            {contar(torneio.jogadores.length, "jogador", "jogadores")}
+            {podeEditar && ` · ${contar(torneio.jogadores.filter((j) => j.pago).length, "pago")}`}
             {" · "}
-            {ativos.length} ativos
+            {contar(ativos.length, "ativo")}
           </div>
         </div>
 
@@ -204,12 +206,12 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr style={{ color: "var(--text-muted-ds)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                  {podeEditar && <th className="text-left py-2 px-2 text-[10px] font-bold tracking-widest uppercase w-12">PAGO</th>}
-                  <th className="text-left py-2 px-2 text-[10px] font-bold tracking-widest uppercase">JOGADOR</th>
-                  <th className="text-left py-2 px-2 text-[10px] font-bold tracking-widest uppercase">DECK</th>
-                  <th className="text-left py-2 px-2 text-[10px] font-bold tracking-widest uppercase hidden sm:table-cell">COMANDANTE</th>
-                  {podeEditar && <th className="text-right py-2 px-2 text-[10px] font-bold tracking-widest uppercase">AÇÕES</th>}
+                <tr className="tabela-cab">
+                  {podeEditar && <th className="text-left py-2 px-2 w-12">Pago</th>}
+                  <th className="text-left py-2 px-2">Jogador</th>
+                  <th className="text-left py-2 px-2">Deck</th>
+                  <th className="text-left py-2 px-2 hidden sm:table-cell">Comandante</th>
+                  {podeEditar && <th className="text-right py-2 px-2">Ações</th>}
                 </tr>
               </thead>
               <tbody>
@@ -217,14 +219,7 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
                   <tr key={j.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     {podeEditar && (
                     <td className="py-1.5 px-2">
-                      <button
-                        onClick={() => alternarPago(j.id, j.pago)}
-                        className={`w-6 h-6 rounded border-2 flex items-center justify-center text-xs
-                                    ${j.pago
-                                      ? "bg-sucesso border-sucesso text-bg"
-                                      : "border-fg-muted text-transparent hover:border-fg-dim"}`}
-                        title={j.pago ? "Pago" : "Não pago"}
-                      >{j.pago ? "✓" : ""}</button>
+                      <CaixaPago pago={j.pago} nome={j.nome} onClick={() => alternarPago(j.id, j.pago)} />
                     </td>
                     )}
                     <td className="py-1.5 px-2">
@@ -264,13 +259,13 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
                       {/* Depois de iniciado, remover quebraria o histórico das mesas */}
                       {torneio.rodadaAtual === 0 ? (
                         <button
-                          className="text-perigo hover:text-red-400 text-xl leading-none px-2"
+                          className="text-perigo hover:text-red-400 text-xl leading-none min-w-[36px] min-h-[36px]"
                           onClick={() => remover(j.id, j.nome)}
                           title="Remover"
                         >×</button>
                       ) : !torneio.finalizado && (
                         <button
-                          className="text-xs px-2 py-1 rounded border border-white/10 hover:bg-white/5 whitespace-nowrap"
+                          className="text-xs px-3 min-h-[36px] rounded border border-white/10 hover:bg-white/5 whitespace-nowrap"
                           onClick={() => drop(j.id, j.nome, j.ativo)}
                           title={j.ativo ? "Tirar das próximas rodadas" : "Voltar para as próximas rodadas"}
                         >{j.ativo ? "Drop" : "Desfazer drop"}</button>

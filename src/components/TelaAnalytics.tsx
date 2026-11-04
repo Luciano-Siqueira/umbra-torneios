@@ -11,7 +11,8 @@ import {
 } from "../core/desempenho";
 import { podeEditarTorneios, torneiosVisiveis } from "../core/visibilidade";
 import type { Torneio } from "../core/types";
-import { BANNER_IMAGE } from "../banner-image";
+import { FUNDO_DE_TELA } from "../banner-image";
+import { formatarNumero, formatarReais } from "../core/formato";
 
 type AbaAnalytics = "geral" | "jogador";
 
@@ -39,18 +40,9 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
   return (
     <div
       className="min-h-screen text-fg"
-      style={{
-        backgroundImage: `linear-gradient(to bottom,
-          rgba(10,10,10,0.65) 0%,
-          rgba(10,10,10,0.75) 20%,
-          rgba(10,10,10,0.85) 45%,
-          rgba(10,10,10,0.94) 100%), url(${BANNER_IMAGE})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundAttachment: "fixed",
-      }}
+      style={FUNDO_DE_TELA}
     >
-      <div className="px-6 md:px-10 py-4 flex items-center gap-3">
+      <div className="px-4 md:px-8 py-4 flex items-center gap-3">
         <button className="btn-ghost" onClick={voltar}>← Voltar</button>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: "var(--text-strong)" }}>
           📊 {podeEditar ? "Analytics" : "Meu desempenho"}
@@ -59,7 +51,7 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
         <AuthChip auth={auth} onLoginClick={onPedirLogin} onVincularNome={onVincularNome} onSair={voltar} />
       </div>
 
-      <main className="px-6 md:px-10 pb-12 space-y-6">
+      <main className="px-4 md:px-8 pb-12 space-y-6">
         {!podeEditar ? (
           <PainelJogador
             torneios={torneios}
@@ -122,7 +114,7 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
                 <KpiTile
                   label="Jogadores únicos"
                   valor={metricas.totalJogadoresUnicos.toLocaleString("pt-BR")}
-                  sub={`média ${metricas.mediaJogadoresPorTorneio.toFixed(1)} por torneio`}
+                  sub={`média ${formatarNumero(metricas.mediaJogadoresPorTorneio, 1)} por torneio`}
                 />
                 <KpiTile
                   label="Partidas disputadas"
@@ -160,7 +152,7 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
                     <thead>
-                      <tr style={{ color: "var(--text-muted-ds)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".02em" }}>
+                      <tr className="tabela-cab">
                         <th className="text-left py-2">#</th>
                         <th className="text-left py-2">Jogador</th>
                         <th className="text-right py-2">🏆</th>
@@ -221,7 +213,6 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
   );
 }
 
-const ESTILO_CABECALHO = { color: "var(--text-muted-ds)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".02em" } as const;
 const NOME_COR: Record<string, string> = {
   W: "Branco", U: "Azul", B: "Preto", R: "Vermelho", G: "Verde", C: "Incolor",
 };
@@ -248,7 +239,7 @@ function CartaoCores({ metricas }: { metricas: MetricasGlobais }) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
               <thead>
-                <tr style={ESTILO_CABECALHO}>
+                <tr className="tabela-cab">
                   <th className="text-left py-2">Cor</th>
                   <th className="text-right py-2">Usos</th>
                   <th className="text-right py-2">% dos decks</th>
@@ -294,7 +285,7 @@ function CartaoComandantes({ metricas }: { metricas: MetricasGlobais }) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
             <thead>
-              <tr style={ESTILO_CABECALHO}>
+              <tr className="tabela-cab">
                 <th className="text-left py-2">Comandante</th>
                 <th className="text-right py-2">Usos</th>
                 <th className="text-right py-2">🏆</th>
@@ -525,7 +516,7 @@ function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
             <div className="overflow-x-auto">
               <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
                 <thead>
-                  <tr style={ESTILO_CABECALHO}>
+                  <tr className="tabela-cab">
                     <th className="text-left py-2">Deck</th>
                     <th className="text-left py-2">Comandante</th>
                     <th className="text-right py-2">Torn.</th>
@@ -573,7 +564,7 @@ function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
           <div className="overflow-x-auto">
             <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
               <thead>
-                <tr style={{ color: "var(--text-muted-ds)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".02em" }}>
+                <tr className="tabela-cab">
                   <th className="text-left py-2">Data</th>
                   <th className="text-left py-2">Torneio</th>
                   <th className="text-left py-2">Deck</th>
@@ -642,7 +633,7 @@ function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
                   <thead>
-                    <tr style={{ color: "var(--text-muted-ds)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".02em" }}>
+                    <tr className="tabela-cab">
                       <th className="text-left py-2">Jogador</th>
                       <th className="text-right py-2">Mesas</th>
                       <th className="text-right py-2">Venceu</th>
@@ -668,10 +659,6 @@ function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
 
     </>
   );
-}
-
-function formatarReais(valor: number): string {
-  return `R$ ${valor.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function formatarData(iso: string): string {

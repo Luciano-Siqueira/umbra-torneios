@@ -4,6 +4,7 @@ import {
   ranking, omwJogador, ogwJogador, gameWinrate,
   vitorias, partidasJogadas,
 } from "../../core/resultados";
+import { formatarPercentual } from "../../core/formato";
 
 export function AbaRanking({ torneio }: { torneio: Torneio }) {
   const rank = useMemo(() => ranking(torneio), [torneio]);
@@ -17,7 +18,7 @@ export function AbaRanking({ torneio }: { torneio: Torneio }) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-fg-dim text-xs uppercase tracking-wider border-b border-bg-cardalt">
+              <tr className="tabela-cab">
                 <th className="text-left py-2 px-2">#</th>
                 <th className="text-left py-2 px-2">Jogador</th>
                 <th className="text-right py-2 px-2">Pts</th>
@@ -53,9 +54,9 @@ export function AbaRanking({ torneio }: { torneio: Torneio }) {
                       {!j.ativo && <span className="ml-2 text-xs text-perigo">(drop)</span>}
                     </td>
                     <td className="py-2 px-2 text-right font-bold text-acento">{j.pontos}</td>
-                    <td className="py-2 px-2 text-right tabular-nums">{(omw * 100).toFixed(1)}%</td>
-                    <td className="py-2 px-2 text-right tabular-nums">{(gw * 100).toFixed(1)}%</td>
-                    <td className="py-2 px-2 text-right tabular-nums">{(ogw * 100).toFixed(1)}%</td>
+                    <td className="py-2 px-2 text-right tabular-nums">{formatarPercentual(omw)}</td>
+                    <td className="py-2 px-2 text-right tabular-nums">{formatarPercentual(gw)}</td>
+                    <td className="py-2 px-2 text-right tabular-nums">{formatarPercentual(ogw)}</td>
                     <td className="py-2 px-2 text-right">{vitorias(j)}</td>
                     <td className="py-2 px-2 text-right">{partidasJogadas(j)}</td>
                   </tr>

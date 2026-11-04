@@ -42,6 +42,7 @@
   --shadow: 0 24px 60px -20px rgba(0,0,0,.70);
   --lift: 0 16px 48px -16px rgba(201,166,72,.25);
   --font-ds: "Sora", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --card-fundo: rgba(20,20,20,0.9);
   --r: 16px;
   --r-m: 12px;
   --r-s: 8px;
@@ -75,14 +76,19 @@ body {
   .btn-success  { @apply btn bg-sucesso text-bg hover:brightness-110; }
   .btn-warning  { @apply btn bg-atencao text-bg hover:brightness-110; }
   .btn-danger   { @apply btn bg-perigo  text-bg hover:brightness-110; }
-  .btn-info     { @apply btn bg-info    text-bg hover:brightness-110; }
+  /* Ação secundária */
+  .btn-info {
+    @apply btn text-acento hover:bg-acento/10;
+    background: rgba(15,15,15,0.7);
+    border: 1px solid rgba(201,166,72,0.45);
+  }
   .btn-ghost    { @apply btn bg-bg-cardalt text-fg hover:bg-bg-card; }
-  .btn-gold     { @apply btn bg-pos-1 text-bg hover:brightness-110; }
 
   .card {
-    @apply rounded-xl p-4;
-    background: rgba(15,15,15,0.55);
-    border: 1px solid rgba(255,255,255,0.08);
+    @apply p-4;
+    background: var(--card-fundo);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
@@ -96,10 +102,22 @@ body {
   }
   .input {
     @apply text-fg px-3 py-2 rounded-lg outline-none transition;
+    min-width: 0;
     background: rgba(20,20,20,0.6);
     border: 1px solid rgba(255,255,255,0.08);
   }
   .input:focus { border-color: var(--brand-link); }
+
+  /* Cabeçalho de todas as tabelas */
+  .tabela-cab {
+    color: var(--text-muted-ds);
+    border-bottom: 1px solid var(--line);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
 
   .label {
     @apply text-fg-dim text-sm font-medium;
@@ -146,9 +164,8 @@ body {
   }
 
   .ds-card {
-    background: var(--ds-surface);
-    background-image: var(--sheen);
-    border: 0.8px solid var(--line);
+    background: var(--card-fundo);
+    border: 1px solid var(--line);
     border-radius: var(--r);
     padding: 18px;
     min-width: 0;

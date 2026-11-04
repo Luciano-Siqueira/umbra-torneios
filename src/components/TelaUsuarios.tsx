@@ -8,8 +8,9 @@ import {
   type NomePendente, type UsuarioInfo,
 } from "../core/admin";
 import { useToast } from "./ui/Toast";
+import { confirmar } from "./ui/Confirm";
+import { FUNDO_DE_TELA } from "../banner-image";
 import { AuthChip } from "./AuthChip";
-import { BANNER_IMAGE } from "../banner-image";
 
 interface Props {
   onPedirLogin?: () => void;
@@ -78,7 +79,15 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
   };
 
   const decidirNome = async (p: NomePendente, aprovar: boolean) => {
-    if (!aprovar && !confirm(`Recusar o vínculo de "${p.nome_jogador}"? O nome fica livre de novo.`)) return;
+    if (!aprovar) {
+      const ok = await confirmar({
+        titulo: "Recusar nome",
+        mensagem: `Recusar o vínculo de "${p.nome_jogador}"? O nome fica livre de novo.`,
+        textoOk: "Recusar",
+        perigo: true,
+      });
+      if (!ok) return;
+    }
     try {
       if (aprovar) await aprovarNome(p.user_id, p.nome_jogador);
       else await removerNomeDoUsuario(p.user_id, p.nome_jogador);
@@ -110,7 +119,12 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
   };
 
   const resetarSenha = async (u: UsuarioInfo) => {
-    if (!confirm(`Enviar email de redefinição de senha para ${u.email}?`)) return;
+    const ok = await confirmar({
+      titulo: "Redefinir senha",
+      mensagem: `Enviar email de redefinição de senha para ${u.email}?`,
+      textoOk: "Enviar",
+    });
+    if (!ok) return;
     try {
       await enviarResetSenha(u.email);
       toast(`Email de reset enviado para ${u.email}`, "sucesso");
@@ -121,16 +135,22 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
 
   const excluirUsuario = async (u: UsuarioInfo) => {
     if (u.user_id === auth.session?.user?.id) {
-      toast("Você não pode deletar a si mesmo", "aviso");
+      toast("Você não pode excluir a própria conta", "aviso");
       return;
     }
     const nome = u.nomes_jogador[0] || u.email;
-    if (!confirm(`⚠️ DELETAR permanentemente o usuário "${nome}"?\n\nTudo associado (login, nomes vinculados, papéis) será removido.\n\nIsso não pode ser desfeito.`)) return;
+    const ok = await confirmar({
+      titulo: "Excluir usuário",
+      mensagem: `Excluir permanentemente o usuário "${nome}"?\n\nO login, os nomes vinculados e os papéis serão removidos.\n\nIsso não pode ser desfeito.`,
+      textoOk: "Excluir",
+      perigo: true,
+    });
+    if (!ok) return;
     setSalvando(u.user_id);
     try {
       await deletarUsuario(u.user_id);
       setUsuarios((prev) => prev.filter((x) => x.user_id !== u.user_id));
-      toast(`Usuário "${nome}" deletado`, "sucesso");
+      toast(`Usuário "${nome}" excluído`, "sucesso");
     } catch (e: any) {
       toast("Erro: " + e.message, "erro");
     } finally {
@@ -158,14 +178,9 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
   return (
     <div
       className="min-h-screen text-fg"
-      style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0.65) 100%), url(${BANNER_IMAGE})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundAttachment: "fixed",
-      }}
+      style={FUNDO_DE_TELA}
     >
-      <div className="px-6 md:px-10 py-4 flex items-center gap-3 flex-wrap">
+      <div className="px-4 md:px-8 py-4 flex items-center gap-3 flex-wrap">
         <button className="btn-ghost" onClick={voltar}>← Voltar</button>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: "var(--text-strong)" }}>
           👥 Gerenciar Usuários
@@ -174,7 +189,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
         <AuthChip auth={auth} onLoginClick={onPedirLogin} onVincularNome={onVincularNome} onSair={voltar} />
       </div>
 
-      <main className="px-6 md:px-10 pb-12 space-y-4">
+      <main className="px-4 md:px-8 pb-12 space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <KpiMini label="TOTAL" valor={String(total)} cor="#c4c4c4" />
           <KpiMini label="👑 ADMINS" valor={String(totAdmin)} cor="#c9a648" />
@@ -195,7 +210,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
 
         {pendentes.length > 0 && (
           <div className="card space-y-2" style={{ borderColor: "rgba(201,166,72,0.4)" }}>
-            <div className="text-sm font-bold" style={{ color: "#c9a648" }}>
+            <div className="text-sm font-bold" style={{ color: "var(--brand-1)" }}>
               Nomes aguardando aprovação ({pendentes.length})
             </div>
             <div className="text-xs text-fg-dim">
@@ -234,12 +249,12 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr style={{ color: "#8a8a8a", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                    <th className="text-left py-3 px-4 text-[10px] font-bold tracking-widest uppercase">EMAIL</th>
-                    <th className="text-left py-3 px-4 text-[10px] font-bold tracking-widest uppercase whitespace-nowrap">👤 JOGADOR</th>
-                    <th className="text-center py-3 px-2 text-[10px] font-bold tracking-widest uppercase whitespace-nowrap">👑 ADMIN</th>
-                    <th className="text-center py-3 px-2 text-[10px] font-bold tracking-widest uppercase whitespace-nowrap">🎯 ORGANIZADOR</th>
-                    <th className="text-right py-3 px-4 text-[10px] font-bold tracking-widest uppercase">AÇÕES</th>
+                  <tr className="tabela-cab">
+                    <th className="text-left py-3 px-4">Email</th>
+                    <th className="text-left py-3 px-4">👤 Jogador</th>
+                    <th className="text-center py-3 px-2">👑 Admin</th>
+                    <th className="text-center py-3 px-2">🎯 Organizador</th>
+                    <th className="text-right py-3 px-4">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -262,8 +277,8 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                               <span key={n} className="text-[11px] px-2 py-0.5 rounded-full"
                                     title={nomeNoTorneio(n) ? undefined : "Não aparece em nenhum torneio"}
                                     style={nomeNoTorneio(n)
-                                      ? { background: "rgba(123,196,127,0.1)", color: "#7bc47f", border: "1px solid rgba(123,196,127,0.25)" }
-                                      : { background: "rgba(252,211,77,0.1)", color: "#fcd34d", border: "1px solid rgba(252,211,77,0.3)" }}>
+                                      ? { background: "rgba(110,231,183,0.1)", color: "var(--good)", border: "1px solid rgba(110,231,183,0.25)" }
+                                      : { background: "rgba(252,211,77,0.1)", color: "var(--warn)", border: "1px solid rgba(252,211,77,0.3)" }}>
                                 {nomeNoTorneio(n) ? n : `⚠ ${n}`}
                               </span>
                             ))}
@@ -275,7 +290,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                           <span className="text-xs">🔒</span>
                           <ToggleButton
                             ativo={u.eh_admin}
-                            corAtivo="#c9a648"
+                            corAtivo="var(--brand-1)"
                             disabled={salvando === u.user_id}
                             onClick={() => togglePapel(u, "admin")}
                           />
@@ -284,7 +299,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                       <td className="py-2 px-2 text-center">
                         <ToggleButton
                           ativo={u.eh_organizador}
-                          corAtivo="#8b0000"
+                          corAtivo="var(--brand-2)"
                           disabled={salvando === u.user_id}
                           onClick={() => togglePapel(u, "organizador")}
                         />
@@ -304,7 +319,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                             disabled={salvando === u.user_id}
                           >🔑</IconBtn>
                           <IconBtn
-                            titulo="Deletar usuário"
+                            titulo="Excluir usuário"
                             cor="#f87171"
                             onClick={() => excluirUsuario(u)}
                             disabled={salvando === u.user_id || u.user_id === auth.session?.user?.id}
@@ -384,13 +399,13 @@ function ModalSenhaAdmin({ usuario, onFechar, onConfirmar }: {
     >
       <form
         className="w-full max-w-sm rounded-2xl p-6"
-        style={{ background: "#1a1a1a", border: "1px solid rgba(201,166,72,0.3)" }}
+        style={{ background: "var(--ds-surface-2)", border: "1px solid rgba(201,166,72,0.3)" }}
         onSubmit={confirmarSenha}
       >
-        <div className="text-[10px] font-bold tracking-[0.3em]" style={{ color: "#c9a648" }}>
+        <div className="text-[10px] font-bold tracking-[0.3em]" style={{ color: "var(--brand-1)" }}>
           🔒 {usuario.eh_admin ? "REMOVER ADMIN" : "TORNAR ADMIN"}
         </div>
-        <div className="text-sm mt-1 mb-4 truncate" style={{ color: "#c4c4c4" }}>
+        <div className="text-sm mt-1 mb-4 truncate" style={{ color: "var(--text-label)" }}>
           {usuario.email}
         </div>
 
@@ -405,7 +420,7 @@ function ModalSenhaAdmin({ usuario, onFechar, onConfirmar }: {
         />
 
         {erro && (
-          <div className="text-xs mt-2" style={{ color: "#f87171" }}>{erro}</div>
+          <div className="text-xs mt-2" style={{ color: "var(--critical)" }}>{erro}</div>
         )}
 
         <button
@@ -419,7 +434,7 @@ function ModalSenhaAdmin({ usuario, onFechar, onConfirmar }: {
           type="button"
           onClick={onFechar}
           className="w-full mt-2 py-2 text-xs transition hover:text-white"
-          style={{ color: "#8a8a8a" }}
+          style={{ color: "var(--text-2)" }}
         >Cancelar</button>
       </form>
     </div>
@@ -466,7 +481,13 @@ function ModalEditarNomes({ usuario, onFechar, onAtualizado, toast }: {
   };
 
   const remover = async (n: string) => {
-    if (!confirm(`Remover "${n}" dos nomes vinculados?`)) return;
+    const ok = await confirmar({
+      titulo: "Remover nome",
+      mensagem: `Remover "${n}" dos nomes vinculados?`,
+      textoOk: "Remover",
+      perigo: true,
+    });
+    if (!ok) return;
     setSalvando(true);
     try {
       await removerNomeDoUsuario(usuario.user_id, n);
@@ -486,13 +507,13 @@ function ModalEditarNomes({ usuario, onFechar, onAtualizado, toast }: {
     >
       <div
         className="w-full max-w-md rounded-2xl p-6"
-        style={{ background: "#1a1a1a", border: "1px solid rgba(201,166,72,0.3)" }}
+        style={{ background: "var(--ds-surface-2)", border: "1px solid rgba(201,166,72,0.3)" }}
       >
         <div className="mb-4">
-          <div className="text-[10px] font-bold tracking-[0.3em]" style={{ color: "#c9a648" }}>
+          <div className="text-[10px] font-bold tracking-[0.3em]" style={{ color: "var(--brand-1)" }}>
             EDITAR NOMES VINCULADOS
           </div>
-          <div className="text-sm mt-1 truncate" style={{ color: "#c4c4c4" }}>
+          <div className="text-sm mt-1 truncate" style={{ color: "var(--text-label)" }}>
             {usuario.email}
           </div>
         </div>
@@ -506,7 +527,7 @@ function ModalEditarNomes({ usuario, onFechar, onAtualizado, toast }: {
           ) : (
             usuario.nomes_jogador.map((n) => (
               <div key={n} className="flex items-center gap-2 p-2 rounded-lg"
-                   style={{ background: "rgba(123,196,127,0.08)", border: "1px solid rgba(123,196,127,0.2)" }}>
+                   style={{ background: "rgba(110,231,183,0.08)", border: "1px solid rgba(110,231,183,0.2)" }}>
                 {renomeando === n ? (
                   <>
                     <input
@@ -518,18 +539,18 @@ function ModalEditarNomes({ usuario, onFechar, onAtualizado, toast }: {
                     />
                     <button onClick={() => salvarRenomeio(n)} disabled={salvando}
                             className="text-xs px-2 py-1 rounded font-semibold"
-                            style={{ background: "#7bc47f", color: "#0a0a0a" }}>✓</button>
+                            style={{ background: "var(--good)", color: "var(--page-1)" }}>✓</button>
                     <button onClick={() => setRenomeando(null)}
-                            className="text-xs px-2 py-1 rounded" style={{ color: "#8a8a8a" }}>×</button>
+                            className="text-xs px-2 py-1 rounded" style={{ color: "var(--text-2)" }}>×</button>
                   </>
                 ) : (
                   <>
-                    <span className="flex-1 text-sm font-medium" style={{ color: "#7bc47f" }}>👤 {n}</span>
+                    <span className="flex-1 text-sm font-medium" style={{ color: "var(--good)" }}>👤 {n}</span>
                     <button onClick={() => { setRenomeando(n); setValorRenomeio(n); }}
-                            className="text-xs px-2 py-1 rounded hover:bg-white/5" style={{ color: "#c9a648" }}
+                            className="text-xs px-2 py-1 rounded hover:bg-white/5" style={{ color: "var(--brand-1)" }}
                             title="Renomear">✎</button>
                     <button onClick={() => remover(n)}
-                            className="text-xs px-2 py-1 rounded hover:bg-red-500/10" style={{ color: "#f87171" }}
+                            className="text-xs px-2 py-1 rounded hover:bg-red-500/10" style={{ color: "var(--critical)" }}
                             title="Remover">×</button>
                   </>
                 )}
@@ -539,8 +560,8 @@ function ModalEditarNomes({ usuario, onFechar, onAtualizado, toast }: {
         </div>
 
         {/* Adicionar novo nome */}
-        <div className="pt-4 border-t" style={{ borderColor: "#2a2a2a" }}>
-          <div className="text-[10px] font-bold tracking-widest uppercase mb-2" style={{ color: "#8a8a8a" }}>
+        <div className="pt-4 border-t" style={{ borderColor: "var(--line)" }}>
+          <div className="text-[10px] font-bold tracking-widest uppercase mb-2" style={{ color: "var(--text-2)" }}>
             + Adicionar nome
           </div>
           <div className="flex gap-2">
@@ -559,7 +580,7 @@ function ModalEditarNomes({ usuario, onFechar, onAtualizado, toast }: {
         <button
           onClick={onFechar}
           className="w-full mt-4 py-2 text-xs transition hover:text-white"
-          style={{ color: "#8a8a8a" }}
+          style={{ color: "var(--text-2)" }}
         >Fechar</button>
       </div>
     </div>
@@ -584,7 +605,7 @@ function ToggleButton({ ativo, corAtivo, disabled, onClick }: {
     <button
       onClick={onClick} disabled={disabled}
       className="relative w-12 h-6 rounded-full transition-colors active:scale-95"
-      style={{ background: ativo ? corAtivo : "#2a2a2a", opacity: disabled ? 0.4 : 1 }}
+      style={{ background: ativo ? corAtivo : "var(--line)", opacity: disabled ? 0.4 : 1 }}
     >
       <div className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all"
            style={{ left: ativo ? "26px" : "2px" }} />
