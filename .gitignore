@@ -26,6 +26,9 @@ CLAUDE.md
 # Anotações pessoais
 MELHORIAS.md
 
+# Acervo gerado por scripts/atualizar_decks.py
+MTG_COMMANDER_ARCHIVE/
+
 # Logs
 *.log
 npm-debug.log*

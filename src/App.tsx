@@ -7,6 +7,7 @@ import { TelaTorneio } from "./components/TelaTorneio";
 import { TelaLogin } from "./components/TelaLogin";
 import { TelaVincularNome } from "./components/TelaVincularNome";
 import { useAuth } from "./core/auth";
+import { sincronizarDecks } from "./core/atualizarDecks";
 import { useListaAtualizada } from "./core/useAoVivo";
 import { publicarAoVivo } from "./core/aoVivo";
 import { listarTorneios } from "./core/storage";
@@ -91,6 +92,7 @@ function AppInner() {
 
   useEffect(() => {
     setUsuarioId(auth.session?.user?.id ?? null);
+    if (auth.session?.user?.id) sincronizarDecks();
   }, [auth.session?.user?.id, setUsuarioId]);
 
   // 1) Carrega localStorage

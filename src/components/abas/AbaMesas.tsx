@@ -11,6 +11,7 @@ import { useAuth } from "../../core/auth";
 import { encontrarMinhaMesa } from "../../core/minhaMesa";
 import { torneioParado } from "../../core/visibilidade";
 import { useTimer, formatarTempo } from "../../core/useTimer";
+import { comandanteDoDeck } from "../../core/decks";
 
 export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar: boolean }) {
   const iniciarRodada = useStore((s) => s.iniciarRodada);
@@ -38,6 +39,10 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
     torneio.jogadores.forEach((j) => m.set(j.id, j.nome));
     return m;
   }, [torneio.jogadores]);
+  const deckPorId = useMemo(
+    () => new Map(torneio.jogadores.map((j) => [j.id, j.deck?.trim() ?? ""])),
+    [torneio.jogadores]
+  );
 
   const pendentes: { m: Mesa; i: number }[] = [];
   const finalizadas: { m: Mesa; i: number }[] = [];
@@ -342,6 +347,7 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
                 key={`p${i}`}
                 mesa={m}
                 jogadoresPorId={jogadoresPorId}
+                deckPorId={deckPorId}
                 onClick={podeEditar ? () => setMesaSel({ mesa: m, idx: i }) : undefined}
               />
             ))}
@@ -358,6 +364,7 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
                 key={`f${i}`}
                 mesa={m}
                 jogadoresPorId={jogadoresPorId}
+                deckPorId={deckPorId}
                 onClick={podeEditar ? () => setMesaSel({ mesa: m, idx: i }) : undefined}
               />
             ))}
@@ -388,10 +395,12 @@ export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar
 function CardMesa({
   mesa,
   jogadoresPorId,
+  deckPorId,
   onClick,
 }: {
   mesa: Mesa;
   jogadoresPorId: Map<number, string>;
+  deckPorId: Map<number, string>;
   onClick?: () => void;
 }) {
   const finalizada = mesa.finalizada;
@@ -436,11 +445,18 @@ function CardMesa({
                 {col}
               </span>
             )}
-            <span className={
-              col === 1 && finalizada ? "font-bold"
-                : parcial && eliminados.has(id) ? "line-through text-fg-muted" : ""
-            }>
-              {jogadoresPorId.get(id) ?? "?"}
+            <span className="min-w-0">
+              <span className={
+                col === 1 && finalizada ? "font-bold"
+                  : parcial && eliminados.has(id) ? "line-through text-fg-muted" : ""
+              }>
+                {jogadoresPorId.get(id) ?? "?"}
+              </span>
+              {deckPorId.get(id) && (
+                <span className="block text-xs text-fg-dim break-words">
+                  {[deckPorId.get(id), comandanteDoDeck(deckPorId.get(id)!)].filter(Boolean).join(" · ")}
+                </span>
+              )}
             </span>
           </div>
         );

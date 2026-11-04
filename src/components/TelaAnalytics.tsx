@@ -3,6 +3,8 @@ import { useStore } from "../core/store";
 import { useAuth } from "../core/auth";
 import { AuthChip } from "./AuthChip";
 import { calcularMetricas, metricasRecentes, type MetricasGlobais } from "../core/metricas";
+import { comandanteDoDeck, coresDoDeck } from "../core/decks";
+import { CoresMana } from "./ui/SimboloMana";
 import {
   calcularDesempenho, listarNomesJogadores, mesmoJogador,
   type Conquista, type DesempenhoJogador, type EvolucaoJogador, type ResultadoMesa, type TorneioDoJogador,
@@ -202,11 +204,121 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
                 )}
               </div>
             </section>
+
+            <section>
+              <div className="ds-sect">Decks e comandantes</div>
+              <div className="ds-grid ds-g2">
+                <CartaoCores metricas={metricas} />
+                <CartaoComandantes metricas={metricas} />
+              </div>
+            </section>
               </>
             )}
           </>
         )}
       </main>
+    </div>
+  );
+}
+
+const ESTILO_CABECALHO = { color: "var(--text-muted-ds)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".02em" } as const;
+const NOME_COR: Record<string, string> = {
+  W: "Branco", U: "Azul", B: "Preto", R: "Vermelho", G: "Verde", C: "Incolor",
+};
+
+const SEM_LISTA = "Aparece quando os jogadores tiverem decks da lista de Decks.";
+
+function NotaDeckProprio({ metricas }: { metricas: MetricasGlobais }) {
+  if (metricas.inscricoesSemComandante === 0) return null;
+  return (
+    <div className="text-xs mt-3" style={{ color: "var(--text-muted-ds)" }}>
+      {metricas.inscricoesSemComandante} de {metricas.inscricoesComDeck} inscrições com deck ficaram de fora, por usarem um deck que não está na lista.
+    </div>
+  );
+}
+
+function CartaoCores({ metricas }: { metricas: MetricasGlobais }) {
+  return (
+    <div className="ds-card">
+      <div className="ds-card-h"><h3>🎨 Cores dos comandantes</h3></div>
+      {metricas.cores.length === 0 ? (
+        <SemDados texto={SEM_LISTA} />
+      ) : (
+        <>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
+              <thead>
+                <tr style={ESTILO_CABECALHO}>
+                  <th className="text-left py-2">Cor</th>
+                  <th className="text-right py-2">Usos</th>
+                  <th className="text-right py-2">% dos decks</th>
+                  <th className="text-right py-2">V</th>
+                  <th className="text-right py-2">WR</th>
+                </tr>
+              </thead>
+              <tbody>
+                {metricas.cores.map((c) => (
+                  <tr key={c.cor} style={{ borderTop: "0.8px solid var(--line-soft)" }}>
+                    <td className="py-1.5">
+                      <span className="inline-flex items-center gap-2" style={{ color: "var(--text-strong)" }}>
+                        <CoresMana cores={c.cor === "C" ? "" : c.cor} />
+                        {NOME_COR[c.cor]}
+                      </span>
+                    </td>
+                    <td className="py-1.5 text-right tabular-nums">{c.usos}</td>
+                    <td className="py-1.5 text-right tabular-nums">{(c.participacao * 100).toFixed(0)}%</td>
+                    <td className="py-1.5 text-right tabular-nums">{c.vitorias}/{c.partidas}</td>
+                    <td className="py-1.5 text-right tabular-nums" style={{ color: "var(--good)" }}>{(c.winrate * 100).toFixed(0)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="text-xs mt-3" style={{ color: "var(--text-muted-ds)" }}>
+            Um deck de várias cores conta em cada uma delas, então os percentuais somam mais de 100%.
+          </div>
+          <NotaDeckProprio metricas={metricas} />
+        </>
+      )}
+    </div>
+  );
+}
+
+function CartaoComandantes({ metricas }: { metricas: MetricasGlobais }) {
+  return (
+    <div className="ds-card">
+      <div className="ds-card-h"><h3>👑 Comandantes que mais ganham</h3></div>
+      {metricas.comandantes.length === 0 ? (
+        <SemDados texto={SEM_LISTA} />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
+            <thead>
+              <tr style={ESTILO_CABECALHO}>
+                <th className="text-left py-2">Comandante</th>
+                <th className="text-right py-2">Usos</th>
+                <th className="text-right py-2">🏆</th>
+                <th className="text-right py-2">V</th>
+                <th className="text-right py-2">WR</th>
+              </tr>
+            </thead>
+            <tbody>
+              {metricas.comandantes.map((c) => (
+                <tr key={c.nome} style={{ borderTop: "0.8px solid var(--line-soft)" }}>
+                  <td className="py-1.5">
+                    <span className="block" style={{ color: "var(--text-strong)" }}>{c.nome}</span>
+                    <CoresMana cores={c.cores} tamanho={14} />
+                  </td>
+                  <td className="py-1.5 text-right tabular-nums">{c.usos}</td>
+                  <td className="py-1.5 text-right tabular-nums" style={{ color: "var(--warn)" }}>{c.campeonatos || "—"}</td>
+                  <td className="py-1.5 text-right tabular-nums">{c.vitorias}/{c.partidas}</td>
+                  <td className="py-1.5 text-right tabular-nums" style={{ color: "var(--good)" }}>{(c.winrate * 100).toFixed(0)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
@@ -458,7 +570,61 @@ function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
         </div>
       </section>
 
-      <section className="ds-grid ds-g2">
+      <section>
+        <div className="ds-card">
+          <div className="ds-card-h"><h3>🎴 Decks usados</h3></div>
+          {d.decks.length === 0 ? (
+            <SemDados texto="Nenhum deck registrado para este jogador." />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
+                <thead>
+                  <tr style={ESTILO_CABECALHO}>
+                    <th className="text-left py-2">Deck</th>
+                    <th className="text-left py-2">Comandante</th>
+                    <th className="text-right py-2">Torn.</th>
+                    <th className="text-right py-2">🏆</th>
+                    <th className="text-right py-2">V</th>
+                    <th className="text-right py-2">WR</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {d.decks.map((x) => {
+                    const cores = coresDoDeck(x.nome);
+                    return (
+                      <tr key={x.nome} style={{ borderTop: "0.8px solid var(--line-soft)" }}>
+                        <td className="py-1.5" style={{ color: "var(--text-strong)" }}>
+                          {x.nome}
+                          {!torneio && mesmoJogador(x.nome, d.historico[0]?.deck ?? "") && (
+                            <span
+                              className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap"
+                              style={{ color: "var(--brand-link)", background: "rgba(201,166,72,0.15)" }}
+                            >ATUAL</span>
+                          )}
+                        </td>
+                        <td className="py-1.5">
+                          {cores === null ? "—" : (
+                            <>
+                              <span className="block">{comandanteDoDeck(x.nome)}</span>
+                              <CoresMana cores={cores} tamanho={14} />
+                            </>
+                          )}
+                        </td>
+                        <td className="py-1.5 text-right tabular-nums">{x.torneios}</td>
+                        <td className="py-1.5 text-right tabular-nums" style={{ color: "var(--warn)" }}>{x.campeonatos || "—"}</td>
+                        <td className="py-1.5 text-right tabular-nums">{x.vitorias}/{x.partidas}</td>
+                        <td className="py-1.5 text-right tabular-nums" style={{ color: "var(--good)" }}>{(x.winrate * 100).toFixed(0)}%</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section>
         <div className="ds-card">
           <div className="ds-card-h"><h3>⚔️ Rivais</h3></div>
           {d.rivais.length === 0 ? (
@@ -500,38 +666,6 @@ function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
                 </table>
               </div>
             </>
-          )}
-        </div>
-
-        <div className="ds-card">
-          <div className="ds-card-h"><h3>🎴 Desempenho por deck</h3></div>
-          {d.decks.length === 0 ? (
-            <SemDados texto="Nenhum deck registrado para este jogador." />
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
-                <thead>
-                  <tr style={{ color: "var(--text-muted-ds)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".02em" }}>
-                    <th className="text-left py-2">Deck</th>
-                    <th className="text-right py-2">Torn.</th>
-                    <th className="text-right py-2">🏆</th>
-                    <th className="text-right py-2">V</th>
-                    <th className="text-right py-2">WR</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {d.decks.map((x) => (
-                    <tr key={x.nome} style={{ borderTop: "0.8px solid var(--line-soft)" }}>
-                      <td className="py-1.5" style={{ color: "var(--text-strong)" }}>{x.nome}</td>
-                      <td className="py-1.5 text-right tabular-nums">{x.torneios}</td>
-                      <td className="py-1.5 text-right tabular-nums" style={{ color: "var(--warn)" }}>{x.campeonatos || "—"}</td>
-                      <td className="py-1.5 text-right tabular-nums">{x.vitorias}/{x.partidas}</td>
-                      <td className="py-1.5 text-right tabular-nums" style={{ color: "var(--good)" }}>{(x.winrate * 100).toFixed(0)}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           )}
         </div>
       </section>

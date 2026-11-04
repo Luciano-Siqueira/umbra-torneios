@@ -3,6 +3,7 @@ import azul from "mana-font/svg/u.svg";
 import preta from "mana-font/svg/b.svg";
 import vermelha from "mana-font/svg/r.svg";
 import verde from "mana-font/svg/g.svg";
+import incolor from "mana-font/svg/c.svg";
 
 const MANA = {
   w: { icone: branca, fundo: "#f0f2c0" },
@@ -10,9 +11,20 @@ const MANA = {
   b: { icone: preta, fundo: "#aca29a" },
   r: { icone: vermelha, fundo: "#db8664" },
   g: { icone: verde, fundo: "#93b483" },
+  c: { icone: incolor, fundo: "#cac5c0" },
 };
 
 export type CorMana = keyof typeof MANA;
+
+// Identidade de cor no formato "WUB"; texto vazio mostra o símbolo de incolor
+export function CoresMana({ cores, tamanho = 16 }: { cores: string; tamanho?: number }) {
+  const lista = (cores.toLowerCase() || "c").split("") as CorMana[];
+  return (
+    <span className="inline-flex gap-0.5 align-middle">
+      {lista.map((c) => <SimboloMana key={c} cor={c} tamanho={tamanho} />)}
+    </span>
+  );
+}
 
 export function SimboloMana({ cor, tamanho = 32 }: { cor: CorMana; tamanho?: number }) {
   const { icone, fundo } = MANA[cor];

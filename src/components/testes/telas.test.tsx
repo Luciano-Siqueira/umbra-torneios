@@ -12,6 +12,7 @@ import { TelaAnalytics } from "../TelaAnalytics";
 import { TelaDecks } from "../TelaDecks";
 import { TelaVincularNome } from "../TelaVincularNome";
 import { AbaJogadores } from "../abas/AbaJogadores";
+import { AbaMesas } from "../abas/AbaMesas";
 import { AuthChip } from "../AuthChip";
 
 const contas = vi.hoisted(() => ({
@@ -247,6 +248,46 @@ describe("decks", () => {
     expect(screen.getByText("Nenhum deck encontrado")).toBeTruthy();
   });
 
+  it("o botão Atualizar decks é só do admin no modo admin", () => {
+    const botao = () => screen.queryByRole("button", { name: /Atualizar decks/ });
+
+    preparar("jogador", {});
+    abrir(<TelaDecks />);
+    expect(botao()).toBeNull();
+    cleanup();
+
+    preparar("organizador", { isOrganizador: true });
+    abrir(<TelaDecks />);
+    expect(botao()).toBeNull();
+    cleanup();
+
+    preparar("organizador", { isAdmin: true, isOrganizador: true });
+    abrir(<TelaDecks />);
+    expect(botao()).toBeNull();
+    cleanup();
+
+    preparar("admin", { isAdmin: true });
+    abrir(<TelaDecks />);
+    expect(botao()).toBeTruthy();
+  });
+
+  it("as mesas mostram o deck e o comandante de cada jogador", () => {
+    const t = torneioCom("Pessoa");
+    t.jogadores.push(novoJogador(3, "Terceira Pessoa", "", true));
+    t.jogadores[0].deck = "Breed Lethality";
+    t.jogadores[1].deck = "Meu deck de elfos";
+    t.rodadaAtual = 1;
+    t.mesas = [{
+      numero: 1, jogadoresIds: [1, 2, 3], finalizada: false, vencedorId: null, eliminacoes: [], empateTopoIds: [],
+    } as unknown as Torneio["mesas"][number]];
+    preparar("jogador", {}, [t]);
+    abrir(<AbaMesas torneio={t} podeEditar={false} />);
+
+    expect(screen.getByText("Breed Lethality · Atraxa, Praetors' Voice")).toBeTruthy();
+    expect(screen.getByText("Meu deck de elfos")).toBeTruthy();
+    expect(screen.getByText("Terceira Pessoa")).toBeTruthy();
+  });
+
   describe("cadastro de jogadores", () => {
     const ativo = () => {
       const t = torneioCom("Pessoa");
@@ -310,6 +351,38 @@ describe("decks", () => {
       expect(ultimoDeck().nome).toBe("Nova Pessoa");
       expect(ultimoDeck().deck).toBe("Meu deck de elfos");
     });
+  });
+});
+
+describe("métricas de decks no Analytics", () => {
+  const comDeck = () => {
+    const t = torneioCom("Pessoa");
+    t.jogadores[0].deck = "Breed Lethality";
+    t.jogadores[0].historicoColocacoes = [[1, 1]];
+    t.jogadores[1].deck = "Meu deck";
+    return t;
+  };
+
+  it("quem organiza vê cores e comandantes na visão geral", () => {
+    preparar("admin", { isAdmin: true }, [comDeck()]);
+    abrir(<TelaAnalytics />);
+
+    expect(screen.getByRole("heading", { name: /Cores dos comandantes/ })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: /Comandantes que mais ganham/ })).toBeTruthy();
+    expect(screen.getByText("Atraxa, Praetors' Voice")).toBeTruthy();
+    expect(screen.getByText("Verde")).toBeTruthy();
+    expect(screen.getByText(/1 de 2 inscrições com deck ficaram de fora/)).toBeTruthy();
+  });
+
+  it("jogador vê os próprios decks, com o atual marcado, sem as métricas gerais", () => {
+    preparar("jogador", { nomesJogador: ["Pessoa"] }, [comDeck()]);
+    abrir(<TelaAnalytics />);
+
+    const secao = within(screen.getByRole("heading", { name: /Decks usados/ }).closest(".ds-card") as HTMLElement);
+    expect(secao.getByText(/Breed Lethality/)).toBeTruthy();
+    expect(secao.getByText("Atraxa, Praetors' Voice")).toBeTruthy();
+    expect(secao.getByText("ATUAL")).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: /Comandantes que mais ganham/ })).toBeNull();
   });
 });
 

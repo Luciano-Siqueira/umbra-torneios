@@ -2,8 +2,10 @@ import { useMemo, useState } from "react";
 import { useStore } from "../core/store";
 import { useAuth } from "../core/auth";
 import { ANOS_DECKS, DECKS, filtrarDecks } from "../core/decks";
+import { atualizarDecks, useVersaoDecks } from "../core/atualizarDecks";
 import { BANNER_IMAGE } from "../banner-image";
 import { AuthChip } from "./AuthChip";
+import { useToast } from "./ui/Toast";
 
 const ESTILO_TITULO = "text-left py-2 px-2 text-[10px] font-bold tracking-widest uppercase";
 
@@ -17,7 +19,32 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
   const auth = useAuth();
   const [busca, setBusca] = useState("");
   const [ano, setAno] = useState("");
-  const decks = useMemo(() => filtrarDecks(busca, ano), [busca, ano]);
+  const versao = useVersaoDecks();
+  const decks = useMemo(() => filtrarDecks(busca, ano), [busca, ano, versao]);
+  const modoView = useStore((s) => s.modoView);
+  const { toast } = useToast();
+  const [progresso, setProgresso] = useState<string | null>(null);
+
+  const atualizar = async () => {
+    setProgresso("Procurando lançamentos...");
+    try {
+      const { adicionados, falhas } = await atualizarDecks((feitos, total) => {
+        if (total > 0) setProgresso(`Baixando ${feitos} de ${total}...`);
+      });
+      if (adicionados.length > 0) {
+        toast(`${adicionados.length} novo${adicionados.length > 1 ? "s" : ""}: ${adicionados.join(", ")}`, "sucesso");
+      } else if (falhas.length === 0) {
+        toast("A lista de decks já está atualizada", "info");
+      }
+      if (falhas.length > 0) {
+        toast(`Ficou de fora: ${falhas.map((f) => `${f.nome} (${f.motivo})`).join("; ")}`, "aviso");
+      }
+    } catch (e: any) {
+      toast(`Não foi possível atualizar os decks: ${e.message}`, "erro");
+    } finally {
+      setProgresso(null);
+    }
+  };
 
   return (
     <div
@@ -41,7 +68,7 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
       </div>
 
       <main className="px-4 md:px-10 pb-12 space-y-4">
-        <div className="card grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2">
+        <div className="card grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-2">
           <input
             type="search"
             className="input w-full"
@@ -54,6 +81,11 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
             <option value="">Todos os anos</option>
             {ANOS_DECKS.map((a) => <option key={a} value={a}>{a}</option>)}
           </select>
+          {auth.isAdmin && modoView === "admin" && (
+            <button className="btn-info whitespace-nowrap" onClick={atualizar} disabled={progresso !== null}>
+              {progresso ?? "⟳ Atualizar decks"}
+            </button>
+          )}
         </div>
 
         <div className="card">
