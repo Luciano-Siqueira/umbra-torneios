@@ -12,6 +12,7 @@ import { AuthChip } from "./AuthChip";
 import { FUNDO_DE_TELA } from "../banner-image";
 import { contar } from "../core/formato";
 import { MTGDivider } from "./ui/Divider";
+import { IconeCifrao, IconeDado, IconeHistorico, IconeMedalha, IconeMesa, IconeTrofeu, IconeUsuarios } from "./ui/Icones";
 import { AbaJogadores } from "./abas/AbaJogadores";
 import { AbaMesas } from "./abas/AbaMesas";
 import { AbaRanking } from "./abas/AbaRanking";
@@ -33,14 +34,14 @@ type Aba =
   | "sorteios"
   | "historico";
 
-const ABAS: { id: Aba; label: string; icone: string }[] = [
-  { id: "jogadores", label: "Jogadores", icone: "◉" },
-  { id: "mesas", label: "Mesas", icone: "▦" },
-  { id: "ranking", label: "Ranking", icone: "★" },
-  { id: "financeiro", label: "Financeiro", icone: "$" },
-  { id: "premiacao", label: "Premiação", icone: "♛" },
-  { id: "sorteios", label: "Sorteios", icone: "◈" },
-  { id: "historico", label: "Histórico", icone: "◷" },
+const ABAS: { id: Aba; label: string; Icone: (props: { tamanho?: number; cor?: string }) => JSX.Element }[] = [
+  { id: "jogadores", label: "Jogadores", Icone: IconeUsuarios },
+  { id: "mesas", label: "Mesas", Icone: IconeMesa },
+  { id: "ranking", label: "Ranking", Icone: IconeTrofeu },
+  { id: "financeiro", label: "Financeiro", Icone: IconeCifrao },
+  { id: "premiacao", label: "Premiação", Icone: IconeMedalha },
+  { id: "sorteios", label: "Sorteios", Icone: IconeDado },
+  { id: "historico", label: "Histórico", Icone: IconeHistorico },
 ];
 
 // Só controla a interface: quem participa ainda baixa o torneio inteiro
@@ -190,7 +191,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
                             ? "bg-bg-panel text-acento border-b-2 border-acento"
                             : "text-fg-dim hover:text-fg hover:bg-bg-panel/40"}`}
             >
-              <span className="mr-1">{a.icone}</span>{a.label}
+              <span className="mr-1.5"><a.Icone cor={aba === a.id ? undefined : "currentColor"} /></span>{a.label}
             </button>
           ))}
         </div>

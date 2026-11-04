@@ -13,7 +13,7 @@ import { ranking } from "../core/resultados";
 import { podeEditarTorneios, torneioParado, torneiosVisiveis } from "../core/visibilidade";
 import { BANNER_IMAGE } from "../banner-image";
 import { IconeDecks, SimboloUmbra } from "./ui/LogoUmbra";
-import { IconeAnalytics, IconeCaixa, IconeDado, IconeDocumento, IconePasta, IconeUsuarios } from "./ui/Icones";
+import { IconeAnalytics, IconeArena, IconeCaixa, IconeDado, IconeDocumento, IconePasta, IconeUsuarios } from "./ui/Icones";
 import { SimboloMana, type CorMana } from "./ui/SimboloMana";
 import { ItemMenu, MenuBarra, TituloMenu } from "./ui/MenuBarra";
 import { contar, formatarReais } from "../core/formato";
@@ -172,7 +172,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
 
           {/* Ações sobre o torneio selecionado; quem só acompanha tem apenas Abrir */}
           {podeEditar ? (
-            <MenuBarra rotulo="Torneio">
+            <MenuBarra icone={<IconeArena tamanho={18} />} rotulo="Torneio">
               <ItemMenu onClick={abrirSelecionado}>Abrir</ItemMenu>
               <ItemMenu
                 onClick={() => {

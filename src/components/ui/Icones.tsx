@@ -27,7 +27,23 @@ function Base({ tamanho = 16, cor = "var(--brand-1)", children }: Props & { chil
 
 const criar = (desenho: ReactNode) => (props: Props) => <Base {...props}>{desenho}</Base>;
 
-export const IconeAnalytics = criar(<path d="M4 20h16M7 20v-7M12 20V5M17 20v-10" />);
+export const IconeArena = criar(<path d="M3 21h18M5 21V10M19 21V10M3 10h18M4 6.5h16M4 6.5 12 3l8 3.5M9.5 21v-6.5a2.5 2.5 0 0 1 5 0V21M4 10V6.5M20 10V6.5" />);
+export const IconeMesa = criar(<>
+  <circle cx="12" cy="12" r="5" />
+  <circle cx="12" cy="3.5" r="1.5" />
+  <circle cx="12" cy="20.5" r="1.5" />
+  <circle cx="3.5" cy="12" r="1.5" />
+  <circle cx="20.5" cy="12" r="1.5" />
+</>);
+export const IconeMedalha = criar(<>
+  <circle cx="12" cy="15" r="6" />
+  <path d="M8.5 10 5 3h5l2 4 2-4h5l-3.5 7M12 12.5v5" />
+</>);
+export const IconeCifrao = criar(<>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M15 9.2c-.5-1-1.6-1.7-3-1.7-1.8 0-3 .9-3 2.2 0 3 6 1.6 6 4.6 0 1.3-1.2 2.2-3 2.2-1.4 0-2.5-.7-3-1.7M12 6v12" />
+</>);
+export const IconeAnalytics =criar(<path d="M4 20h16M7 20v-7M12 20V5M17 20v-10" />);
 export const IconeUsuarios = criar(<>
   <circle cx="9" cy="8" r="3.5" />
   <path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.5a6.5 6.5 0 0 1 3.5 5.5" />
