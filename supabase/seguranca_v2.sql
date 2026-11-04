@@ -202,17 +202,31 @@ begin
     ) then
       raise exception 'Senha incorreta';
     end if;
-    if p_eh_admin then
-      insert into public.admins (user_id) values (p_user_id) on conflict do nothing;
-    else
+    if not p_eh_admin then
       delete from public.admins where user_id = p_user_id;
+    elsif exists (
+      select 1 from information_schema.columns
+      where table_schema = 'public' and table_name = 'admins' and column_name = 'email'
+    ) then
+      insert into public.admins (user_id, email)
+      select u.id, u.email from auth.users u where u.id = p_user_id
+      on conflict do nothing;
+    else
+      insert into public.admins (user_id) values (p_user_id) on conflict do nothing;
     end if;
   end if;
 
-  if p_eh_organizador then
-    insert into public.organizadores (user_id) values (p_user_id) on conflict do nothing;
-  else
+  if not p_eh_organizador then
     delete from public.organizadores where user_id = p_user_id;
+  elsif exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'organizadores' and column_name = 'email'
+  ) then
+    insert into public.organizadores (user_id, email)
+    select u.id, u.email from auth.users u where u.id = p_user_id
+    on conflict do nothing;
+  else
+    insert into public.organizadores (user_id) values (p_user_id) on conflict do nothing;
   end if;
 end;
 $$;

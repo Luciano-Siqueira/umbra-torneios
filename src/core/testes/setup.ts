@@ -4,12 +4,15 @@ export type RespostaFalsa = (url: string, init: RequestInit) => Response | Promi
 const dados = new Map<string, string>();
 const global = globalThis as any;
 
-global.localStorage = {
-  getItem: (k: string) => dados.get(k) ?? null,
-  setItem: (k: string, v: string) => void dados.set(k, v),
-  removeItem: (k: string) => void dados.delete(k),
-};
-global.window = globalThis;
+// Os testes de tela já têm window e localStorage, vindos do jsdom
+if (typeof document === "undefined") {
+  global.localStorage = {
+    getItem: (k: string) => dados.get(k) ?? null,
+    setItem: (k: string, v: string) => void dados.set(k, v),
+    removeItem: (k: string) => void dados.delete(k),
+  };
+  global.window = globalThis;
+}
 
 global.fetch = async (entrada: any, init: RequestInit = {}) => {
   const url = String(entrada?.url ?? entrada);

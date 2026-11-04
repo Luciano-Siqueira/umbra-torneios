@@ -13,11 +13,9 @@ export default defineConfig({
     assetsInlineLimit: 100000000,
     cssCodeSplit: false,
     target: "es2015",
-    minify: "esbuild",
-    rollupOptions: {
+    rolldownOptions: {
       output: {
         format: "iife",
-        inlineDynamicImports: true,
       },
     },
     emptyOutDir: true,

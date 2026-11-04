@@ -137,13 +137,13 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
               </div>
             )}
 
-            {/* Vincular/alterar nome do jogador */}
+            {/* Só o admin pode estar sem nome, pois a conta nova já vincula um ao ser criada */}
             <button
               onClick={() => { setAbrindoMenu(false); onVincularNome?.(); }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition"
               style={{ color: "#c9a648" }}
             >
-              {auth.nomesJogador.length === 0 ? "➕ Vincular meu nome" : "✎ Adicionar outro nome"}
+              {auth.nomesJogador.length + auth.nomesPendentes.length === 0 ? "➕ Vincular meu nome" : "✎ Trocar nome"}
             </button>
 
             {/* Desvincular nomes existentes */}

@@ -1,14 +1,21 @@
 import { useEffect, useState } from "react";
-import { vincularNome } from "../core/auth";
+import { trocarNome, useAuth, vincularNome } from "../core/auth";
 import * as storage from "../core/storage";
 import { supabase } from "../core/supabaseClient";
 
 interface Props {
   aberta: boolean;
   onConcluido: () => void;
+  // Sem isto não há como cancelar: é o caso de quem acabou de criar a conta
+  onCancelar?: () => void;
 }
 
-export function TelaVincularNome({ aberta, onConcluido }: Props) {
+export function TelaVincularNome({ aberta, onConcluido, onCancelar }: Props) {
+  const auth = useAuth();
+  const nomesAtuais = [...auth.nomesJogador, ...auth.nomesPendentes];
+  const trocando = nomesAtuais.length > 0;
+  const [escolhido, setEscolhido] = useState("");
+  const nomeAntigo = nomesAtuais.includes(escolhido) ? escolhido : nomesAtuais[0];
   const [nome, setNome] = useState("");
   const [sugestoes, setSugestoes] = useState<string[]>([]);
   const [sugestaoAtiva, setSugestaoAtiva] = useState(0);
@@ -19,6 +26,10 @@ export function TelaVincularNome({ aberta, onConcluido }: Props) {
   // Carrega todos os nomes cadastrados (local + servidor)
   useEffect(() => {
     if (!aberta) return;
+    setNome("");
+    setSugestoes([]);
+    setErro("");
+    setEscolhido("");
     (async () => {
       const { data } = await supabase.from("nomes_cadastrados").select("nome").order("nome");
       const nomesSrv = (data || []).map((r: any) => r.nome);
@@ -55,12 +66,13 @@ export function TelaVincularNome({ aberta, onConcluido }: Props) {
     setCarregando(true);
     setErro("");
     try {
-      await vincularNome(n);
+      if (trocando) await trocarNome(nomeAntigo, n);
+      else await vincularNome(n);
       // Garante que o nome está também na base pública (pra autocomplete futuro)
       await supabase.from("nomes_cadastrados").upsert({ nome: n });
       onConcluido();
     } catch (e: any) {
-      setErro(e.message || "Erro ao vincular");
+      setErro(e.message || (trocando ? "Erro ao trocar o nome" : "Erro ao vincular"));
     } finally {
       setCarregando(false);
     }
@@ -85,18 +97,34 @@ export function TelaVincularNome({ aberta, onConcluido }: Props) {
             className="inline-block px-3 py-1 rounded-full text-[10px] font-bold tracking-[0.3em] mb-3"
             style={{ background: "rgba(201,166,72,0.1)", color: "#c9a648", border: "1px solid rgba(201,166,72,0.3)" }}
           >
-            VINCULAR SEU PERFIL
+            {trocando ? "TROCAR NOME" : "VINCULAR SEU PERFIL"}
           </div>
           <h2 className="text-xl font-bold" style={{ color: "#f5f5f5" }}>
             Qual seu nome nos torneios?
           </h2>
           <p className="text-xs mt-2" style={{ color: "#8a8a8a" }}>
-            Precisamos saber como você aparece na lista de jogadores
-            para liberar o acesso aos seus torneios.
+            {!trocando
+              ? "Precisamos saber como você aparece na lista de jogadores para liberar o acesso aos seus torneios."
+              : auth.isAdmin
+                ? "Use o nome que aparece na lista de jogadores."
+                : "O novo nome precisa ser aprovado pelo admin. Até lá, você não vê os torneios desse nome."}
           </p>
         </div>
 
         <div className="space-y-3">
+          {nomesAtuais.length > 1 && (
+            <label className="block text-xs" style={{ color: "#8a8a8a" }}>
+              Nome que será trocado
+              <select
+                value={nomeAntigo}
+                onChange={(e) => setEscolhido(e.target.value)}
+                className="w-full mt-1 px-3 py-2 rounded-lg outline-none text-sm"
+                style={{ background: "#0a0a0a", border: "1px solid #2a2a2a", color: "#f5f5f5" }}
+              >
+                {nomesAtuais.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </label>
+          )}
           <div className="relative">
             <input
               type="text"
@@ -174,8 +202,21 @@ export function TelaVincularNome({ aberta, onConcluido }: Props) {
               boxShadow: "0 4px 16px -4px rgba(201,166,72,0.5)",
             }}
           >
-            {carregando ? "VINCULANDO..." : "VINCULAR E CONTINUAR"}
+            {trocando
+              ? (carregando ? "TROCANDO..." : "TROCAR NOME")
+              : (carregando ? "VINCULANDO..." : "VINCULAR E CONTINUAR")}
           </button>
+          {onCancelar && (
+            <button
+              type="button"
+              onClick={onCancelar}
+              disabled={carregando}
+              className="w-full py-2.5 rounded-lg font-semibold text-sm transition hover:bg-white/5 active:scale-95 disabled:opacity-40"
+              style={{ color: "#c4c4c4", border: "1px solid #2a2a2a" }}
+            >
+              Cancelar
+            </button>
+          )}
         </div>
       </div>
     </div>

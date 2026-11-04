@@ -175,6 +175,19 @@ export async function vincularNome(nome: string): Promise<void> {
   localStorage.removeItem(KEY_PERFIL);
 }
 
+// O nome antigo só sai depois que o novo foi aceito, para um erro não deixar a conta sem nome
+export async function trocarNome(antigo: string, novo: string): Promise<void> {
+  if (antigo.trim() === novo.trim()) throw new Error("Esse já é o seu nome");
+  await vincularNome(novo);
+  const { data: sess } = await supabase.auth.getSession();
+  const { error } = await supabase
+    .from("usuarios_jogadores")
+    .delete()
+    .eq("user_id", sess.session?.user?.id ?? "")
+    .eq("nome_jogador", antigo);
+  if (error) throw error;
+}
+
 export async function desvincularNome(nome: string): Promise<void> {
   const { data: sess } = await supabase.auth.getSession();
   const uid = sess.session?.user?.id;

@@ -14,6 +14,7 @@ import { podeEditarTorneios, torneioParado, torneiosVisiveis } from "../core/vis
 import { BANNER_IMAGE } from "../banner-image";
 import { SimboloUmbra } from "./ui/LogoUmbra";
 import { SimboloMana, type CorMana } from "./ui/SimboloMana";
+import { ItemMenu, MenuBarra, TituloMenu } from "./ui/MenuBarra";
 
 const CORES_MTG: { hex: string; nome: string; mana: CorMana }[] = [
   { hex: "#f9f5e3", nome: "PLAINS", mana: "w" },
@@ -74,8 +75,6 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
   const fileRef = useRef<HTMLInputElement>(null);
   const backupRef = useRef<HTMLInputElement>(null);
   const recarregar = useStore((s) => s.recarregar);
-  const [menuImp, setMenuImp] = useState(false);
-  const [menuExp, setMenuExp] = useState(false);
 
   const torneioSelecionado = torneios.find((t) => t.id === selecionadoId) || null;
 
@@ -169,28 +168,24 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             </>
           )}
 
-          {/* Ações sobre o torneio selecionado */}
-          <button
-            className="rounded-full px-4 py-2 font-medium text-sm transition hover:bg-white/5 active:scale-95"
-            style={{ color: "var(--text-strong)" }}
-            onClick={abrirSelecionado}
-          >Abrir</button>
-          {podeEditar && (
-            <>
-              <button
-                className="rounded-full px-4 py-2 font-medium text-sm transition hover:bg-white/5 active:scale-95"
-                style={{ color: "var(--text-strong)" }}
+          {/* Ações sobre o torneio selecionado; quem só acompanha tem apenas Abrir */}
+          {podeEditar ? (
+            <MenuBarra rotulo="Torneio">
+              <ItemMenu onClick={abrirSelecionado}>Abrir</ItemMenu>
+              <ItemMenu
                 onClick={() => {
                   if (!torneioSelecionado) return toast("Selecione um torneio primeiro", "aviso");
                   setDialogoAberto("editar");
                 }}
-              >Editar</button>
-              <button
-                className="rounded-full px-4 py-2 font-medium text-sm transition active:scale-95 hover:bg-red-500/10"
-                style={{ color: "var(--critical)" }}
-                onClick={excluirSelecionado}
-              >Excluir</button>
-            </>
+              >Editar</ItemMenu>
+              <ItemMenu perigo onClick={excluirSelecionado}>Excluir</ItemMenu>
+            </MenuBarra>
+          ) : (
+            <button
+              className="rounded-full px-4 py-2 font-medium text-sm transition hover:bg-white/5 active:scale-95"
+              style={{ color: "var(--text-strong)" }}
+              onClick={abrirSelecionado}
+            >Abrir</button>
           )}
 
           <div className="w-px h-6 mx-1" style={{ background: "rgba(255,255,255,0.1)" }} />
@@ -225,77 +220,44 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             </button>
           )}
 
-        {/* Importar (dropdown) — só edição liberada */}
-        {podeEditar && (<div className="relative">
-          <button
-            className="rounded-full px-4 py-2 font-medium text-sm transition hover:bg-white/5 active:scale-95 flex items-center gap-1.5"
-            style={{ color: "var(--text-strong)" }}
-            onClick={() => { setMenuImp((v) => !v); setMenuExp(false); }}
-          >
-            <span>📂</span><span>Importar</span><span className="text-xs opacity-60">▾</span>
-          </button>
-          {menuImp && (
-            <div className="absolute top-full left-0 mt-1 bg-bg-card border border-bg-cardalt rounded-lg shadow-2xl z-20 w-full overflow-hidden">
-              <button
-                className="block w-full text-left px-3 py-2 hover:bg-bg-panel text-sm"
-                onClick={() => { setMenuImp(false); importar(); }}
-              >📄 Torneio (JSON)</button>
-              <button
-                className="block w-full text-left px-3 py-2 hover:bg-bg-panel text-sm"
-                onClick={() => { setMenuImp(false); backupRef.current?.click(); }}
-              >📦 Backup completo</button>
-              <div className="border-t border-bg-cardalt" />
-              <button
-                className="block w-full text-left px-3 py-2 hover:bg-bg-panel text-sm"
-                onClick={() => {
-                  setMenuImp(false);
-                  const t = criarTorneioTeste();
-                  toast(`Torneio teste criado: 29 jogadores`, "sucesso");
-                  abrirTorneio(t.id);
-                }}
-              >🎲 Torneio de teste</button>
-            </div>
-          )}
-        </div>)}
-        {/* Exportar (dropdown) — só edição liberada */}
-        {podeEditar && (<div className="relative">
-          <button
-            className="rounded-full px-4 py-2 font-medium text-sm transition hover:bg-white/5 active:scale-95 flex items-center gap-1.5"
-            style={{ color: "var(--text-strong)" }}
-            onClick={() => { setMenuExp((v) => !v); setMenuImp(false); }}
-          >
-            <span>📦</span><span>Exportar</span><span className="text-xs opacity-60">▾</span>
-          </button>
-          {menuExp && (
-            <div className="absolute top-full left-0 mt-1 bg-bg-card border border-bg-cardalt rounded-lg shadow-2xl z-20 w-full overflow-hidden">
-              <button
-                className="block w-full text-left px-3 py-2 hover:bg-bg-panel text-sm disabled:opacity-40"
-                disabled={!torneioSelecionado}
-                onClick={() => {
-                  setMenuExp(false);
-                  if (!torneioSelecionado) return;
-                  const json = JSON.stringify(torneioSelecionado, null, 2);
-                  const blob = new Blob([json], { type: "application/json" });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = `${torneioSelecionado.id}.json`;
-                  a.click();
-                  URL.revokeObjectURL(url);
-                  toast("Torneio exportado", "sucesso");
-                }}
-              >📄 Torneio selecionado (JSON)</button>
-              <button
-                className="block w-full text-left px-3 py-2 hover:bg-bg-panel text-sm"
-                onClick={() => {
-                  setMenuExp(false);
-                  exportarTudo();
-                  toast("Backup baixado", "sucesso");
-                }}
-              >📦 Backup completo</button>
-            </div>
-          )}
-        </div>)}
+        {/* Importar e exportar — só edição liberada */}
+        {podeEditar && (
+          <MenuBarra icone="📂" rotulo="Importar / Exportar">
+            <TituloMenu>Importar</TituloMenu>
+            <ItemMenu onClick={importar}>📄 Torneio (JSON)</ItemMenu>
+            <ItemMenu onClick={() => backupRef.current?.click()}>📦 Backup completo</ItemMenu>
+            <ItemMenu
+              onClick={() => {
+                const t = criarTorneioTeste();
+                toast(`Torneio teste criado: 29 jogadores`, "sucesso");
+                abrirTorneio(t.id);
+              }}
+            >🎲 Torneio de teste</ItemMenu>
+            <div className="border-t border-bg-cardalt mt-1" />
+            <TituloMenu>Exportar</TituloMenu>
+            <ItemMenu
+              disabled={!torneioSelecionado}
+              onClick={() => {
+                if (!torneioSelecionado) return;
+                const json = JSON.stringify(torneioSelecionado, null, 2);
+                const blob = new Blob([json], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `${torneioSelecionado.id}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                toast("Torneio exportado", "sucesso");
+              }}
+            >📄 Torneio selecionado (JSON)</ItemMenu>
+            <ItemMenu
+              onClick={() => {
+                exportarTudo();
+                toast("Backup baixado", "sucesso");
+              }}
+            >📦 Backup completo</ItemMenu>
+          </MenuBarra>
+        )}
         <input
           ref={fileRef}
           type="file"
@@ -457,7 +419,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             </div>
             <div className="text-sm mb-6" style={{ color: "var(--text-2)" }}>
               {auth.isAdmin
-                ? "Clique em + Novo torneio ou 📂 Importar para começar."
+                ? "Clique em + Novo torneio ou 📂 Importar / Exportar para começar."
                 : auth.session && auth.nomesPendentes.length > 0 && auth.nomesJogador.length === 0
                   ? <>O nome <b style={{color: "#c9a648"}}>{auth.nomesPendentes.join(", ")}</b> está aguardando a aprovação do admin.<br/>Seus torneios aparecem aqui depois disso.</>
                 : auth.session && auth.nomesJogador.length > 0

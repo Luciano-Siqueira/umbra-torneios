@@ -160,6 +160,7 @@ function AppInner() {
 
       {/* Vinculação obrigatória de nome pra não-admin que acabou de criar conta */}
       <TelaVincularNome
+        onCancelar={vincularAberto ? () => setVincularAberto(false) : undefined}
         aberta={
           vincularAberto ||
           (!auth.loading && auth.perfilCarregado && !!auth.session && !auth.isAdmin && auth.nomesJogador.length === 0 && auth.nomesPendentes.length === 0)

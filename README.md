@@ -35,7 +35,7 @@ npm install
 npm run dev              # dev server
 npm run build            # checa os tipos e faz o build pra Vercel
 npm run build:single     # checa os tipos e gera dist-single/index.html standalone (tudo inline)
-npm test                 # testes automáticos (src/core/testes)
+npm test                 # testes automáticos (src/core/testes e src/components/testes)
 ```
 
 Deploy: push na `main` → Vercel autodeploys.
@@ -121,10 +121,10 @@ VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 
 O prefixo `VITE_` é obrigatório e coloca o valor no JavaScript enviado ao navegador. Por isso, use só a chave publishable e nunca `sb_secret` ou `service_role`. Depois de mudar uma variável na Vercel, é preciso fazer um novo deploy.
 
-**Acesso aos torneios (RLS)**: admin vê e altera todos; organizador vê e altera os que criou; jogador só lê aqueles em que participa, e só depois que o admin aprova o nome (`usuarios_jogadores.aprovado`). Dono e pagamentos ficam em `torneio_privado`, que só admin e dono leem; ao participante vai `dados.premios`. Mudar quem é admin passa por `definir_papel_seguro`, que confere a senha no banco. Regras em `supabase/seguranca_v2.sql`; para revisar, rode `supabase/auditoria_rls.sql`.
+**Acesso aos torneios (RLS)**: admin vê e altera todos; organizador vê e altera os que criou; jogador só lê aqueles em que participa, e só depois que o admin aprova o nome (`usuarios_jogadores.aprovado`). Dono e pagamentos ficam em `torneio_privado`, que só admin e dono leem; ao participante vai `dados.premios`. Mudar quem é admin passa por `definir_papel_seguro`, que confere a senha no banco. Regras em `supabase/seguranca_v2.sql` e `supabase/corrigir_papel_email.sql`; para revisar, rode `supabase/auditoria_rls.sql`.
 
 **Tabelas**:
-- `admins (user_id uuid PK)`
+- `admins (user_id uuid PK, email text)`
 - `organizadores (user_id uuid PK)`
 - `usuarios_jogadores (user_id uuid, nome_jogador text UNIQUE)`
 - `torneios (id uuid PK, user_id uuid, nome text, dados jsonb, atualizado_em timestamptz)` — JSONB storage pattern
