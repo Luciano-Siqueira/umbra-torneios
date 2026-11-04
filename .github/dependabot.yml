@@ -5,6 +5,10 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # Versão principal nova exige migração, então é decidida à parte
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       atualizacoes-menores:
         update-types: [minor, patch]
