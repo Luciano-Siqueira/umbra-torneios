@@ -205,7 +205,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
             </button>
           ) : torneio.rodadaAtual > 0 ? (
             <button
-              className="btn-success !py-2 text-xs md:text-sm flex-shrink-0"
+              className="btn-gold !py-2 text-xs md:text-sm flex-shrink-0"
               onClick={async () => {
                 const ok = await confirmar({
                   titulo: "Finalizar torneio",
