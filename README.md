@@ -118,8 +118,6 @@ Mesmo usuário pode ter todos os papéis. O `modoView` (admin/organizador/jogado
 - O botão "Atualizar decks" (só admin, no modo admin) roda no navegador: compara com o `DeckList.json` do MTGJSON, baixa só os decks novos, busca as cores na Scryfall e grava na tabela (`src/core/atualizarDecks.ts`)
 - `scripts/atualizar_decks.py` mantém um acervo local com as listas completas e as imagens. Não é usado pelo site
 - O torneio guarda só o nome do deck; comandante e cores vêm da lista. Um deck fora dela é tratado como próprio
-- `supabase/completar_decks.sql` preenche os decks vazios de torneios antigos
-
 ### Supabase
 
 Credenciais em variáveis de ambiente, lidas no build. Localmente ficam em `.env.local` e, em produção, na Vercel (Production e Preview):
