@@ -9,7 +9,9 @@ import { ToastProvider } from "../ui/Toast";
 import { TelaTorneios } from "../TelaTorneios";
 import { TelaTorneio } from "../TelaTorneio";
 import { TelaAnalytics } from "../TelaAnalytics";
+import { TelaDecks } from "../TelaDecks";
 import { TelaVincularNome } from "../TelaVincularNome";
+import { AbaJogadores } from "../abas/AbaJogadores";
 import { AuthChip } from "../AuthChip";
 
 const contas = vi.hoisted(() => ({
@@ -218,6 +220,75 @@ describe("abas do torneio", () => {
     for (const aba of ["Jogadores", "Mesas", "Ranking", "Financeiro", "Premiação", "Sorteios", "Histórico"]) {
       expect(textos).toContain(aba);
     }
+  });
+});
+
+describe("decks", () => {
+  it("todos os papéis abrem a tela de decks", () => {
+    preparar("jogador", {});
+    abrir(<TelaTorneios />);
+    fireEvent.click(screen.getByRole("button", { name: /Decks/ }));
+    expect(useStore.getState().tela).toBe("decks");
+    useStore.getState().voltarParaLista();
+  });
+
+  it("a tela busca e filtra a lista", () => {
+    preparar("jogador", {});
+    abrir(<TelaDecks />);
+    const total = screen.getByText(/^\d+ decks$/).textContent!;
+
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "atraxa" } });
+    expect(screen.getByText(new RegExp(`^3 de ${parseInt(total)} decks$`))).toBeTruthy(); // Inclui Ixhel, Scion of Atraxa
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Filtrar por ano" }), { target: { value: "2018" } });
+    expect(screen.getByText(new RegExp(`^1 de ${parseInt(total)} decks$`))).toBeTruthy();
+
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "nada disso" } });
+    expect(screen.getByText("Nenhum deck encontrado")).toBeTruthy();
+  });
+
+  describe("cadastro de jogadores", () => {
+    const ativo = () => {
+      const t = torneioCom("Pessoa");
+      preparar("admin", { isAdmin: true }, [t]);
+      abrir(<AbaJogadores torneio={t} podeEditar />);
+      fireEvent.change(screen.getByPlaceholderText("Nome do jogador..."), { target: { value: "Nova Pessoa" } });
+      return screen.getByPlaceholderText(/Deck ou comandante/) as HTMLInputElement;
+    };
+    const ultimoDeck = () => {
+      const { torneios, torneioId } = useStore.getState();
+      const t = torneios.find((x) => x.id === torneioId)!;
+      return t.jogadores[t.jogadores.length - 1];
+    };
+
+    it("busca pelo comandante e guarda o nome do deck", () => {
+      const campo = ativo();
+      fireEvent.change(campo, { target: { value: "atraxa" } });
+      fireEvent.mouseDown(screen.getByRole("option", { name: /Breed Lethality/ }));
+
+      expect(campo.value).toBe("Breed Lethality");
+      expect(screen.queryByRole("listbox")).toBeNull();
+    });
+
+    it("setas e Enter escolhem a sugestão sem adicionar o jogador", () => {
+      const campo = ativo();
+      const antes = useStore.getState().torneios[0].jogadores.length;
+      fireEvent.change(campo, { target: { value: "kaalia" } });
+      fireEvent.keyDown(campo, { key: "ArrowDown" });
+      fireEvent.keyDown(campo, { key: "Enter" });
+
+      expect(campo.value).toBe("Heavenly Inferno");
+      expect(useStore.getState().torneios[0].jogadores).toHaveLength(antes);
+    });
+
+    it("aceita um deck próprio que não está na lista", () => {
+      const campo = ativo();
+      fireEvent.change(campo, { target: { value: "Meu deck de elfos" } });
+      fireEvent.keyDown(campo, { key: "Enter" });
+
+      expect(ultimoDeck().nome).toBe("Nova Pessoa");
+      expect(ultimoDeck().deck).toBe("Meu deck de elfos");
+    });
   });
 });
 

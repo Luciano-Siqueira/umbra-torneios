@@ -13,7 +13,7 @@ import { registrarResultado, desfazerResultado } from "./resultados";
 import { publicarAoVivo, publicarAoVivoDepois, removerAoVivo, type LinhaAoVivo } from "./aoVivo";
 import { alternarPausaTimer, iniciarTimer, pararTimer } from "./timer";
 
-export type Tela = "splash" | "torneios" | "torneio" | "analytics" | "usuarios";
+export type Tela = "splash" | "torneios" | "torneio" | "analytics" | "usuarios" | "decks";
 export type ModoView = "admin" | "organizador" | "jogador";
 
 interface State {

@@ -17,6 +17,9 @@ import { confirmar } from "./components/ui/Confirm";
 const TelaAnalytics = lazy(() =>
   import("./components/TelaAnalytics").then((m) => ({ default: m.TelaAnalytics }))
 );
+const TelaDecks = lazy(() =>
+  import("./components/TelaDecks").then((m) => ({ default: m.TelaDecks }))
+);
 const TelaUsuarios = lazy(() =>
   import("./components/TelaUsuarios").then((m) => ({ default: m.TelaUsuarios }))
 );
@@ -146,6 +149,7 @@ function AppInner() {
       {tela === "torneio" && <TelaTorneio onPedirLogin={() => setLoginAberto(true)} onVincularNome={() => setVincularAberto(true)} />}
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-fg-dim">Carregando...</div>}>
         {tela === "analytics" && <TelaAnalytics onPedirLogin={() => setLoginAberto(true)} onVincularNome={() => setVincularAberto(true)} />}
+        {tela === "decks" && <TelaDecks onPedirLogin={() => setLoginAberto(true)} onVincularNome={() => setVincularAberto(true)} />}
         {tela === "usuarios" && <TelaUsuarios onPedirLogin={() => setLoginAberto(true)} onVincularNome={() => setVincularAberto(true)} />}
       </Suspense>
 

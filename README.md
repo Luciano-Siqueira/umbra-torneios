@@ -72,6 +72,7 @@ src/
     TelaTorneios.tsx            # listagem de torneios
     TelaTorneio.tsx             # torneio individual (rodadas, mesas)
     TelaAnalytics.tsx           # KPIs e gráficos
+    TelaDecks.tsx               # lista dos decks de Commander, com busca (dados em core/decks.ts)
     TelaUsuarios.tsx            # painel admin (👑 ADMIN / 🎯 ORG / ✎🔑🗑)
     DialogoTorneio.tsx          # criar/editar torneio
     DialogoResultado.tsx        # registrar resultado de mesa

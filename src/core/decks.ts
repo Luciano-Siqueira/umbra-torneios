@@ -1,0 +1,269 @@
+// Decks de Commander lançados. Cada linha: lançamento|coleção|nome|comandante(s)|cartas|tokens
+const TABELA = `
+2009-08-26|TD0|Deathdancer Xira|Xira Arien|100|0
+2009-08-26|TD0|Enchantress Rubinia|Rubinia Soulsinger|100|0
+2011-06-17|CMD|Devour for Power|The Mimeoplasm|100|0
+2011-06-17|CMD|Heavenly Inferno|Kaalia of the Vast|100|0
+2011-06-17|CMD|Counterpunch|Ghave, Guru of Spores|100|0
+2011-06-17|CMD|Mirror Mastery|Riku of Two Reflections|100|0
+2011-06-17|CMD|Political Puppets|Zedruu the Greathearted|100|0
+2013-11-01|C13|Nature of the Beast|Marath, Will of the Wild|100|0
+2013-11-01|C13|Evasive Maneuvers|Derevi, Empyrial Tactician|100|0
+2013-11-01|C13|Power Hungry|Prossh, Skyraider of Kher|100|0
+2013-11-01|C13|Mind Seize|Jeleva, Nephalia's Scourge|100|0
+2013-11-01|C13|Eternal Bargain|Oloro, Ageless Ascetic|100|0
+2014-11-07|C14|Guided By Nature|Freyalise, Llanowar's Fury|100|0
+2014-11-07|C14|Forged In Stone|Nahiri, the Lithomancer|100|0
+2014-11-07|C14|Built From Scratch|Daretti, Scrap Savant|100|0
+2014-11-07|C14|Peer Through Time|Teferi, Temporal Archmage|100|0
+2014-11-07|C14|Sworn To Darkness|Ob Nixilis of the Black Oath|100|0
+2015-11-13|C15|Seize Control|Mizzix of the Izmagnus|100|0
+2015-11-13|C15|Call the Spirits|Daxos the Returned|100|0
+2015-11-13|C15|Plunder the Graves|Meren of Clan Nel Toth|100|0
+2015-11-13|C15|Swell the Host|Ezuri, Claw of Progress|100|0
+2015-11-13|C15|Wade into Battle|Kalemne, Disciple of Iroas|100|0
+2016-11-11|C16|Open Hostility|Saskia the Unyielding|100|10
+2016-11-11|C16|Breed Lethality|Atraxa, Praetors' Voice|100|10
+2016-11-11|C16|Entropic Uprising|Yidris, Maelstrom Wielder|100|10
+2016-11-11|C16|Invent Superiority|Breya, Etherium Shaper|100|10
+2016-11-11|C16|Stalwart Unity|Kynaios and Tiro of Meletis|100|10
+2017-06-09|CMA|Plunder the Graves|Meren of Clan Nel Toth|100|0
+2017-06-09|CMA|Heavenly Inferno|Kaalia of the Vast|100|0
+2017-06-09|CMA|Evasive Maneuvers|Derevi, Empyrial Tactician|100|0
+2017-06-09|CMA|Guided by Nature|Freyalise, Llanowar's Fury|100|0
+2017-08-25|C17|Feline Ferocity|Arahbo, Roar of the World|100|0
+2017-08-25|C17|Vampiric Bloodlust|Edgar Markov|100|0
+2017-08-25|C17|Arcane Wizardry|Inalla, Archmage Ritualist|100|0
+2017-08-25|C17|Draconic Domination|The Ur-Dragon|100|0
+2018-06-08|CM2|Built From Scratch|Daretti, Scrap Savant|100|0
+2018-06-08|CM2|Wade into Battle|Kalemne, Disciple of Iroas|100|0
+2018-06-08|CM2|Devour for Power|The Mimeoplasm|100|0
+2018-06-08|CM2|Breed Lethality|Atraxa, Praetors' Voice|100|0
+2018-08-10|C18|Subjective Reality|Aminatou, the Fateshifter|100|0
+2018-08-10|C18|Adaptive Enchantment|Estrid, the Masked|100|0
+2018-08-10|C18|Nature's Vengeance|Lord Windgrace|100|0
+2018-08-10|C18|Exquisite Invention|Saheeli, the Gifted|100|0
+2019-08-23|C19|Faceless Menace|Kadena, Slinking Sorcerer|100|0
+2019-08-23|C19|Mystic Intellect|Sevinne, the Chronoclasm|100|0
+2019-08-23|C19|Primal Genesis|Ghired, Conclave Exile|100|0
+2019-08-23|C19|Merciless Rage|Anje Falkenrath|100|0
+2020-04-17|C20|Ruthless Regiment|Jirina Kudro|100|10
+2020-04-17|C20|Arcane Maelstrom|Kalamax, the Stormsire|100|10
+2020-04-17|C20|Timeless Wisdom|Gavi, Nest Warden|100|10
+2020-04-17|C20|Enhanced Evolution|Otrimi, the Ever-Playful|100|10
+2020-04-17|C20|Symbiotic Swarm|Kathril, Aspect Warper|100|10
+2020-09-25|ZNC|Sneak Attack|Anowon, the Ruin Thief|100|0
+2020-09-25|ZNC|Land's Wrath|Obuun, Mul Daya Ancestor|100|0
+2020-11-20|CMR|Arm for Battle|Wyleth, Soul of Steel|100|0
+2020-11-20|CMR|Reap the Tides|Aesi, Tyrant of Gyre Strait|100|0
+2021-02-05|KHC|Phantom Premonition|Ranar the Ever-Watchful|100|0
+2021-02-05|KHC|Elven Empire|Lathril, Blade of the Elves|100|0
+2021-04-23|C21|Prismari Performance|Zaffai, Thunder Conductor|100|0
+2021-04-23|C21|Silverquill Statement|Breena, the Demagogue|100|0
+2021-04-23|C21|Witherbloom Witchcraft|Willowdusk, Essence Seer|100|0
+2021-04-23|C21|Lorehold Legacies|Osgir, the Reconstructor|100|0
+2021-04-23|C21|Quantum Quandrix|Adrix and Nev, Twincasters|100|0
+2021-07-23|AFC|Draconic Rage|Vrondiss, Rage of Ancients|100|0
+2021-07-23|AFC|Planar Portal|Prosper, Tome-Bound|100|0
+2021-07-23|AFC|Aura of Courage|Galea, Kindler of Hope|100|0
+2021-07-23|AFC|Dungeons of Death|Sefris of the Hidden Ways|100|0
+2021-09-24|MIC|Coven Counters|Leinore, Autumn Sovereign|100|0
+2021-09-24|MIC|Undead Unleashed|Wilhelt, the Rotcleaver|100|0
+2021-11-19|VOC|Vampiric Bloodline|Strefan, Maurer Progenitor|100|0
+2021-11-19|VOC|Spirit Squadron|Millicent, Restless Revenant|100|0
+2022-02-18|NEC|Upgrades Unleashed|Chishiro, the Shattered Blade|100|0
+2022-02-18|NEC|Buckle Up|Kotori, Pilot Prodigy|100|0
+2022-04-22|SLD|Heads I Win, Tails You Lose|Zndrsplt, Eye of Wisdom // Zndrsplt, Eye of Wisdom, Okaun, Eye of Chaos // Okaun, Eye of Chaos|100|0
+2022-04-29|NCC|Bedecked Brokers|Perrie, the Pulverizer|100|0
+2022-04-29|NCC|Maestros Massacre|Anhelo, the Painter|100|0
+2022-04-29|NCC|Obscura Operation|Kamiz, Obscura Oculus|100|0
+2022-04-29|NCC|Riveteers Rampage|Henzie "Toolbox" Torre|100|0
+2022-04-29|NCC|Cabaretti Cacophony|Kitt Kanto, Mayhem Diva|100|0
+2022-06-10|CLB|Mind Flayarrrs|Captain N'ghathrod|100|0
+2022-06-10|CLB|Exit from Exile|Faldorn, Dread Wolf Herald|100|0
+2022-06-10|CLB|Party Time|Nalia de'Arnise|100|0
+2022-06-10|CLB|Draconic Dissent|Firkraag, Cunning Instigator|100|0
+2022-09-09|DMC|Legends' Legacy|Dihada, Binder of Wills|100|0
+2022-09-09|DMC|Painbow|Jared Carthalion|100|0
+2022-10-07|40K|Tyranid Swarm Collector's Edition|The Swarmlord|100|0
+2022-10-07|40K|Necron Dynasties|Szarekh, the Silent King|100|0
+2022-10-07|40K|Forces of the Imperium Collector's Edition|Inquisitor Greyfax|100|0
+2022-10-07|40K|The Ruinous Powers|Abaddon the Despoiler|100|0
+2022-10-07|40K|Forces of the Imperium|Inquisitor Greyfax|100|0
+2022-10-07|40K|The Ruinous Powers Collector's Edition|Abaddon the Despoiler|100|0
+2022-10-07|40K|Necron Dynasties Collector's Edition|Szarekh, the Silent King|100|0
+2022-10-07|40K|Tyranid Swarm|The Swarmlord|100|0
+2022-11-18|BRC|Mishra's Burnished Banner|Mishra, Eminent One|100|10
+2022-11-18|BRC|Urza's Iron Alliance|Urza, Chief Artificer|100|0
+2022-12-02|SCD|Chaos Incarnate|Kardur, Doomscourge|100|0
+2022-12-02|SCD|First Flight|Isperia, Supreme Judge|100|0
+2022-12-02|SCD|Draconic Destruction|Atarka, World Render|100|0
+2022-12-02|SCD|Token Triumph|Emmara, Soul of the Accord|100|0
+2022-12-02|SCD|Grave Danger|Gisa and Geralf|100|0
+2023-02-10|ONC|Rebellion Rising|Neyali, Suns' Vanguard|100|0
+2023-02-10|ONC|Corrupting Influence|Ixhel, Scion of Atraxa|100|0
+2023-04-21|MOC|Growing Threat|Brimaz, Blight of Oreskos|100|0
+2023-04-21|MOC|Divine Convocation|Kasla, the Broken Halo|100|0
+2023-04-21|MOC|Tinker Time|Gimbal, Gremlin Prodigy|100|0
+2023-04-21|MOC|Cavalry Charge|Sidar Jabari of Zhalfir|100|0
+2023-04-21|MOC|Call for Backup|Bright-Palm, Soul Awakener|100|0
+2023-05-08|SLD|From Cute to Brute|Esika, God of the Tree // The Prismatic Bridge|100|0
+2023-06-23|LTC|Elven Council|Galadriel, Elven-Queen|100|0
+2023-06-23|LTC|Food and Fellowship|Frodo, Adventurous Hobbit, Sam, Loyal Attendant|100|0
+2023-06-23|LTC|Riders of Rohan|Éowyn, Shieldmaiden|100|0
+2023-06-23|LTC|The Hosts of Mordor|Sauron, Lord of the Rings|100|0
+2023-08-04|CMM|Sliver Swarm|Sliver Gravemother|100|0
+2023-08-04|CMM|Planeswalker Party|Commodore Guff|100|0
+2023-08-04|CMM|Eldrazi Unbound|Zhulodok, Void Gorger|100|0
+2023-08-04|CMM|Enduring Enchantments|Anikthea, Hand of Erebos|100|0
+2023-08-14|SLD|Angels: They're Just Like Us but Cooler and with Wings|Gisela, the Broken Blade // Brisela, Voice of Nightmares|100|2
+2023-09-08|WOC|Fae Dominion|Tegwyll, Duke of Splendor|100|0
+2023-09-08|WOC|Virtue and Valor|Ellivere of the Wild Court|100|0
+2023-10-13|WHO|Blast from the Past|The Fourth Doctor, Sarah Jane Smith|100|0
+2023-10-13|WHO|Timey-Wimey|The Tenth Doctor, Rose Tyler|100|0
+2023-10-13|WHO|Masters of Evil|Davros, Dalek Creator|100|0
+2023-10-13|WHO|Paradox Power|The Thirteenth Doctor, Yasmin Khan|100|0
+2023-11-17|LCC|Explorers of the Deep|Hakbal of the Surging Soul|100|0
+2023-11-17|LCC|Blood Rites|Clavileño, First of the Blessed|100|0
+2023-11-17|LCC|Ahoy Mateys|Admiral Brass, Unsinkable|100|0
+2023-11-17|LCC|Veloci-Ramp-Tor|Pantlaza, Sun-Favored|100|0
+2024-01-22|SLD|Raining Cats and Dogs|Rin and Seri, Inseparable // Rin and Seri, Inseparable|100|2
+2024-02-09|MKC|Deep Clue Sea|Morska, Undersea Sleuth|100|0
+2024-02-09|MKC|Blame Game|Nelly Borca, Impulsive Accuser|100|0
+2024-02-09|MKC|Revenant Recon|Mirko, Obsessive Theorist|100|0
+2024-02-09|MKC|Deadly Disguise|Kaust, Eyes of the Glade|100|0
+2024-03-08|PIP|Hail, Caesar|Caesar, Legion's Emperor|100|0
+2024-03-08|PIP|Scrappy Survivors|Dogmeat, Ever Loyal|100|0
+2024-03-08|PIP|Science!|Dr. Madison Li|100|0
+2024-03-08|PIP|Mutant Menace|The Wise Mothman|100|0
+2024-04-19|OTC|Desert Bloom|Yuma, Proud Protector|100|0
+2024-04-19|OTC|Quick Draw|Stella Lee, Wild Card|100|0
+2024-04-19|OTC|Grand Larceny|Gonti, Canny Acquisitor|100|0
+2024-04-19|OTC|Most Wanted|Olivia, Opulent Outlaw|100|0
+2024-06-14|M3C|Tricky Terrain Collector's Edition|Omo, Queen of Vesuva|100|0
+2024-06-14|M3C|Creative Energy|Satya, Aetherflux Genius|100|0
+2024-06-14|M3C|Eldrazi Incursion|Ulalek, Fused Atrocity|100|0
+2024-06-14|M3C|Graveyard Overdrive Collector's Edition|Disa the Restless|100|0
+2024-06-14|M3C|Eldrazi Incursion Collector's Edition|Ulalek, Fused Atrocity|100|0
+2024-06-14|M3C|Creative Energy Collector's Edition|Satya, Aetherflux Genius|100|0
+2024-06-14|M3C|Graveyard Overdrive|Disa the Restless|100|0
+2024-06-14|M3C|Tricky Terrain|Omo, Queen of Vesuva|100|0
+2024-08-02|BLC|Squirreled Away|Hazel of the Rootbloom|100|0
+2024-08-02|BLC|Family Matters|Zinnia, Valley's Voice|100|0
+2024-08-02|BLC|Peace Offering|Ms. Bumbleflower|100|0
+2024-08-02|BLC|Animated Army|Bello, Bard of the Brambles|100|0
+2024-09-27|DSC|Death Toll|Winter, Cynical Opportunist|100|10
+2024-09-27|DSC|Miracle Worker|Aminatou, Veil Piercer|100|10
+2024-09-27|DSC|Jump Scare!|Zimone, Mystery Unraveler|100|10
+2024-09-27|DSC|Endless Punishment|Valgavoth, Harrower of Souls|100|10
+2024-12-04|SLD|20 Ways to Win|Go-Shintai of Life's Origin|100|5
+2025-02-14|DRC|Living Energy|Saheeli, Radiant Creator|100|9
+2025-02-14|DRC|Eternal Might|Temmet, Naktamun's Will|100|10
+2025-04-11|TDC|Sultai Arisen|Teval, the Balanced Scale|100|0
+2025-04-11|TDC|Jeskai Striker|Shiko and Narset, Unified|100|0
+2025-04-11|TDC|Mardu Surge|Zurgo Stormrender|100|0
+2025-04-11|TDC|Temur Roar|Eshki, Temur's Roar|100|0
+2025-04-11|TDC|Abzan Armor|Felothar the Steadfast|100|0
+2025-05-12|SLD|Everyone's Invited!|Morophon, the Boundless|100|4
+2025-06-13|FIC|Counter Blitz (FINAL FANTASY X)|Tidus, Yuna's Guardian|100|0
+2025-06-13|FIC|Limit Break (FINAL FANTASY VII)|Cloud, Ex-SOLDIER|100|0
+2025-06-13|FIC|Revival Trance Collector's Edition (FINAL FANTASY VI)|Terra, Herald of Hope|100|0
+2025-06-13|FIC|Limit Break Collector's Edition (FINAL FANTASY VII)|Cloud, Ex-SOLDIER|100|0
+2025-06-13|FIC|Revival Trance (FINAL FANTASY VI)|Terra, Herald of Hope|100|0
+2025-06-13|FIC|Scions & Spellcraft Collector's Edition (FINAL FANTASY XIV)|Y'shtola, Night's Blessed|100|0
+2025-06-13|FIC|Counter Blitz Collector's Edition (FINAL FANTASY X)|Tidus, Yuna's Guardian|100|0
+2025-06-13|FIC|Scions & Spellcraft (FINAL FANTASY XIV)|Y'shtola, Night's Blessed|100|0
+2025-08-01|EOC|World Shaper|Hearthhull, the Worldseed|100|10
+2025-08-01|EOC|Counter Intelligence|Inspirit, Flagship Vessel|100|10
+2026-01-23|ECC|Blight Curse|Auntie Ool, Cursewretch|100|0
+2026-01-23|ECC|Dance of the Elements|Ashling, the Limitless|100|0
+2026-03-06|TMC|Turtle Power!|Heroes in a Half Shell|100|0
+2026-04-24|SOC|Lorehold Spirit|Quintorius, History Chaser|100|0
+2026-04-24|SOC|Prismari Artistry|Rootha, Mastering the Moment|100|0
+2026-04-24|SOC|Silverquill Influence|Killian, Decisive Mentor|100|0
+2026-04-24|SOC|Quandrix Unlimited|Zimone, Infinite Analyst|100|0
+2026-04-24|SOC|Witherbloom Pestilence|Dina, Essence Brewer|100|0
+2026-05-18|SLD|Goblin Storm|Zada, Hedron Grinder|100|5
+2026-06-26|MSC|The Fantastic Four Collector's Edition|Invisible Woman|100|10
+2026-06-26|MSC|Avengers Assemble Collector's Edition|Captain America, Team Leader|100|10
+2026-06-26|MSC|Wakanda Forever Collector's Edition|T'Challa, the Black Panther|100|10
+2026-06-26|MSC|Doom Prevails Collector's Edition|Doctor Doom, King of Latveria|100|10
+2026-06-26|MSC|Avengers Assemble|Captain America, Team Leader|100|10
+2026-06-26|MSC|Wakanda Forever|T'Challa, the Black Panther|100|10
+2026-06-26|MSC|Doom Prevails|Doctor Doom, King of Latveria|100|10
+2026-06-26|MSC|The Fantastic Four|Invisible Woman|100|10
+2026-08-10|SLD|Hatsune Miku|Trostani, Selesnya's Voice|100|3
+2026-09-28|SLD|Odds and Ends|Yennett, Cryptic Sovereign|100|10
+2026-10-02|FDC|Keen Engineering|Sai, Master Thopterist|100|10
+2026-10-02|FRC|Multiverse Reforged|Jace, Multiverse Architect|100|9
+2026-10-02|FDC|Wretched Ranks|Ghoulcaller Gisa|100|10
+2026-10-02|FDC|Calling All Angels|Giada, Font of Hope|100|10
+2026-10-02|FDC|Tramplesaurus Rex|Ghalta, Primal Hunger|100|10
+2026-10-02|FDC|Reign of Dragons|Lathliss, Dragon Queen|100|10
+`;
+
+export interface DeckCommander {
+  lancamento: string;
+  colecao: string;
+  nome: string;
+  comandantes: string;
+  cartas: number;
+  tokens: number;
+}
+
+// Sugestão do cadastro: reimpressões do mesmo deck viram uma só, com todas as coleções
+export interface SugestaoDeck {
+  nome: string;
+  comandantes: string;
+  colecoes: string[];
+}
+
+export const DECKS: DeckCommander[] = TABELA.trim()
+  .split("\n")
+  .map((linha) => {
+    const [lancamento, colecao, nome, comandantes, cartas, tokens] = linha.trim().split("|");
+    return { lancamento, colecao, nome, comandantes, cartas: Number(cartas), tokens: Number(tokens) };
+  })
+  .reverse(); // Mais recentes primeiro
+
+export const ANOS_DECKS = Array.from(new Set(DECKS.map((d) => d.lancamento.slice(0, 4))));
+
+// Sem acentos e sem maiúsculas: "eowyn" encontra "Éowyn"
+const normalizar = (texto: string) =>
+  texto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+
+const textoDeBusca = new Map(
+  DECKS.map((d) => [d, normalizar(`${d.nome} ${d.comandantes} ${d.colecao} ${d.lancamento.slice(0, 4)}`)])
+);
+
+// Todas as palavras precisam aparecer, em qualquer ordem
+export function filtrarDecks(termo: string, ano = ""): DeckCommander[] {
+  const palavras = normalizar(termo).split(/\s+/).filter(Boolean);
+  return DECKS.filter(
+    (d) =>
+      (!ano || d.lancamento.startsWith(ano)) &&
+      palavras.every((p) => textoDeBusca.get(d)!.includes(p))
+  );
+}
+
+export function sugerirDecks(termo: string, limite = 8): SugestaoDeck[] {
+  const inicio = normalizar(termo);
+  if (inicio.length < 2) return [];
+
+  const unicos = new Map<string, SugestaoDeck>();
+  for (const d of filtrarDecks(termo)) {
+    const chave = `${normalizar(d.nome)}|${normalizar(d.comandantes)}`;
+    const existente = unicos.get(chave);
+    if (existente) existente.colecoes.push(d.colecao);
+    else unicos.set(chave, { nome: d.nome, comandantes: d.comandantes, colecoes: [d.colecao] });
+  }
+
+  // Quem começa com o que foi digitado vem antes; o resto mantém os mais recentes primeiro
+  const prioridade = (s: SugestaoDeck) =>
+    normalizar(s.nome).startsWith(inicio) ? 0 : normalizar(s.comandantes).startsWith(inicio) ? 1 : 2;
+  return Array.from(unicos.values())
+    .map((s, i) => ({ s, i }))
+    .sort((a, b) => prioridade(a.s) - prioridade(b.s) || a.i - b.i)
+    .slice(0, limite)
+    .map(({ s }) => s);
+}

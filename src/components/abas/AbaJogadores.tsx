@@ -1,9 +1,34 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Torneio } from "../../core/types";
 import { useStore } from "../../core/store";
 import { useToast } from "../ui/Toast";
 import { confirmar } from "../ui/Confirm";
+import { CampoDeck } from "../ui/CampoDeck";
 import { sugerirNomes } from "../../core/storage";
+
+function DeckDoJogador({ deck, disabled, onSalvar }: { deck: string; disabled: boolean; onSalvar: (novo: string) => void }) {
+  const [valor, setValor] = useState(deck);
+  useEffect(() => setValor(deck), [deck]); // Pode ter mudado em outro aparelho
+
+  const salvar = (texto: string) => {
+    const novo = texto.trim();
+    if (novo !== deck) onSalvar(novo);
+  };
+
+  return (
+    <CampoDeck
+      valor={valor}
+      onMudar={setValor}
+      onEscolher={salvar}
+      onEnter={() => salvar(valor)}
+      onSair={() => salvar(valor)}
+      placeholder="— sem deck —"
+      disabled={disabled}
+      className="w-full bg-transparent text-xs italic px-2 py-1 rounded border border-transparent hover:border-white/10 focus:border-acento focus:bg-black/20 outline-none"
+      style={{ color: deck ? "var(--app-text)" : "var(--text-muted-ds)" }}
+    />
+  );
+}
 
 export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEditar: boolean }) {
   const addJogador = useStore((s) => s.addJogador);
@@ -116,12 +141,12 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
               </div>
             )}
           </div>
-          <input
+          <CampoDeck
             className="input w-full"
-            value={deck}
-            onChange={(e) => setDeck(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && adicionar()}
-            placeholder="Deck (opcional)"
+            valor={deck}
+            onMudar={setDeck}
+            onEnter={() => adicionar()}
+            placeholder="Deck ou comandante (opcional)"
             disabled={rodadaAndamento || torneio.finalizado}
           />
           <button
@@ -215,18 +240,10 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
                           {j.deck || "— sem deck —"}
                         </span>
                       ) : (
-                      <input
-                        type="text"
-                        defaultValue={j.deck || ""}
-                        placeholder="— sem deck —"
-                        onBlur={(e) => {
-                          const novo = e.target.value.trim();
-                          if (novo !== (j.deck || "")) editarJogador(j.id, { deck: novo });
-                        }}
-                        onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-                        className="w-full bg-transparent text-xs italic px-2 py-1 rounded border border-transparent hover:border-white/10 focus:border-acento focus:bg-black/20 outline-none"
-                        style={{ color: j.deck ? "var(--app-text)" : "var(--text-muted-ds)" }}
+                      <DeckDoJogador
+                        deck={j.deck || ""}
                         disabled={rodadaAndamento}
+                        onSalvar={(novo) => editarJogador(j.id, { deck: novo })}
                       />
                       )}
                     </td>

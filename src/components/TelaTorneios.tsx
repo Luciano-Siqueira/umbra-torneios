@@ -204,6 +204,19 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             <span>Analytics</span>
           </button>
 
+          <button
+            className="rounded-full px-4 py-2 font-semibold text-sm transition active:scale-95 flex items-center gap-1.5"
+            style={{
+              background: "rgba(201,166,72,0.12)",
+              color: "var(--action)",
+              border: "1px solid rgba(201,166,72,0.25)"
+            }}
+            onClick={() => irPara("decks")}
+          >
+            <span>🃏</span>
+            <span>Decks</span>
+          </button>
+
           {/* Botão Gerenciar Usuários — só admin, no modo admin */}
           {auth.isAdmin && modoView === "admin" && (
             <button
