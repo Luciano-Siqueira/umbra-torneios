@@ -4,7 +4,8 @@ import { useStore } from "../../core/store";
 import { useToast } from "../ui/Toast";
 import { confirmar } from "../ui/Confirm";
 import { CampoDeck } from "../ui/CampoDeck";
-import { comandanteDoDeck } from "../../core/decks";
+import { CoresMana } from "../ui/SimboloMana";
+import { comandanteDoDeck, coresDoDeck } from "../../core/decks";
 import { sugerirNomes } from "../../core/storage";
 
 function DeckDoJogador({ deck, onSalvar }: { deck: string; onSalvar: (novo: string) => void }) {
@@ -247,14 +248,16 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
                       />
                       )}
                       {/* No celular, o comandante fica junto do deck */}
-                      {comandanteDoDeck(j.deck || "") && (
+                      {coresDoDeck(j.deck || "") !== null && (
                         <span className="block sm:hidden text-xs px-2 mt-0.5" style={{ color: "var(--text-2)" }}>
-                          {comandanteDoDeck(j.deck || "")}
+                          {comandanteDoDeck(j.deck)} <CoresMana cores={coresDoDeck(j.deck)!} tamanho={13} />
                         </span>
                       )}
                     </td>
                     <td className="py-1.5 px-2 text-xs hidden sm:table-cell" style={{ color: "var(--app-text)" }}>
-                      {comandanteDoDeck(j.deck || "") || "—"}
+                      {coresDoDeck(j.deck || "") === null ? "—" : (
+                        <>{comandanteDoDeck(j.deck)} <CoresMana cores={coresDoDeck(j.deck)!} tamanho={14} /></>
+                      )}
                     </td>
                     {podeEditar && (
                     <td className="py-1.5 px-2 text-right">

@@ -11,7 +11,8 @@ import { useAuth } from "../../core/auth";
 import { encontrarMinhaMesa } from "../../core/minhaMesa";
 import { torneioParado } from "../../core/visibilidade";
 import { useTimer, formatarTempo } from "../../core/useTimer";
-import { comandanteDoDeck } from "../../core/decks";
+import { comandanteDoDeck, coresDoDeck } from "../../core/decks";
+import { CoresMana } from "../ui/SimboloMana";
 
 export function AbaMesas({ torneio, podeEditar }: { torneio: Torneio; podeEditar: boolean }) {
   const iniciarRodada = useStore((s) => s.iniciarRodada);
@@ -455,6 +456,9 @@ function CardMesa({
               {deckPorId.get(id) && (
                 <span className="block text-xs text-fg-dim break-words">
                   {[deckPorId.get(id), comandanteDoDeck(deckPorId.get(id)!)].filter(Boolean).join(" · ")}
+                  {coresDoDeck(deckPorId.get(id)!) !== null && (
+                    <> <CoresMana cores={coresDoDeck(deckPorId.get(id)!)!} tamanho={13} /></>
+                  )}
                 </span>
               )}
             </span>

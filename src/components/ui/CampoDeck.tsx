@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { sugerirDecks, type SugestaoDeck } from "../../core/decks";
+import { CoresMana } from "./SimboloMana";
 
 interface Props {
   valor: string;
@@ -104,7 +105,7 @@ export function CampoDeck({ valor, onMudar, onEscolher, onEnter, onSair, placeho
             >
               <span className={`block text-sm ${i === ativa ? "text-acento font-semibold" : ""}`}>{s.nome}</span>
               <span className="block text-xs" style={{ color: "var(--text-2)" }}>
-                {s.comandantes} · {s.colecoes.join(", ")}
+                {s.comandantes} <CoresMana cores={s.cores} tamanho={13} /> · {s.colecoes.join(", ")}
               </span>
             </button>
           ))}

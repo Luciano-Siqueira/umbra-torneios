@@ -217,6 +217,7 @@ export interface DeckCommander {
 export interface SugestaoDeck {
   nome: string;
   comandantes: string;
+  cores: string;
   colecoes: string[];
 }
 
@@ -284,7 +285,7 @@ export function sugerirDecks(termo: string, limite = 8): SugestaoDeck[] {
     const chave = `${normalizar(d.nome)}|${normalizar(d.comandantes)}`;
     const existente = unicos.get(chave);
     if (existente) existente.colecoes.push(d.colecao);
-    else unicos.set(chave, { nome: d.nome, comandantes: d.comandantes, colecoes: [d.colecao] });
+    else unicos.set(chave, { nome: d.nome, comandantes: d.comandantes, cores: d.cores, colecoes: [d.colecao] });
   }
 
   // Quem começa com o que foi digitado vem antes; o resto mantém os mais recentes primeiro

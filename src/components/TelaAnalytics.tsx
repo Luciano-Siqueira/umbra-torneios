@@ -306,8 +306,7 @@ function CartaoComandantes({ metricas }: { metricas: MetricasGlobais }) {
               {metricas.comandantes.map((c) => (
                 <tr key={c.nome} style={{ borderTop: "0.8px solid var(--line-soft)" }}>
                   <td className="py-1.5">
-                    <span className="block" style={{ color: "var(--text-strong)" }}>{c.nome}</span>
-                    <CoresMana cores={c.cores} tamanho={14} />
+                    <span style={{ color: "var(--text-strong)" }}>{c.nome}</span> <CoresMana cores={c.cores} tamanho={14} />
                   </td>
                   <td className="py-1.5 text-right tabular-nums">{c.usos}</td>
                   <td className="py-1.5 text-right tabular-nums" style={{ color: "var(--warn)" }}>{c.campeonatos || "—"}</td>
@@ -551,10 +550,7 @@ function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
                         </td>
                         <td className="py-1.5">
                           {cores === null ? "—" : (
-                            <>
-                              <span className="block">{comandanteDoDeck(x.nome)}</span>
-                              <CoresMana cores={cores} tamanho={14} />
-                            </>
+                            <>{comandanteDoDeck(x.nome)} <CoresMana cores={cores} tamanho={14} /></>
                           )}
                         </td>
                         <td className="py-1.5 text-right tabular-nums">{x.torneios}</td>

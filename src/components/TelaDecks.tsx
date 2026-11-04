@@ -6,6 +6,7 @@ import { atualizarDecks, useVersaoDecks } from "../core/atualizarDecks";
 import { BANNER_IMAGE } from "../banner-image";
 import { AuthChip } from "./AuthChip";
 import { useToast } from "./ui/Toast";
+import { CoresMana } from "./ui/SimboloMana";
 
 const ESTILO_TITULO = "text-left py-2 px-2 text-[10px] font-bold tracking-widest uppercase";
 
@@ -116,10 +117,12 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
                       <span className="font-medium" style={{ color: "var(--text-strong)" }}>{d.nome}</span>
                       {/* No celular, o comandante e a coleção ficam junto do nome */}
                       <span className="block text-xs sm:hidden" style={{ color: "var(--text-2)" }}>
-                        {d.comandantes} · {d.colecao} · {d.lancamento.slice(0, 4)}
+                        {d.comandantes} <CoresMana cores={d.cores} tamanho={13} /> · {d.colecao} · {d.lancamento.slice(0, 4)}
                       </span>
                     </td>
-                    <td className="py-1.5 px-2 hidden sm:table-cell">{d.comandantes}</td>
+                    <td className="py-1.5 px-2 hidden sm:table-cell">
+                      {d.comandantes} <CoresMana cores={d.cores} tamanho={14} />
+                    </td>
                     <td className="py-1.5 px-2 text-right tabular-nums hidden md:table-cell">{d.cartas}</td>
                     <td className="py-1.5 px-2 text-right tabular-nums hidden md:table-cell">{d.tokens}</td>
                   </tr>

@@ -252,6 +252,46 @@ describe("abas do torneio", () => {
   });
 });
 
+describe("cores depois do comandante", () => {
+  // Símbolos desenhados dentro do elemento que também tem o nome, depois dele
+  const coresVemDepois = (nome: string) => {
+    const el = screen.getAllByText(new RegExp(nome))[0];
+    const texto = Array.from(el.childNodes).find((n) => n.nodeType === Node.TEXT_NODE && n.textContent!.includes(nome))!;
+    const pips = el.querySelector("[aria-hidden='true']");
+    return !!pips && !!(texto.compareDocumentPosition(pips) & Node.DOCUMENT_POSITION_FOLLOWING);
+  };
+
+  it("na aba Decks", () => {
+    preparar("jogador", {});
+    abrir(<TelaDecks />);
+    expect(coresVemDepois("Lathliss, Dragon Queen")).toBe(true);
+  });
+
+  it("nas mesas, na lista de jogadores e nas sugestões, e deck próprio fica sem cores", () => {
+    const t = torneioCom("Pessoa");
+    t.jogadores[0].deck = "Breed Lethality";
+    t.jogadores[1].deck = "Meu deck";
+    t.rodadaAtual = 1;
+    t.mesas = [{
+      numero: 1, jogadoresIds: [1, 2], finalizada: false, vencedorId: null, eliminacoes: [], empateTopoIds: [],
+    } as unknown as Torneio["mesas"][number]];
+    preparar("jogador", {}, [t]);
+    abrir(<AbaMesas torneio={t} podeEditar={false} />);
+    expect(coresVemDepois("Atraxa, Praetors' Voice")).toBe(true);
+    expect(screen.getByText("Meu deck").querySelector("[aria-hidden='true']")).toBeNull();
+    cleanup();
+
+    abrir(<AbaJogadores torneio={t} podeEditar={false} />);
+    expect(coresVemDepois("Atraxa, Praetors' Voice")).toBe(true);
+    cleanup();
+
+    preparar("admin", { isAdmin: true }, [{ ...t, mesas: [], rodadaAtual: 0 }]);
+    abrir(<AbaJogadores torneio={{ ...t, mesas: [], rodadaAtual: 0 }} podeEditar />);
+    fireEvent.change(screen.getByPlaceholderText(/Deck ou comandante/), { target: { value: "kaalia" } });
+    expect(coresVemDepois("Kaalia of the Vast")).toBe(true);
+  });
+});
+
 describe("decks", () => {
   it("todos os papéis abrem a tela de decks", () => {
     preparar("jogador", {});
