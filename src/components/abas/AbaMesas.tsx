@@ -158,7 +158,11 @@ export function AbaMesas({ torneio, podeEditar, onIrParaAba }: {
   };
 
   const botaoEncerrarAntes = podeEncerrarAntes && (
-    <button className="btn-ghost !bg-transparent border border-white/20 text-sm" onClick={encerrarAntes}>
+    <button
+      className="btn !bg-transparent border text-sm hover:!bg-white/5"
+      style={{ color: "var(--critical)", borderColor: "var(--critical)" }}
+      onClick={encerrarAntes}
+    >
       Encerrar antes do previsto
     </button>
   );
