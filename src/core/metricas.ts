@@ -2,6 +2,7 @@
 import type { Torneio, Mesa } from "./types";
 import { ranking, vitorias, partidasJogadas, gameWinrate } from "./resultados";
 import { comandanteDoDeck, coresDoDeck } from "./decks";
+import { nomeDaCombinacao } from "./coresMagic";
 
 export interface MetricasGlobais {
   totalTorneios: number;
@@ -23,6 +24,8 @@ export interface MetricasGlobais {
   topDecks: Array<{ nome: string; usos: number }>;
   cores: DesempenhoCor[]; // na ordem WUBRG e incolor
   comandantes: DesempenhoComandante[]; // quem mais vence primeiro
+  combinacoes: DesempenhoCombinacao[]; // mais usadas primeiro
+  melhorCombinacao: DesempenhoCombinacao | null; // melhor taxa, com um mínimo de partidas
   inscricoesComDeck: number;
   inscricoesSemComandante: number; // deck próprio, fora da lista
 }
@@ -39,6 +42,15 @@ export interface DesempenhoCor extends Placar {
   cor: string; // W, U, B, R, G ou C (incolor)
   participacao: number; // 0..1 das inscrições com comandante conhecido
 }
+
+export interface DesempenhoCombinacao extends Placar {
+  cores: string; // na ordem WUBRG; vazio = incolor
+  nome: string;
+  participacao: number; // 0..1 das inscrições com comandante conhecido
+}
+
+// Com poucas partidas, 1 vitória em 1 mesa viraria 100%
+const MIN_PARTIDAS_TAXA = 5;
 
 export interface DesempenhoComandante extends Placar {
   nome: string;
@@ -65,6 +77,7 @@ export function calcularMetricas(torneios: Torneio[]): MetricasGlobais {
   const porDeck = new Map<string, number>();
   const porComandante = new Map<string, DesempenhoComandante>();
   const porCor = new Map<string, Placar>();
+  const porCombinacao = new Map<string, Placar>();
   let inscricoesComDeck = 0;
   let inscricoesSemComandante = 0;
 
@@ -104,6 +117,9 @@ export function calcularMetricas(torneios: Torneio[]): MetricasGlobais {
           const comandante = porComandante.get(nomeComandante) ?? { ...placarVazio(), nome: nomeComandante, cores };
           somarAoPlacar(comandante, vitorias(j), partidasJogadas(j), campeao);
           porComandante.set(nomeComandante, comandante);
+          const combinacao = porCombinacao.get(cores) ?? placarVazio();
+          somarAoPlacar(combinacao, vitorias(j), partidasJogadas(j), campeao);
+          porCombinacao.set(cores, combinacao);
           // Um deck de várias cores conta em cada uma delas
           for (const cor of cores || "C") {
             const placar = porCor.get(cor) ?? placarVazio();
@@ -151,9 +167,23 @@ export function calcularMetricas(torneios: Torneio[]): MetricasGlobais {
     return placar ? [{ ...placar, cor, participacao: placar.usos / comComandante }] : [];
   });
 
+  const combinacoes = Array.from(porCombinacao.entries())
+    .map(([coresCombinacao, placar]) => ({
+      ...placar,
+      cores: coresCombinacao,
+      nome: nomeDaCombinacao(coresCombinacao),
+      participacao: placar.usos / comComandante,
+    }))
+    .sort((a, b) => b.usos - a.usos || b.vitorias - a.vitorias || a.nome.localeCompare(b.nome));
+  const melhorCombinacao = [...combinacoes]
+    .filter((c) => c.partidas >= MIN_PARTIDAS_TAXA)
+    .sort((a, b) => b.winrate - a.winrate || b.vitorias - a.vitorias)[0] ?? null;
+
   return {
     cores,
     comandantes,
+    combinacoes,
+    melhorCombinacao,
     inscricoesComDeck,
     inscricoesSemComandante,
     totalTorneios: torneios.length,

@@ -451,6 +451,7 @@ describe("decks", () => {
         { name: "Floresta", count: 30, type: "Basic Land", types: ["Land"] },
         { name: "Raio", count: 1, type: "Instant", types: ["Instant"] },
       ],
+      tokens: [{ name: "Saproling", count: 5, type: "Token Creature", power: "1", toughness: "1" }],
     } };
 
     beforeEach(() => { window.scrollTo = (() => {}) as typeof window.scrollTo; });
@@ -477,6 +478,8 @@ describe("decks", () => {
       expect(terrenos.getByText("Floresta")).toBeTruthy();
       expect(terrenos.getAllByText("30").length).toBeGreaterThan(0);
       expect(screen.queryByRole("region", { name: "Artefatos" })).toBeNull();
+      expect(within(screen.getByRole("region", { name: "Tokens" })).getByText("Saproling")).toBeTruthy();
+      expect(within(screen.getByRole("region", { name: "Tokens" })).getByText("1/1")).toBeTruthy();
       expect(screen.getByText(/33 cartas/)).toBeTruthy();
 
       fireEvent.click(screen.getByRole("button", { name: /Todos os decks/ }));
@@ -494,6 +497,24 @@ describe("decks", () => {
       fireEvent.click(screen.getByRole("button", { name: "Tentar de novo" }));
       expect(screen.getByText("Carregando as cartas do deck...")).toBeTruthy();
     });
+  });
+
+  it("a lista troca Cartas por Cores e filtra pela combinação", () => {
+    preparar("admin", { isAdmin: true });
+    abrir(<TelaDecks />);
+
+    const titulos = within(screen.getAllByRole("row")[0]).getAllByRole("columnheader").map((c) => c.textContent);
+    expect(titulos).toContain("Cores");
+    expect(titulos).not.toContain("Cartas");
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Filtrar por cores" }), { target: { value: "WUB" } });
+    const linhas = screen.getAllByRole("row").slice(1);
+    expect(linhas.length).toBeGreaterThan(0);
+    for (const l of linhas) expect(l.textContent).toContain("Esper");
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Filtrar por cores" }), { target: { value: "" } });
+    expect(screen.getAllByRole("row").slice(1)).toHaveLength(1);
+    expect(screen.getByText(/Eldrazi Unbound/)).toBeTruthy();
   });
 
   it("a tela busca e filtra a lista", () => {
@@ -611,6 +632,9 @@ describe("métricas de decks no Analytics", () => {
     expect(screen.getByRole("heading", { name: /Comandantes que mais ganham/ })).toBeTruthy();
     expect(screen.getByText("Atraxa, Praetors' Voice")).toBeTruthy();
     expect(screen.getByText("Verde")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: /Combinações de cores/ })).toBeTruthy();
+    expect(screen.getByText("Combinação mais usada")).toBeTruthy();
+    expect(screen.getAllByText("Witch-Maw").length).toBeGreaterThan(0);
     expect(screen.getByText(/1 de 2 inscrições com deck ficaram de fora/)).toBeTruthy();
   });
 

@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { useStore } from "../core/store";
 import { useAuth } from "../core/auth";
-import { ANOS_DECKS, DECKS, filtrarDecks, type DeckCommander } from "../core/decks";
+import { ANOS_DECKS, DECKS, filtrarDecks, opcoesDeCores, type DeckCommander } from "../core/decks";
+import { nomeDaCombinacao } from "../core/coresMagic";
 import { DetalheDeck } from "./DetalheDeck";
 import { atualizarDecks, useVersaoDecks } from "../core/atualizarDecks";
 import { FUNDO_DE_TELA } from "../banner-image";
@@ -10,6 +11,7 @@ import { useToast } from "./ui/Toast";
 import { CoresMana } from "./ui/SimboloMana";
 
 const ESTILO_TITULO = "text-left py-2 px-2";
+const TODAS_AS_CORES = "todas";
 
 function formatarData(iso: string) {
   const [ano, mes, dia] = iso.split("-");
@@ -21,8 +23,10 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
   const auth = useAuth();
   const [busca, setBusca] = useState("");
   const [ano, setAno] = useState("");
+  const [cor, setCor] = useState(TODAS_AS_CORES);
   const versao = useVersaoDecks();
-  const decks = useMemo(() => filtrarDecks(busca, ano), [busca, ano, versao]);
+  const decks = useMemo(() => filtrarDecks(busca, ano, cor === TODAS_AS_CORES ? null : cor), [busca, ano, cor, versao]);
+  const opcoes = useMemo(() => opcoesDeCores(), [versao]);
   const modoView = useStore((s) => s.modoView);
   const { toast } = useToast();
   const [progresso, setProgresso] = useState<string | null>(null);
@@ -75,7 +79,7 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
 
       <main className="px-4 md:px-8 pb-12 space-y-4">
         {aberto ? <DetalheDeck deck={aberto} onVoltar={() => setAberto(null)} /> : <>
-        <div className="card grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-2">
+        <div className="card grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-2">
           <input
             type="search"
             className="input w-full"
@@ -87,6 +91,16 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
           <select className="input" value={ano} onChange={(e) => setAno(e.target.value)} aria-label="Filtrar por ano">
             <option value="">Todos os anos</option>
             {ANOS_DECKS.map((a) => <option key={a} value={a}>{a}</option>)}
+          </select>
+          <select className="input" value={cor} onChange={(e) => setCor(e.target.value)} aria-label="Filtrar por cores">
+            <option value={TODAS_AS_CORES}>Todas as cores</option>
+            {opcoes.map((g) => (
+              <optgroup key={g.grupo} label={g.grupo}>
+                {g.opcoes.map((o) => (
+                  <option key={o.cores} value={o.cores}>{o.nome} ({o.qtd})</option>
+                ))}
+              </optgroup>
+            ))}
           </select>
           <button className="btn-info whitespace-nowrap" onClick={atualizar} disabled={progresso !== null}>
             {progresso ?? "⟳ Atualizar decks"}
@@ -108,7 +122,7 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
                   <th className={`${ESTILO_TITULO} hidden sm:table-cell`}>Coleção</th>
                   <th className={ESTILO_TITULO}>Deck</th>
                   <th className={`${ESTILO_TITULO} hidden sm:table-cell`}>Comandante</th>
-                  <th className={`${ESTILO_TITULO} !text-right hidden md:table-cell`}>Cartas</th>
+                  <th className={`${ESTILO_TITULO} hidden sm:table-cell`}>Cores</th>
                   <th className={`${ESTILO_TITULO} !text-right hidden md:table-cell`}>Tokens</th>
                 </tr>
               </thead>
@@ -131,10 +145,10 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
                         {d.comandantes} <CoresMana cores={d.cores} tamanho={13} /> · {d.colecao} · {d.lancamento.slice(0, 4)}
                       </span>
                     </td>
-                    <td className="py-1.5 px-2 hidden sm:table-cell">
-                      {d.comandantes} <CoresMana cores={d.cores} tamanho={14} />
+                    <td className="py-1.5 px-2 hidden sm:table-cell">{d.comandantes}</td>
+                    <td className="py-1.5 px-2 hidden sm:table-cell whitespace-nowrap">
+                      <CoresMana cores={d.cores} tamanho={14} /> {nomeDaCombinacao(d.cores)}
                     </td>
-                    <td className="py-1.5 px-2 text-right tabular-nums hidden md:table-cell">{d.cartas}</td>
                     <td className="py-1.5 px-2 text-right tabular-nums hidden md:table-cell">{d.tokens}</td>
                   </tr>
                 ))}

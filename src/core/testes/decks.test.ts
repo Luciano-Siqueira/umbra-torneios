@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ANOS_DECKS, comandanteDoDeck, coresDoDeck, DECKS, filtrarDecks, sugerirDecks } from "../decks";
+import { ANOS_DECKS, comandanteDoDeck, coresDoDeck, DECKS, filtrarDecks, opcoesDeCores, sugerirDecks } from "../decks";
+import { COMBINACOES, nomeDaCombinacao } from "../coresMagic";
 import { calcularMetricas } from "../metricas";
 import { novoJogador, novoTorneio, type Torneio } from "../types";
 
@@ -43,6 +44,39 @@ describe("cores dos comandantes", () => {
   });
 });
 
+describe("combinações de cores", () => {
+  it("tem as 32 combinações, cada uma com um nome", () => {
+    expect(COMBINACOES).toHaveLength(32);
+    expect(new Set(COMBINACOES.map((c) => c.cores)).size).toBe(32);
+    expect(nomeDaCombinacao("WUB")).toBe("Esper");
+    expect(nomeDaCombinacao("WG")).toBe("Selesnya");
+    expect(nomeDaCombinacao("")).toBe("Incolor");
+  });
+
+  it("todo deck da lista tem uma combinação conhecida, na ordem WUBRG", () => {
+    const conhecidas = new Set(COMBINACOES.map((c) => c.cores));
+    for (const d of DECKS) expect(conhecidas.has(d.cores), d.nome).toBe(true);
+  });
+
+  it("filtra pela combinação exata, sem misturar com as que a contêm", () => {
+    const wub = filtrarDecks("", "", "WUB");
+    expect(wub.length).toBeGreaterThan(0);
+    expect(wub.every((d) => d.cores === "WUB")).toBe(true);
+    expect(filtrarDecks("", "", "").map((d) => d.nome)).toEqual(["Eldrazi Unbound"]);
+    expect(filtrarDecks("", "", null)).toHaveLength(DECKS.length);
+  });
+
+  it("a busca por texto encontra pelo nome da combinação", () => {
+    expect(filtrarDecks("esper").every((d) => d.cores === "WUB")).toBe(true);
+  });
+
+  it("o filtro só oferece combinações com decks, somando o total", () => {
+    const opcoes = opcoesDeCores().flatMap((g) => g.opcoes);
+    expect(opcoes.every((o) => o.qtd > 0)).toBe(true);
+    expect(opcoes.reduce((soma, o) => soma + o.qtd, 0)).toBe(DECKS.length);
+  });
+});
+
 describe("métricas de decks", () => {
   function torneio(decks: string[]): Torneio {
     const t = novoTorneio("Teste", 10);
@@ -75,6 +109,20 @@ describe("métricas de decks", () => {
     expect(m.cores.map((c) => c.cor)).toEqual(["W", "B", "R", "C"]);
     expect(porCor.W).toMatchObject({ usos: 1, vitorias: 2, participacao: 0.5 });
     expect(porCor.C).toMatchObject({ usos: 1, vitorias: 0, participacao: 0.5 });
+  });
+
+  it("soma por combinação exata, com as mais usadas primeiro", () => {
+    const m = calcularMetricas([torneio(["Heavenly Inferno", "Breed Lethality", "Breed Lethality"])]);
+    expect(m.combinacoes.map((c) => c.nome)).toEqual(["Witch-Maw", "Mardu"]);
+    expect(m.combinacoes[1]).toMatchObject({ cores: "WBR", usos: 1, vitorias: 2, partidas: 2, campeonatos: 1 });
+    expect(m.combinacoes[0].participacao).toBeCloseTo(2 / 3);
+  });
+
+  it("a melhor taxa exige um mínimo de mesas", () => {
+    expect(calcularMetricas([torneio(["Heavenly Inferno", "Breed Lethality"])]).melhorCombinacao).toBeNull();
+
+    const varios = Array.from({ length: 3 }, () => torneio(["Heavenly Inferno", "Breed Lethality"]));
+    expect(calcularMetricas(varios).melhorCombinacao?.nome).toBe("Mardu");
   });
 
   it("deck próprio fica de fora, mas é informado", () => {

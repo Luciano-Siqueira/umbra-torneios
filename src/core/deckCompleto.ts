@@ -8,6 +8,7 @@ export interface CartaDoDeck {
   quantidade: number;
   tipo: string;
   imagem: string | null;
+  forca?: string; // poder/resistência dos tokens de criatura
 }
 
 export type IdGrupo = "criaturas" | "encantamentos" | "magicas" | "artefatos" | "terrenos" | "outros";
@@ -24,6 +25,8 @@ export interface DeckCompleto {
   comandantes: CartaDoDeck[];
   grupos: GrupoDeCartas[];
   totalCartas: number;
+  tokens: CartaDoDeck[];
+  totalTokens: number;
 }
 
 const GRUPOS: { id: IdGrupo; titulo: string; icone: string }[] = [
@@ -65,6 +68,19 @@ function daCarta(c: any, tamanho: "normal" | "large"): CartaDoDeck {
   };
 }
 
+// O mesmo token pode vir em várias linhas (Bird, Bird): soma pela mesma carta
+function montarTokens(lista: any[] = []): CartaDoDeck[] {
+  const unicos = new Map<string, CartaDoDeck>();
+  for (const t of lista) {
+    const forca = t.power !== undefined ? `${t.power}/${t.toughness}` : undefined;
+    const chave = t.identifiers?.scryfallId ?? `${t.name}|${forca}`;
+    const existente = unicos.get(chave);
+    if (existente) existente.quantidade += t.count ?? 1;
+    else unicos.set(chave, { ...daCarta(t, "normal"), forca });
+  }
+  return Array.from(unicos.values()).sort((a, b) => a.nome.localeCompare(b.nome));
+}
+
 export function montarDeckCompleto(deck: any): DeckCompleto {
   const porGrupo = new Map<IdGrupo, any[]>();
   for (const carta of deck.mainBoard ?? []) {
@@ -93,9 +109,12 @@ export function montarDeckCompleto(deck: any): DeckCompleto {
   });
 
   const comandantes = (deck.commander ?? []).map((c: any) => daCarta(c, "large"));
+  const tokens = montarTokens(deck.tokens);
   return {
     comandantes,
     grupos,
+    tokens,
+    totalTokens: tokens.reduce((soma, t) => soma + t.quantidade, 0),
     totalCartas: grupos.reduce((soma, g) => soma + g.total, 0)
       + comandantes.reduce((soma: number, c: CartaDoDeck) => soma + c.quantidade, 0),
   };

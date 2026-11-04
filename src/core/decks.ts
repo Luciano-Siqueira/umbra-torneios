@@ -1,3 +1,5 @@
+import { COMBINACOES, nomeDaCombinacao, type CombinacaoDeCores } from "./coresMagic";
+
 // Decks de Commander lançados. Cada linha: lançamento|coleção|nome|comandante(s)|cartas|tokens|cores
 // Cores: identidade de cor do comandante segundo a Scryfall (WUBRG; vazio = incolor)
 const TABELA = `
@@ -245,7 +247,7 @@ export function aplicarDecksExtras(extras: DeckCommander[]) {
   // Mais recentes primeiro
   const lista = Array.from(unicos.values()).sort((a, b) => b.lancamento.localeCompare(a.lancamento));
   const busca = new Map(
-    lista.map((d) => [d, normalizar(`${d.nome} ${d.comandantes} ${d.colecao} ${d.lancamento.slice(0, 4)}`)])
+    lista.map((d) => [d, normalizar(`${d.nome} ${d.comandantes} ${d.colecao} ${d.lancamento.slice(0, 4)} ${nomeDaCombinacao(d.cores)}`)])
   );
 
   DECKS = lista;
@@ -267,13 +269,30 @@ export function coresDoDeck(nome: string): string | null {
 }
 
 // Todas as palavras precisam aparecer, em qualquer ordem
-export function filtrarDecks(termo: string, ano = ""): DeckCommander[] {
+// cores: combinação exata, como "WUB"; vazio é incolor e null não filtra
+export function filtrarDecks(termo: string, ano = "", cores: string | null = null): DeckCommander[] {
   const palavras = normalizar(termo).split(/\s+/).filter(Boolean);
   return DECKS.filter(
     (d) =>
       (!ano || d.lancamento.startsWith(ano)) &&
+      (cores === null || d.cores === cores) &&
       palavras.every((p) => textoDeBusca.get(d)!.includes(p))
   );
+}
+
+// Opções do filtro: só as combinações que existem na lista, com a quantidade de decks
+export function opcoesDeCores(): { grupo: string; opcoes: (CombinacaoDeCores & { qtd: number })[] }[] {
+  const qtd = new Map<string, number>();
+  for (const d of DECKS) qtd.set(d.cores, (qtd.get(d.cores) ?? 0) + 1);
+  const grupos: { grupo: string; opcoes: (CombinacaoDeCores & { qtd: number })[] }[] = [];
+  for (const c of COMBINACOES) {
+    const n = qtd.get(c.cores);
+    if (!n) continue;
+    const grupo = grupos.find((g) => g.grupo === c.grupo);
+    if (grupo) grupo.opcoes.push({ ...c, qtd: n });
+    else grupos.push({ grupo: c.grupo, opcoes: [{ ...c, qtd: n }] });
+  }
+  return grupos;
 }
 
 export function sugerirDecks(termo: string, limite = 8): SugestaoDeck[] {

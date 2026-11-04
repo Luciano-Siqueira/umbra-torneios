@@ -79,7 +79,26 @@ describe("montar o deck", () => {
     expect(d.grupos[0].cartas.map((c) => [c.nome, c.quantidade])).toEqual([["Forest", 3], ["Swamp", 1]]);
   });
 
+  it("tokens ficam fora da contagem de cartas e somam as linhas repetidas", () => {
+    const d = montarDeckCompleto({
+      commander: [{ name: "Comandante", count: 1 }],
+      tokens: [
+        { name: "Bird", count: 3, power: "1", toughness: "1", identifiers: { scryfallId: "b1" } },
+        { name: "Bird", count: 1, power: "1", toughness: "1", identifiers: { scryfallId: "b1" } },
+        { name: "Bird", count: 2, power: "3", toughness: "3", identifiers: { scryfallId: "b2" } },
+        { name: "Treasure", count: 5, identifiers: { scryfallId: "t1" } },
+      ],
+    });
+    expect(d.totalCartas).toBe(1);
+    expect(d.totalTokens).toBe(11);
+    expect(d.tokens.map((t) => [t.nome, t.quantidade, t.forca])).toEqual([
+      ["Bird", 4, "1/1"],
+      ["Bird", 2, "3/3"],
+      ["Treasure", 5, undefined],
+    ]);
+  });
+
   it("deck sem dados não quebra a tela", () => {
-    expect(montarDeckCompleto({})).toEqual({ comandantes: [], grupos: [], totalCartas: 0 });
+    expect(montarDeckCompleto({})).toEqual({ comandantes: [], grupos: [], totalCartas: 0, tokens: [], totalTokens: 0 });
   });
 });

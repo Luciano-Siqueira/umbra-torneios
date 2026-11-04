@@ -199,9 +199,13 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
 
             <section>
               <div className="ds-sect">Decks e comandantes</div>
+              <KpisDeCores metricas={metricas} />
               <div className="ds-grid ds-g2">
                 <CartaoCores metricas={metricas} />
                 <CartaoComandantes metricas={metricas} />
+              </div>
+              <div className="mt-4">
+                <CartaoCombinacoes metricas={metricas} />
               </div>
             </section>
               </>
@@ -224,6 +228,78 @@ function NotaDeckProprio({ metricas }: { metricas: MetricasGlobais }) {
   return (
     <div className="text-xs mt-3" style={{ color: "var(--text-muted-ds)" }}>
       {metricas.inscricoesSemComandante} de {metricas.inscricoesComDeck} inscrições com deck ficaram de fora, por usarem um deck que não está na lista.
+    </div>
+  );
+}
+
+function KpisDeCores({ metricas }: { metricas: MetricasGlobais }) {
+  if (metricas.combinacoes.length === 0) return null;
+  const maisUsada = metricas.combinacoes[0];
+  const maisVence = [...metricas.combinacoes].sort((a, b) => b.vitorias - a.vitorias || b.winrate - a.winrate)[0];
+  const melhor = metricas.melhorCombinacao;
+  const corMaisUsada = [...metricas.cores].sort((a, b) => b.usos - a.usos)[0];
+  return (
+    <div className="ds-grid ds-g4 mb-4">
+      <KpiTile
+        label="Cor mais usada"
+        valor={NOME_COR[corMaisUsada.cor]}
+        sub={`em ${(corMaisUsada.participacao * 100).toFixed(0)}% dos decks`}
+      />
+      <KpiTile
+        label="Combinação mais usada"
+        valor={maisUsada.nome}
+        sub={`${maisUsada.usos} ${maisUsada.usos === 1 ? "uso" : "usos"} · ${(maisUsada.participacao * 100).toFixed(0)}% dos decks`}
+      />
+      <KpiTile
+        label="Combinação que mais vence"
+        valor={maisVence.nome}
+        sub={`${maisVence.vitorias} ${maisVence.vitorias === 1 ? "vitória" : "vitórias"} em ${maisVence.partidas} mesas`}
+      />
+      <KpiTile
+        label="Melhor taxa de vitória"
+        valor={melhor ? melhor.nome : "—"}
+        sub={melhor ? `${(melhor.winrate * 100).toFixed(0)}% em ${melhor.partidas} mesas` : "precisa de 5 mesas ou mais"}
+      />
+    </div>
+  );
+}
+
+function CartaoCombinacoes({ metricas }: { metricas: MetricasGlobais }) {
+  return (
+    <div className="ds-card">
+      <div className="ds-card-h"><h3>🌈 Combinações de cores</h3></div>
+      {metricas.combinacoes.length === 0 ? (
+        <SemDados texto={SEM_LISTA} />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm" style={{ color: "var(--app-text)" }}>
+            <thead>
+              <tr className="tabela-cab">
+                <th className="text-left py-2">Combinação</th>
+                <th className="text-right py-2">Usos</th>
+                <th className="text-right py-2">% dos decks</th>
+                <th className="text-right py-2">🏆</th>
+                <th className="text-right py-2">V</th>
+                <th className="text-right py-2">WR</th>
+              </tr>
+            </thead>
+            <tbody>
+              {metricas.combinacoes.map((c) => (
+                <tr key={c.cores} style={{ borderTop: "0.8px solid var(--line-soft)" }}>
+                  <td className="py-1.5" style={{ color: "var(--text-strong)" }}>
+                    {c.nome} <CoresMana cores={c.cores} tamanho={14} />
+                  </td>
+                  <td className="py-1.5 text-right tabular-nums">{c.usos}</td>
+                  <td className="py-1.5 text-right tabular-nums">{(c.participacao * 100).toFixed(0)}%</td>
+                  <td className="py-1.5 text-right tabular-nums" style={{ color: "var(--warn)" }}>{c.campeonatos || "—"}</td>
+                  <td className="py-1.5 text-right tabular-nums">{c.vitorias}/{c.partidas}</td>
+                  <td className="py-1.5 text-right tabular-nums" style={{ color: "var(--good)" }}>{(c.winrate * 100).toFixed(0)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

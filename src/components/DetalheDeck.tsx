@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { buscarDeckCompleto, type CartaDoDeck, type DeckCompleto } from "../core/deckCompleto";
 import type { DeckCommander } from "../core/decks";
 import { contar } from "../core/formato";
+import { nomeDaCombinacao } from "../core/coresMagic";
 import { CoresMana } from "./ui/SimboloMana";
 
 function formatarData(iso: string) {
@@ -64,7 +65,7 @@ export function DetalheDeck({ deck, onVoltar }: { deck: DeckCommander; onVoltar:
       <div className="card">
         <h2 className="text-xl md:text-2xl font-bold" style={{ color: "var(--text-strong)" }}>{deck.nome}</h2>
         <div className="text-sm mt-1" style={{ color: "var(--text-2)" }}>
-          <CoresMana cores={deck.cores} tamanho={16} /> {deck.colecao} · {formatarData(deck.lancamento)}
+          <CoresMana cores={deck.cores} tamanho={16} /> {nomeDaCombinacao(deck.cores)} · {deck.colecao} · {formatarData(deck.lancamento)}
           {dados && ` · ${contar(dados.totalCartas, "carta")}`}
         </div>
       </div>
@@ -110,6 +111,33 @@ export function DetalheDeck({ deck, onVoltar }: { deck: DeckCommander; onVoltar:
                 </ul>
               </section>
             ))}
+
+            <section aria-label="Tokens" className="card min-w-0 mb-4 break-inside-avoid">
+              <h3 className="font-semibold mb-2 flex items-center gap-2" style={{ color: "var(--text-strong)" }}>
+                <span>🪙</span>
+                <span className="flex-1">Tokens</span>
+                <span className="text-sm tabular-nums" style={{ color: "var(--brand-1)" }}>{dados.totalTokens}</span>
+              </h3>
+              {dados.tokens.length === 0 ? (
+                <div className="text-xs" style={{ color: "var(--text-2)" }}>O MTGJSON não lista tokens para este deck.</div>
+              ) : (
+                <ul className="text-sm">
+                  {dados.tokens.map((t) => (
+                    <li
+                      key={`${t.nome}|${t.forca}|${t.imagem}`}
+                      className="flex gap-2 py-1"
+                      style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+                    >
+                      <span className="tabular-nums w-5 text-right flex-shrink-0" style={{ color: "var(--text-2)" }}>
+                        {t.quantidade}
+                      </span>
+                      <span className="min-w-0 break-words flex-1" title={t.tipo}>{t.nome}</span>
+                      {t.forca && <span className="tabular-nums" style={{ color: "var(--text-2)" }}>{t.forca}</span>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
           </div>
         </div>
       )}
