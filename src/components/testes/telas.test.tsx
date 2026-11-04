@@ -281,6 +281,27 @@ describe("decks", () => {
       expect(useStore.getState().torneios[0].jogadores).toHaveLength(antes);
     });
 
+    it("com rodada em andamento, o deck pode mudar e o comandante acompanha", () => {
+      const t = torneioCom("Pessoa");
+      t.rodadaAtual = 1;
+      t.mesas = [{ id: 1 } as unknown as Torneio["mesas"][number]];
+      preparar("admin", { isAdmin: true }, [t]);
+      const Tela = () => <AbaJogadores torneio={useStore((s) => s.torneios[0])} podeEditar />;
+      abrir(<Tela />);
+
+      const linha = within(screen.getByText("Pessoa").closest("tr")!);
+      const campo = linha.getByRole("combobox") as HTMLInputElement;
+      expect(campo.disabled).toBe(false);
+
+      fireEvent.change(campo, { target: { value: "atraxa" } });
+      fireEvent.mouseDown(screen.getByRole("option", { name: /Breed Lethality/ }));
+      expect(linha.getAllByText("Atraxa, Praetors' Voice").length).toBeGreaterThan(0);
+
+      fireEvent.change(campo, { target: { value: "Meu deck" } });
+      fireEvent.keyDown(campo, { key: "Enter" });
+      expect(linha.queryByText("Atraxa, Praetors' Voice")).toBeNull();
+    });
+
     it("aceita um deck próprio que não está na lista", () => {
       const campo = ativo();
       fireEvent.change(campo, { target: { value: "Meu deck de elfos" } });

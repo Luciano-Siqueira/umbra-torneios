@@ -4,9 +4,10 @@ import { useStore } from "../../core/store";
 import { useToast } from "../ui/Toast";
 import { confirmar } from "../ui/Confirm";
 import { CampoDeck } from "../ui/CampoDeck";
+import { comandanteDoDeck } from "../../core/decks";
 import { sugerirNomes } from "../../core/storage";
 
-function DeckDoJogador({ deck, disabled, onSalvar }: { deck: string; disabled: boolean; onSalvar: (novo: string) => void }) {
+function DeckDoJogador({ deck, onSalvar }: { deck: string; onSalvar: (novo: string) => void }) {
   const [valor, setValor] = useState(deck);
   useEffect(() => setValor(deck), [deck]); // Pode ter mudado em outro aparelho
 
@@ -23,7 +24,6 @@ function DeckDoJogador({ deck, disabled, onSalvar }: { deck: string; disabled: b
       onEnter={() => salvar(valor)}
       onSair={() => salvar(valor)}
       placeholder="— sem deck —"
-      disabled={disabled}
       className="w-full bg-transparent text-xs italic px-2 py-1 rounded border border-transparent hover:border-white/10 focus:border-acento focus:bg-black/20 outline-none"
       style={{ color: deck ? "var(--app-text)" : "var(--text-muted-ds)" }}
     />
@@ -207,6 +207,7 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
                   {podeEditar && <th className="text-left py-2 px-2 text-[10px] font-bold tracking-widest uppercase w-12">PAGO</th>}
                   <th className="text-left py-2 px-2 text-[10px] font-bold tracking-widest uppercase">JOGADOR</th>
                   <th className="text-left py-2 px-2 text-[10px] font-bold tracking-widest uppercase">DECK</th>
+                  <th className="text-left py-2 px-2 text-[10px] font-bold tracking-widest uppercase hidden sm:table-cell">COMANDANTE</th>
                   {podeEditar && <th className="text-right py-2 px-2 text-[10px] font-bold tracking-widest uppercase">AÇÕES</th>}
                 </tr>
               </thead>
@@ -242,10 +243,18 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
                       ) : (
                       <DeckDoJogador
                         deck={j.deck || ""}
-                        disabled={rodadaAndamento}
                         onSalvar={(novo) => editarJogador(j.id, { deck: novo })}
                       />
                       )}
+                      {/* No celular, o comandante fica junto do deck */}
+                      {comandanteDoDeck(j.deck || "") && (
+                        <span className="block sm:hidden text-xs px-2 mt-0.5" style={{ color: "var(--text-2)" }}>
+                          {comandanteDoDeck(j.deck || "")}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-1.5 px-2 text-xs hidden sm:table-cell" style={{ color: "var(--app-text)" }}>
+                      {comandanteDoDeck(j.deck || "") || "—"}
                     </td>
                     {podeEditar && (
                     <td className="py-1.5 px-2 text-right">

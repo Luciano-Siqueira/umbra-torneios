@@ -236,6 +236,13 @@ const textoDeBusca = new Map(
   DECKS.map((d) => [d, normalizar(`${d.nome} ${d.comandantes} ${d.colecao} ${d.lancamento.slice(0, 4)}`)])
 );
 
+const comandantesPorNome = new Map(DECKS.map((d) => [normalizar(d.nome), d.comandantes]));
+
+// Vem da lista, sem ficar salvo no torneio: um deck próprio não tem comandante conhecido
+export function comandanteDoDeck(nome: string): string {
+  return comandantesPorNome.get(normalizar(nome)) ?? "";
+}
+
 // Todas as palavras precisam aparecer, em qualquer ordem
 export function filtrarDecks(termo: string, ano = ""): DeckCommander[] {
   const palavras = normalizar(termo).split(/\s+/).filter(Boolean);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ANOS_DECKS, DECKS, filtrarDecks, sugerirDecks } from "../decks";
+import { ANOS_DECKS, comandanteDoDeck, DECKS, filtrarDecks, sugerirDecks } from "../decks";
 
 describe("lista de decks", () => {
   it("toda linha tem os dados completos", () => {
@@ -23,6 +23,22 @@ describe("lista de decks", () => {
     expect(datas).toEqual([...datas].sort().reverse());
     expect(ANOS_DECKS[0]).toBe("2026");
     expect(ANOS_DECKS[ANOS_DECKS.length - 1]).toBe("2009");
+  });
+});
+
+describe("comandante do deck", () => {
+  it("encontra pelo nome, sem ligar para maiúsculas", () => {
+    expect(comandanteDoDeck("Multiverse Reforged")).toBe("Jace, Multiverse Architect");
+    expect(comandanteDoDeck(" guided by nature ")).toBe("Freyalise, Llanowar's Fury");
+  });
+
+  it("deck próprio ou vazio não tem comandante", () => {
+    expect(comandanteDoDeck("Meu deck de elfos")).toBe("");
+    expect(comandanteDoDeck("")).toBe("");
+  });
+
+  it("o mesmo nome de deck nunca aponta para comandantes diferentes", () => {
+    for (const d of DECKS) expect(comandanteDoDeck(d.nome)).toBe(d.comandantes);
   });
 });
 
