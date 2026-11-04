@@ -95,30 +95,6 @@ describe("rodadas e desempate", () => {
   });
 });
 
-describe("decks mais usados na lista de torneios", () => {
-  it("mostra os 5 primeiros acima dos cards, com a quantidade de usos", () => {
-    const t = torneioCom("Pessoa");
-    const decks = ["Breed Lethality", "Breed Lethality", "A", "B", "C", "D", "E"];
-    t.jogadores = decks.map((d, i) => novoJogador(i + 1, `J${i}`, d, true));
-    preparar("admin", { isAdmin: true }, [t]);
-    abrir(<TelaTorneios />);
-
-    const secao = screen.getByRole("region", { name: "Decks mais usados" });
-    const itens = within(secao).getAllByRole("listitem");
-    expect(itens).toHaveLength(5);
-    expect(itens[0].textContent).toContain("Breed Lethality");
-    expect(itens[0].textContent).toContain("2 usos");
-    expect(itens[1].textContent).toContain("1 uso");
-    expect(secao.compareDocumentPosition(screen.getByRole("heading", { level: 3, name: "Liga" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  });
-
-  it("sem decks informados, a seção não aparece", () => {
-    preparar("admin", { isAdmin: true }, [torneioCom("Pessoa")]);
-    abrir(<TelaTorneios />);
-    expect(screen.queryByRole("region", { name: "Decks mais usados" })).toBeNull();
-  });
-});
-
 describe("barra da lista de torneios", () => {
   it("quem edita tem os menus Torneio e Importar / Exportar", () => {
     preparar("admin", { isAdmin: true });
@@ -426,11 +402,20 @@ describe("métricas de decks no Analytics", () => {
     expect(screen.getByText(/1 de 2 inscrições com deck ficaram de fora/)).toBeTruthy();
   });
 
+  it("os decks do jogador vêm logo acima do histórico de torneios", () => {
+    preparar("jogador", { nomesJogador: ["Pessoa"] }, [comDeck()]);
+    abrir(<TelaAnalytics />);
+
+    const titulos = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent ?? "");
+    const decks = titulos.findIndex((t) => t.includes("Decks mais usados"));
+    expect(titulos[decks + 1]).toContain("Histórico de torneios");
+  });
+
   it("jogador vê os próprios decks, com o atual marcado, sem as métricas gerais", () => {
     preparar("jogador", { nomesJogador: ["Pessoa"] }, [comDeck()]);
     abrir(<TelaAnalytics />);
 
-    const secao = within(screen.getByRole("heading", { name: /Decks usados/ }).closest(".ds-card") as HTMLElement);
+    const secao = within(screen.getByRole("heading", { name: /Decks mais usados/ }).closest(".ds-card") as HTMLElement);
     expect(secao.getByText(/Breed Lethality/)).toBeTruthy();
     expect(secao.getByText("Atraxa, Praetors' Voice")).toBeTruthy();
     expect(secao.getByText("ATUAL")).toBeTruthy();
