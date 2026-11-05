@@ -32,7 +32,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <TCtx.Provider value={{ toast }}>
       {children}
-      <div className="fixed bottom-4 right-4 z-[60] flex flex-col gap-2 max-w-sm">
+      <div className="fixed bottom-20 md:bottom-4 right-4 z-[60] flex flex-col gap-2 max-w-sm">
         {toasts.map((t) => (
           <div
             key={t.id}

@@ -73,15 +73,15 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
       style={FUNDO_DE_TELA}
     >
       <div className="px-4 md:px-8 py-4 flex items-center gap-3">
-        <button className="btn-ghost" onClick={voltar}>← Voltar</button>
-        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2" style={{ color: "var(--text-strong)" }}>
+        <button className="btn-ghost hidden md:block" onClick={voltar}>← Voltar</button>
+        <h1 className="text-xl md:text-3xl font-bold flex items-center gap-2 min-w-0" style={{ color: "var(--text-strong)" }}>
           <IconeDecks tamanho={32} /> Decks
         </h1>
         <div className="flex-1" />
         <AuthChip auth={auth} onLoginClick={onPedirLogin} onVincularNome={onVincularNome} onSair={voltar} />
       </div>
 
-      <main className="px-4 md:px-8 pb-12 space-y-4">
+      <main className="px-4 md:px-8 pb-24 md:pb-12 space-y-4">
         {aberto ? <DetalheDeck deck={aberto} onVoltar={() => setAberto(null)} /> : <>
         <div className="card grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-2">
           <input

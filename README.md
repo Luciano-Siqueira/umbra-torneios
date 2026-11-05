@@ -172,6 +172,7 @@ O prefixo `VITE_` é obrigatório e coloca o valor no JavaScript enviado ao nave
 - **Deletar admin**: bloquear auto-delete (`user_id === auth.session?.user?.id`)
 - **Idioma**: português brasileiro em labels e código
 - **Commits**: em inglês, no padrão Conventional Commits (`fix(auth): ...`)
+- **Celular** (abaixo de 768 px): a navegação fica em `ui/BarraInferior.tsx`, e Novo torneio vira um botão redondo. Dentro de um torneio ficam só as abas dele
 - **Ações do torneio**: clicar no card abre o torneio. Editar, exportar e excluir ficam em ícones no próprio card, só para quem edita
 - **Ícones**: a barra e os títulos usam `components/ui/Icones.tsx`, em ouro antigo. Coroa é admin, alvo é organizador e pessoa é jogador. Emojis ficam nas conquistas, nas medalhas e nas mensagens
 

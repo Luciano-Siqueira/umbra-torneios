@@ -27,18 +27,20 @@ export function MenuBarra({ icone, rotulo, children }: { icone?: ReactNode; rotu
         type="button"
         aria-haspopup="menu"
         aria-expanded={aberto}
-        className="rounded-full px-4 py-2 font-medium text-sm transition hover:bg-white/5 active:scale-95 flex items-center gap-1.5 whitespace-nowrap"
+        aria-label={rotulo}
+        className="rounded-full p-2 md:px-4 md:py-2 font-medium text-sm transition hover:bg-white/5 active:scale-95 flex items-center gap-1.5 whitespace-nowrap"
         style={{ color: "var(--text-strong)" }}
         onClick={() => setAberto((v) => !v)}
       >
         {icone}
-        <span>{rotulo}</span>
-        <span className="text-xs opacity-60">▾</span>
+        {/* No celular fica só o ícone */}
+        <span className="hidden md:inline">{rotulo}</span>
+        <span className="hidden md:inline text-xs opacity-60">▾</span>
       </button>
       {aberto && (
         <div
           role="menu"
-          className="absolute top-full left-0 mt-1 bg-bg-card border border-bg-cardalt rounded-lg shadow-2xl z-40 min-w-full w-max max-w-[calc(100vw-2rem)] overflow-hidden"
+          className="absolute top-full right-0 md:right-auto md:left-0 mt-1 bg-bg-card border border-bg-cardalt rounded-lg shadow-2xl z-40 min-w-full w-max max-w-[calc(100vw-2rem)] overflow-hidden"
           onClick={() => setAberto(false)}
         >
           {children}

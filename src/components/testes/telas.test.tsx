@@ -16,6 +16,7 @@ import { AbaMesas } from "../abas/AbaMesas";
 import { AbaRanking } from "../abas/AbaRanking";
 import { AbaFinanceiro } from "../abas/AbaFinanceiro";
 import { AuthChip } from "../AuthChip";
+import { BarraInferior } from "../ui/BarraInferior";
 
 const contas = vi.hoisted(() => ({
   atual: {} as AuthState,
@@ -254,6 +255,69 @@ describe("rodadas e desempate", () => {
     const aviso = screen.getByText(/Desempate oficial MTG/);
     expect(aviso.style.color).toBe("var(--critical)");
     expect(aviso.compareDocumentPosition(screen.getByRole("table")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});
+
+describe("barra inferior do celular", () => {
+  const barra = () => screen.queryByRole("navigation", { name: "Navegação principal" });
+  const itens = () => within(barra()!).getAllByRole("button").map((b) => b.textContent);
+  afterEach(() => useStore.setState({ tela: "torneios" }));
+
+  it("mostra só o que cada papel pode abrir", () => {
+    preparar("admin", { isAdmin: true });
+    useStore.setState({ tela: "torneios" });
+    abrir(<BarraInferior />);
+    expect(itens()).toEqual(["Torneios", "Analytics", "Decks", "Usuários"]);
+    cleanup();
+
+    preparar("organizador", { isOrganizador: true });
+    abrir(<BarraInferior />);
+    expect(itens()).toEqual(["Torneios", "Analytics"]);
+    cleanup();
+
+    preparar("jogador", {});
+    abrir(<BarraInferior />);
+    expect(itens()).toEqual(["Torneios", "Desempenho"]);
+  });
+
+  it("navega e marca a tela aberta", () => {
+    preparar("admin", { isAdmin: true });
+    useStore.setState({ tela: "torneios" });
+    abrir(<BarraInferior />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Decks" }));
+    expect(useStore.getState().tela).toBe("decks");
+    expect(screen.getByRole("button", { name: "Decks" }).getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("button", { name: "Torneios" }).getAttribute("aria-current")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Torneios" }));
+    expect(useStore.getState().tela).toBe("torneios");
+  });
+
+  it("some dentro de um torneio e sem login", () => {
+    preparar("admin", { isAdmin: true });
+    useStore.setState({ tela: "torneio" });
+    abrir(<BarraInferior />);
+    expect(barra()).toBeNull();
+    cleanup();
+
+    preparar("admin", { session: null });
+    useStore.setState({ tela: "torneios" });
+    abrir(<BarraInferior />);
+    expect(barra()).toBeNull();
+  });
+
+  it("o botão redondo abre o novo torneio, só para quem edita", () => {
+    preparar("admin", { isAdmin: true });
+    abrir(<TelaTorneios />);
+    const redondo = screen.getAllByRole("button", { name: "Novo torneio" }).find((b) => b.textContent === "+")!;
+    fireEvent.click(redondo);
+    expect(screen.getByRole("heading", { name: "Novo Torneio" })).toBeTruthy();
+    cleanup();
+
+    preparar("jogador", {});
+    abrir(<TelaTorneios />);
+    expect(screen.queryByRole("button", { name: "Novo torneio" })).toBeNull();
   });
 });
 

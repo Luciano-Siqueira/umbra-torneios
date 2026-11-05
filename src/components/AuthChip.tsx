@@ -42,6 +42,7 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
   const { toast } = useToast();
   const [abrindoMenu, setAbrindoMenu] = useState(false);
   const raiz = useRef<HTMLDivElement>(null);
+  const [abrirParaDireita, setAbrirParaDireita] = useState(false);
 
   // Fecha ao clicar fora ou com Esc
   useEffect(() => {
@@ -81,9 +82,13 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
   const emailCurto = email.split("@")[0];
 
   return (
-    <div ref={raiz} className="relative">
+    <div ref={raiz} className="relative flex-shrink-0">
       <button
-        onClick={() => setAbrindoMenu((v) => !v)}
+        onClick={() => {
+          // Perto da borda esquerda, abrir para a esquerda cortaria o menu
+          setAbrirParaDireita((raiz.current?.getBoundingClientRect().right ?? 999) < 280);
+          setAbrindoMenu((v) => !v);
+        }}
         className="flex items-center gap-1.5 md:gap-2 rounded-full px-2 md:px-3 py-1.5 transition hover:bg-white/5"
         style={{
           background: `${corModo(modoView)}15`,
@@ -107,7 +112,7 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
       {abrindoMenu && (
         <>
           <div
-            className="absolute right-0 mt-1 rounded-lg shadow-2xl z-40 min-w-[180px] overflow-hidden"
+            className={`absolute ${abrirParaDireita ? "left-0" : "right-0"} mt-1 rounded-lg shadow-2xl z-40 min-w-[180px] w-max max-w-[calc(100vw-2rem)] overflow-hidden`}
             style={{
               background: "var(--ds-surface-2)",
               border: "1px solid rgba(201,166,72,0.2)",

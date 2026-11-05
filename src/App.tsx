@@ -8,6 +8,7 @@ import { TelaLogin } from "./components/TelaLogin";
 import { TelaVincularNome } from "./components/TelaVincularNome";
 import { useAuth } from "./core/auth";
 import { sincronizarDecks } from "./core/atualizarDecks";
+import { BarraInferior } from "./components/ui/BarraInferior";
 import { useListaAtualizada } from "./core/useAoVivo";
 import { publicarAoVivo } from "./core/aoVivo";
 import { listarTorneios } from "./core/storage";
@@ -139,7 +140,7 @@ function AppInner() {
     <>
       {semConexao && (
         <div
-          className="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap"
+          className="fixed bottom-20 md:bottom-3 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap"
           style={{ background: "var(--warn)", color: "#0a0a0a" }}
         >
           ⏳ Alterações aguardando internet
@@ -154,6 +155,8 @@ function AppInner() {
         {tela === "decks" && <TelaDecks onPedirLogin={() => setLoginAberto(true)} onVincularNome={() => setVincularAberto(true)} />}
         {tela === "usuarios" && <TelaUsuarios onPedirLogin={() => setLoginAberto(true)} onVincularNome={() => setVincularAberto(true)} />}
       </Suspense>
+
+      <BarraInferior />
 
       <TelaLogin
         aberta={loginAberto}

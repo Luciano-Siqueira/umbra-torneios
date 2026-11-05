@@ -181,16 +181,16 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
       className="min-h-screen text-fg"
       style={FUNDO_DE_TELA}
     >
-      <div className="px-4 md:px-8 py-4 flex items-center gap-3 flex-wrap">
-        <button className="btn-ghost" onClick={voltar}>← Voltar</button>
-        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2" style={{ color: "var(--text-strong)" }}>
+      <div className="px-4 md:px-8 py-4 flex items-center gap-3">
+        <button className="btn-ghost hidden md:block" onClick={voltar}>← Voltar</button>
+        <h1 className="text-xl md:text-3xl font-bold flex items-center gap-2 min-w-0" style={{ color: "var(--text-strong)" }}>
           <IconeUsuarios tamanho={28} /> Gerenciar Usuários
         </h1>
         <div className="flex-1" />
         <AuthChip auth={auth} onLoginClick={onPedirLogin} onVincularNome={onVincularNome} onSair={voltar} />
       </div>
 
-      <main className="px-4 md:px-8 pb-12 space-y-4">
+      <main className="px-4 md:px-8 pb-24 md:pb-12 space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <KpiMini label="TOTAL" valor={String(total)} cor="#c4c4c4" />
           <KpiMini label={<><IconeCoroa tamanho={12} cor="currentColor" /> ADMINS</>} valor={String(totAdmin)} cor="#c9a648" />

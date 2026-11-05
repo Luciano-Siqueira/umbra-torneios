@@ -170,7 +170,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
         }}
       >
         <div
-          className="flex flex-wrap gap-2 items-center rounded-full pl-2 pr-3 py-2 border"
+          className="flex md:flex-wrap gap-2 items-center rounded-full pl-2 pr-3 py-2 border"
           style={{
             background: "rgba(15,15,15,0.72)",
             borderColor: "rgba(201,166,72,0.18)",
@@ -180,12 +180,13 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
           }}
         >
           <span className="flex items-center pl-2 pr-1"><SimboloUmbra tamanho={26} /></span>
+          <span className="md:hidden flex-1 min-w-0 truncate font-semibold" style={{ color: "var(--text-strong)" }}>Torneios</span>
 
           {/* CTA principal — só admin vê */}
           {podeEditar && (
             <>
               <button
-                className="rounded-full px-5 py-2 font-semibold text-sm transition active:scale-95 text-white flex items-center gap-2"
+                className="rounded-full px-5 py-2 font-semibold text-sm transition active:scale-95 text-white hidden md:flex items-center gap-2"
                 style={{
                   background: "var(--sig-d)",
                   boxShadow: "0 6px 24px -4px rgba(201,166,72,0.55), inset 0 1px 0 rgba(255,255,255,0.2)"
@@ -195,13 +196,13 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
                 <span className="text-base leading-none">+</span>
                 <span>Novo torneio</span>
               </button>
-              <div className="w-px h-6 mx-1" style={{ background: "rgba(255,255,255,0.1)" }} />
+              <div className="hidden md:block w-px h-6 mx-1" style={{ background: "rgba(255,255,255,0.1)" }} />
             </>
           )}
 
           {/* Analytics — destaque sutil */}
           <button
-            className="rounded-full px-4 py-2 font-semibold text-sm transition active:scale-95 flex items-center gap-1.5"
+            className="rounded-full px-4 py-2 font-semibold text-sm transition active:scale-95 hidden md:flex items-center gap-1.5"
             style={{
               background: "rgba(201,166,72,0.12)",
               color: "var(--action)",
@@ -216,7 +217,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
           {/* Decks — só admin, no modo admin */}
           {auth.isAdmin && modoView === "admin" && (
             <button
-              className="rounded-full px-4 py-2 font-semibold text-sm transition active:scale-95 flex items-center gap-1.5"
+              className="rounded-full px-4 py-2 font-semibold text-sm transition active:scale-95 hidden md:flex items-center gap-1.5"
               style={{
                 background: "rgba(201,166,72,0.12)",
                 color: "var(--action)",
@@ -232,7 +233,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
           {/* Botão Gerenciar Usuários — só admin, no modo admin */}
           {auth.isAdmin && modoView === "admin" && (
             <button
-              className="rounded-full px-4 py-2 font-semibold text-sm transition active:scale-95 flex items-center gap-1.5"
+              className="rounded-full px-4 py-2 font-semibold text-sm transition active:scale-95 hidden md:flex items-center gap-1.5"
               style={{
                 background: "rgba(201,166,72,0.12)",
                 color: "var(--brand-1)",
@@ -300,7 +301,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
           }}
         />
 
-        <div className="w-px h-6 mx-1" style={{ background: "rgba(255,255,255,0.1)" }} />
+        <div className="hidden md:block w-px h-6 mx-1" style={{ background: "rgba(255,255,255,0.1)" }} />
         <AuthChip auth={auth} onLoginClick={onPedirLogin} onVincularNome={onVincularNome} />
         </div>
       </div>
@@ -411,7 +412,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
       </div>
 
       {/* Grid de cards — ocupa toda a tela */}
-      <main className="px-4 md:px-8 pb-12">
+      <main className="px-4 md:px-8 pb-24 md:pb-12">
         {torneios.length === 0 && (sincronizando || (!auth.perfilCarregado && !auth.perfilErro)) ? (
           <EsqueletoTorneios />
         ) : torneios.length === 0 ? (
@@ -464,6 +465,17 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
           </div>
         )}
       </main>
+
+      {/* No celular, a barra superior dá lugar a este botão */}
+      {podeEditar && (
+        <button
+          type="button"
+          aria-label="Novo torneio"
+          onClick={() => setDialogoAberto("novo")}
+          className="md:hidden fixed right-4 bottom-20 z-30 w-14 h-14 rounded-full flex items-center justify-center text-3xl leading-none text-white active:scale-95 transition"
+          style={{ background: "var(--sig-d)", boxShadow: "0 8px 24px -4px rgba(0,0,0,0.7)", marginBottom: "env(safe-area-inset-bottom)" }}
+        >+</button>
+      )}
 
       {/* Dialogos */}
       <Modal
