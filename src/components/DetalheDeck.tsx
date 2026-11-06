@@ -114,7 +114,7 @@ export function DetalheDeck({ deck, onVoltar }: { deck: DeckCommander; onVoltar:
                   {g.cartas.map((c) => (
                     <li
                       key={c.nome}
-                      {...eventos(c)}
+                      {...eventos({ nome: c.nome, imagens: c.imagem ? [{ src: c.imagem }] : [] })}
                       className="flex gap-2 py-1"
                       style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
                     >
@@ -149,7 +149,7 @@ export function DetalheDeck({ deck, onVoltar }: { deck: DeckCommander; onVoltar:
                   {dados.tokens.map((t) => (
                     <li
                       key={`${t.nome}|${t.forca}|${t.imagem}`}
-                      {...eventos(t)}
+                      {...eventos({ nome: t.nome, imagens: t.imagem ? [{ src: t.imagem }] : [] })}
                       className="flex gap-2 py-1"
                       style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
                     >

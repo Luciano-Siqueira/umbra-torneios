@@ -680,7 +680,7 @@ describe("decks", () => {
       const carta = within(await screen.findByRole("region", { name: "Criaturas" })).getByRole("button", { name: "Ver a carta Bicho" });
 
       fireEvent.pointerEnter(carta, { pointerType: "mouse", clientX: 100, clientY: 200 });
-      const imagem = screen.getByRole("img", { name: "Bicho" }) as HTMLImageElement;
+      const imagem = await screen.findByRole("img", { name: "Bicho" }) as HTMLImageElement;
       expect(imagem.src).toBe("https://cards.scryfall.io/normal/front/b/i/bi01.jpg");
       expect(screen.queryByRole("dialog")).toBeNull();
 
@@ -689,6 +689,53 @@ describe("decks", () => {
 
       // Carta sem imagem não vira botão
       expect(screen.queryByRole("button", { name: "Ver a carta Floresta" })).toBeNull();
+    });
+
+    it("clicar com o mouse abre a carta em destaque", async () => {
+      (globalThis as any).__rede = async (url: string) =>
+        url.endsWith("DeckList.json") ? json(lista) : url.includes("Arquivo_C16") ? json(deck) : json({}, 404);
+      abrirDeck(/^Breed Lethality$/);
+      const carta = within(await screen.findByRole("region", { name: "Criaturas" })).getByRole("button", { name: "Ver a carta Bicho" });
+
+      fireEvent.pointerDown(carta, { pointerType: "mouse" });
+      fireEvent.click(carta);
+      expect(within(screen.getByRole("dialog", { name: "Bicho" })).getByRole("img", { name: "Bicho" })).toBeTruthy();
+      fireEvent.click(screen.getByRole("dialog"));
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+
+    it("na lista, passar o mouse no deck mostra o comandante, e clicar abre o deck", async () => {
+      (globalThis as any).__rede = async (url: string) =>
+        url.endsWith("DeckList.json") ? json(lista) : url.includes("Arquivo_C16") ? json(deck) : json({}, 404);
+      preparar("admin", { isAdmin: true });
+      abrir(<TelaDecks />);
+      const linha = screen.getAllByRole("button", { name: /^Breed Lethality$/ })[0].closest("tr")!;
+
+      fireEvent.pointerEnter(linha, { pointerType: "mouse", clientX: 50, clientY: 50 });
+      const imagem = await screen.findByRole("img", { name: "Atraxa, Praetors' Voice" }) as HTMLImageElement;
+      expect(decodeURIComponent(imagem.src)).toContain("cards/named?format=image&version=normal&exact=Atraxa, Praetors' Voice&set=cm2");
+
+      // Se a impressão do deck não existir, tenta qualquer outra
+      fireEvent.error(imagem);
+      expect(imagem.src).not.toContain("&set=");
+
+      fireEvent.pointerLeave(linha, { pointerType: "mouse" });
+      expect(screen.queryByRole("img", { name: "Atraxa, Praetors' Voice" })).toBeNull();
+
+      fireEvent.click(linha);
+      expect(await screen.findByRole("region", { name: "Comandante" })).toBeTruthy();
+    });
+
+    it("decks com dois comandantes mostram as duas cartas", async () => {
+      preparar("admin", { isAdmin: true });
+      abrir(<TelaDecks />);
+      const linha = screen.getAllByRole("button", { name: /^Food and Fellowship$/ })[0].closest("tr")!;
+      fireEvent.pointerEnter(linha, { pointerType: "mouse", clientX: 50, clientY: 50 });
+      const imagens = await screen.findAllByRole("img", { name: /Frodo/ });
+      expect(imagens.map((i) => decodeURIComponent((i as HTMLImageElement).src).match(/exact=([^&]+)/)![1])).toEqual([
+        "Frodo, Adventurous Hobbit",
+        "Sam, Loyal Attendant",
+      ]);
     });
 
     it("no celular, tocar abre a carta em destaque e tocar de novo fecha", async () => {

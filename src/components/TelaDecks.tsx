@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { useStore } from "../core/store";
 import { useAuth } from "../core/auth";
-import { ANOS_DECKS, DECKS, filtrarDecks, opcoesDeCores, type DeckCommander } from "../core/decks";
+import { ANOS_DECKS, DECKS, filtrarDecks, imagensDoComandante, opcoesDeCores, type DeckCommander } from "../core/decks";
+import { usePrevisaoDeCarta } from "./ui/PrevisaoDeCarta";
 import { nomeDaCombinacao } from "../core/coresMagic";
 import { colecaoConhecida, nomeDaColecao } from "../core/colecoes";
 import { DetalheDeck } from "./DetalheDeck";
@@ -33,6 +34,7 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
   const { toast } = useToast();
   const [progresso, setProgresso] = useState<string | null>(null);
   const [aberto, setAberto] = useState<DeckCommander | null>(null);
+  const { eventos, previsao } = usePrevisaoDeCarta();
 
   const atualizar = async () => {
     setProgresso("Procurando lançamentos...");
@@ -138,6 +140,7 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
                     className="cursor-pointer hover:bg-white/5 transition"
                     style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
                     onClick={() => setAberto(d)}
+                    {...eventos({ nome: d.comandantes, imagens: imagensDoComandante(d) }, { apenasPassarMouse: true })}
                   >
                     <td className="py-1.5 px-2">
                       <button type="button" className="font-medium text-left hover:underline" style={{ color: "var(--text-strong)" }}>
@@ -163,6 +166,7 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
           )}
         </div>
         </>}
+        {!aberto && previsao}
       </main>
     </div>
   );

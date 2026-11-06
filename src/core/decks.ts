@@ -259,6 +259,29 @@ export function aplicarDecksExtras(extras: DeckCommander[]) {
 
 aplicarDecksExtras([]);
 
+// Os comandantes vêm juntos em um texto, e os nomes também têm vírgula. Estes são os decks com mais de uma carta
+const CARTAS_DOS_COMANDANTES: Record<string, string[]> = {
+  "Zndrsplt, Eye of Wisdom // Zndrsplt, Eye of Wisdom, Okaun, Eye of Chaos // Okaun, Eye of Chaos": ["Zndrsplt, Eye of Wisdom", "Okaun, Eye of Chaos"],
+  "Frodo, Adventurous Hobbit, Sam, Loyal Attendant": ["Frodo, Adventurous Hobbit", "Sam, Loyal Attendant"],
+  "The Fourth Doctor, Sarah Jane Smith": ["The Fourth Doctor", "Sarah Jane Smith"],
+  "The Tenth Doctor, Rose Tyler": ["The Tenth Doctor", "Rose Tyler"],
+  "The Thirteenth Doctor, Yasmin Khan": ["The Thirteenth Doctor", "Yasmin Khan"],
+};
+
+// Nome de cada carta de comandante, pela frente das cartas de duas faces
+export function cartasDoComandante(comandantes: string): string[] {
+  return CARTAS_DOS_COMANDANTES[comandantes] ?? [comandantes.split(" // ")[0].trim()];
+}
+
+// Imagem pela Scryfall, sem precisar consultar antes. Tenta a impressão do próprio deck e, sem ela, qualquer uma
+export function imagensDoComandante(deck: Pick<DeckCommander, "comandantes" | "colecao">): { src: string; reserva: string }[] {
+  const base = "https://api.scryfall.com/cards/named?format=image&version=normal&exact=";
+  return cartasDoComandante(deck.comandantes).map((nome) => ({
+    src: `${base}${encodeURIComponent(nome)}&set=${deck.colecao.toLowerCase()}`,
+    reserva: `${base}${encodeURIComponent(nome)}`,
+  }));
+}
+
 // Vem da lista, sem ficar salvo no torneio: um deck próprio não tem comandante conhecido
 export function comandanteDoDeck(nome: string): string {
   return decksPorNome.get(normalizar(nome))?.comandantes ?? "";

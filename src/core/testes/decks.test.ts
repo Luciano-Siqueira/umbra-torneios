@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ANOS_DECKS, comandanteDoDeck, coresDoDeck, DECKS, filtrarDecks, opcoesDeCores, sugerirDecks } from "../decks";
 import { COMBINACOES, nomeDaCombinacao } from "../coresMagic";
 import { colecaoConhecida, nomeDaColecao } from "../colecoes";
+import { cartasDoComandante } from "../decks";
 import { calcularMetricas } from "../metricas";
 import { novoJogador, novoTorneio, type Torneio } from "../types";
 
@@ -42,6 +43,19 @@ describe("cores dos comandantes", () => {
     expect(coresDoDeck("Eldrazi Unbound")).toBe("");
     expect(coresDoDeck("Meu deck de elfos")).toBeNull();
     expect(coresDoDeck("Breed Lethality")).toBe("WUBG");
+  });
+});
+
+describe("cartas dos comandantes", () => {
+  it("separa os decks com dois comandantes e usa a frente das cartas de duas faces", () => {
+    expect(cartasDoComandante("Atraxa, Praetors' Voice")).toEqual(["Atraxa, Praetors' Voice"]);
+    expect(cartasDoComandante("Esika, God of the Tree // The Prismatic Bridge")).toEqual(["Esika, God of the Tree"]);
+    expect(cartasDoComandante("The Tenth Doctor, Rose Tyler")).toEqual(["The Tenth Doctor", "Rose Tyler"]);
+  });
+
+  it("os decks da lista com duas cartas de comandante estão mapeados", () => {
+    const varios = DECKS.filter((d) => cartasDoComandante(d.comandantes).length > 1);
+    expect(varios.map((d) => d.nome).sort()).toEqual(["Blast from the Past", "Food and Fellowship", "Heads I Win, Tails You Lose", "Paradox Power", "Timey-Wimey"]);
   });
 });
 
