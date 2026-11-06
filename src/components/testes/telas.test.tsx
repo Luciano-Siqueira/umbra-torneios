@@ -294,6 +294,17 @@ describe("barra inferior do celular", () => {
     expect(useStore.getState().tela).toBe("torneios");
   });
 
+  it("o ícone de decks só fica dourado com a tela de decks aberta", () => {
+    preparar("admin", { isAdmin: true });
+    useStore.setState({ tela: "torneios" });
+    abrir(<BarraInferior />);
+    const corDoIcone = () => screen.getByRole("button", { name: "Decks" }).querySelector("svg")!.getAttribute("stroke");
+    expect(corDoIcone()).toBe("currentColor");
+
+    fireEvent.click(screen.getByRole("button", { name: "Decks" }));
+    expect(corDoIcone()).toBe("var(--brand-1)");
+  });
+
   it("some dentro de um torneio e sem login", () => {
     preparar("admin", { isAdmin: true });
     useStore.setState({ tela: "torneio" });

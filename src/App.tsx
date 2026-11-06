@@ -129,12 +129,11 @@ function AppInner() {
 
   // 4) Se já logado e está na splash, vai direto pra torneios
   useEffect(() => {
-    if (!auth.loading && auth.session && tela === "splash") {
-      // só pula se não é a 1ª renderização intencional
-      const timer = setTimeout(() => irPara("torneios"), 100);
-      return () => clearTimeout(timer);
-    }
+    if (!auth.loading && auth.session && tela === "splash") irPara("torneios");
   }, [auth.loading, auth.session, tela, irPara]);
+
+  // Enquanto confere a sessão salva, ou logo antes de ir para os torneios, a tela de entrada não aparece
+  const conferindoSessao = auth.loading || !!auth.session;
 
   return (
     <>
@@ -147,7 +146,9 @@ function AppInner() {
         </div>
       )}
 
-      {tela === "splash" &&<Splash onPedirLogin={() => setLoginAberto(true)} />}
+      {tela === "splash" && (conferindoSessao
+        ? <div className="min-h-screen" aria-busy="true" />
+        : <Splash onPedirLogin={() => setLoginAberto(true)} />)}
       {tela === "torneios" && <TelaTorneios onPedirLogin={() => setLoginAberto(true)} onVincularNome={() => setVincularAberto(true)} />}
       {tela === "torneio" && <TelaTorneio onPedirLogin={() => setLoginAberto(true)} onVincularNome={() => setVincularAberto(true)} />}
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-fg-dim">Carregando...</div>}>

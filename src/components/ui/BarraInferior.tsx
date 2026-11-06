@@ -27,7 +27,7 @@ export function BarraInferior() {
       abrir: () => irPara("analytics"),
     },
     ...(admin ? [
-      { id: "decks" as Tela, rotulo: "Decks", icone: () => <IconeDecks tamanho={22} />, abrir: () => irPara("decks") },
+      { id: "decks" as Tela, rotulo: "Decks", icone: (cor: string) => <IconeDecks tamanho={22} cor={cor} />, abrir: () => irPara("decks") },
       { id: "usuarios" as Tela, rotulo: "Usuários", icone: (cor: string) => <IconeUsuarios tamanho={22} cor={cor} />, abrir: () => irPara("usuarios") },
     ] : []),
   ];

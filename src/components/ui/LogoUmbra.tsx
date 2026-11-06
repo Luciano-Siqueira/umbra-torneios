@@ -3,7 +3,7 @@
 const CRESCENTE = "M98 13.26A26 26 0 1 0 98 62.74A26 26 0 0 1 98 13.26Z";
 
 // Duas cartas em contorno, com o crescente da marca na da frente
-export function IconeDecks({ tamanho = 24 }: { tamanho?: number }) {
+export function IconeDecks({ tamanho = 24, cor = "var(--brand-1)" }: { tamanho?: number; cor?: string }) {
   return (
     <svg
       width={tamanho}
@@ -11,7 +11,7 @@ export function IconeDecks({ tamanho = 24 }: { tamanho?: number }) {
       viewBox="0 0 24 24"
       aria-hidden="true"
       fill="none"
-      stroke="var(--brand-1)"
+      stroke={cor}
       strokeWidth="1.4"
       strokeLinejoin="round"
       className="inline-block align-[-0.12em] flex-shrink-0"
@@ -20,7 +20,7 @@ export function IconeDecks({ tamanho = 24 }: { tamanho?: number }) {
       <rect x="3.6" y="5.2" width="11.4" height="16.2" rx="2" fill="var(--page-1)" />
       <path
         d={CRESCENTE}
-        fill="var(--brand-1)"
+        fill={cor}
         stroke="none"
         transform="translate(9.3 13.3) scale(0.2) translate(-78.5 -38)"
       />
