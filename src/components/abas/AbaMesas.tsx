@@ -15,9 +15,10 @@ import { comandanteDoDeck, coresDoDeck } from "../../core/decks";
 import { CoresMana } from "../ui/SimboloMana";
 import { contar } from "../../core/formato";
 
-export function AbaMesas({ torneio, podeEditar, onIrParaAba }: {
+export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: {
   torneio: Torneio;
   podeEditar: boolean;
+  verTempo?: boolean; // falso para o jogador quando o torneio não libera o tempo
   onIrParaAba?: (aba: "ranking" | "premiacao" | "historico") => void;
 }) {
   const iniciarRodada = useStore((s) => s.iniciarRodada);
@@ -35,10 +36,10 @@ export function AbaMesas({ torneio, podeEditar, onIrParaAba }: {
   );
 
   useEffect(() => {
-    timer.setOnFimNormal(() => toast("⏰ Tempo normal acabou! Iniciando tempo extra.", "aviso"));
-    timer.setOnFimTotal(() => toast("🔔 TEMPO ESGOTADO — encerrem as partidas!", "erro"));
+    timer.setOnFimNormal(verTempo ? () => toast("⏰ Tempo normal acabou! Iniciando tempo extra.", "aviso") : () => {});
+    timer.setOnFimTotal(verTempo ? () => toast("🔔 TEMPO ESGOTADO — encerrem as partidas!", "erro") : () => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [verTempo]);
 
   const jogadoresPorId = useMemo(() => {
     const m = new Map<number, string>();
@@ -322,10 +323,10 @@ export function AbaMesas({ torneio, podeEditar, onIrParaAba }: {
   // Com rodada em andamento
   return (
     <div className="space-y-4 w-full">
-      {minha?.mesa && <CartaoMinhaMesa minha={minha} />}
+      {minha?.mesa && <CartaoMinhaMesa minha={minha} mostrarTempo={verTempo} />}
 
       {/* Quem só acompanha e está jogando já vê o tempo no cartão acima */}
-      {(podeEditar || !minha?.mesa) && (
+      {verTempo && (podeEditar || !minha?.mesa) && (
       <div className="card flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
           <div className="label mb-1">Rodada {torneio.rodadaAtual} de {torneio.qtdRodadas}</div>

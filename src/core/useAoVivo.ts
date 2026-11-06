@@ -33,11 +33,16 @@ export function useAoVivo(torneioId: string | null, escritor = false): void {
       const { torneios, aplicarAoVivo } = useStore.getState();
       const atual = torneios.find((t) => t.id === linha.torneio_id);
       const mudouRodada = !!atual && (atual.rodadaAtual !== linha.rodada || atual.finalizado !== linha.finalizado);
+      // Aviso novo sem mudar mesas nem tempo: a mudança está no torneio, como liberar as mesas aos jogadores
+      const mudouForaDaLinha = novidade && !!atual && !mudouRodada
+        && JSON.stringify(atual.mesas) === JSON.stringify(linha.mesas)
+        && JSON.stringify(atual.timer ?? null) === JSON.stringify(linha.timer ?? null);
       aplicarAoVivo(linha);
 
       // Pontos e histórico não vêm na linha. Quem só acompanha baixa o torneio uma vez
-      // por rodada; quem também grava precisa dele inteiro para não sobrescrever o outro aparelho.
-      if (!mudouRodada && !(escritor && novidade)) return;
+      // por rodada ou quando a mudança não veio na linha; quem também grava precisa dele
+      // inteiro para não sobrescrever o outro aparelho.
+      if (!mudouRodada && !mudouForaDaLinha && !(escritor && novidade)) return;
       await baixarTorneio();
       if (ativo) useStore.getState().aplicarAoVivo(linha);
     };

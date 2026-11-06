@@ -5,7 +5,8 @@ import { useAoVivo } from "../core/useAoVivo";
 import { useVibrarFimDaRodada } from "../core/useTimer";
 import { encontrarMinhaMesa } from "../core/minhaMesa";
 import type { Torneio } from "../core/types";
-import { podeEditarTorneios } from "../core/visibilidade";
+import { partesDaRodadaVisiveis, podeEditarTorneios } from "../core/visibilidade";
+import { PainelVisaoJogadores } from "./PainelVisaoJogadores";
 import { confirmar } from "./ui/Confirm";
 import { useToast } from "./ui/Toast";
 import { AuthChip } from "./AuthChip";
@@ -73,11 +74,14 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
     setAbaEscolhida(nova);
     try { sessionStorage.setItem(`mtg.aba.${torneioId}`, nova); } catch { /* ignore */ }
   };
-  const abasVisiveis = podeEditar ? ABAS : ABAS.filter((a) => ABAS_JOGADOR.includes(a.id));
+  const verRodada = torneio ? partesDaRodadaVisiveis(torneio, podeEditar, auth) : { mesas: false, tempo: false };
+  const abasVisiveis = podeEditar
+    ? ABAS
+    : ABAS.filter((a) => ABAS_JOGADOR.includes(a.id) && (a.id !== "mesas" || verRodada.mesas));
   // A aba salva pode não existir no modo atual: o F5 pode reabrir depois de trocar de modo
   const aba: Aba = abasVisiveis.some((a) => a.id === abaEscolhida)
     ? abaEscolhida!
-    : podeEditar ? "jogadores" : "mesas";
+    : podeEditar ? "jogadores" : verRodada.mesas ? "mesas" : "ranking";
 
   useAoVivo(torneio ? torneio.id : null, podeEditar);
 
@@ -223,11 +227,12 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
       </div>
 
       <main className="flex-1 px-4 md:px-8 py-4 overflow-y-auto">
-        {!podeEditar && encontrarMinhaMesa([torneio], auth.nomesJogador)?.mesa && (
+        {!podeEditar && verRodada.tempo && encontrarMinhaMesa([torneio], auth.nomesJogador)?.mesa && (
           <VibracaoFimDaRodada torneio={torneio} />
         )}
         {aba === "jogadores" && <AbaJogadores torneio={torneio} podeEditar={podeEditar} />}
-        {aba === "mesas" && <AbaMesas torneio={torneio} podeEditar={podeEditar} onIrParaAba={setAba} />}
+        {aba === "mesas" && podeEditar && <PainelVisaoJogadores torneio={torneio} />}
+        {aba === "mesas" && <AbaMesas torneio={torneio} podeEditar={podeEditar} verTempo={verRodada.tempo} onIrParaAba={setAba} />}
         {aba === "ranking" && <AbaRanking torneio={torneio} />}
         {aba === "financeiro" && <AbaFinanceiro torneio={torneio} />}
         {aba === "premiacao" && <AbaPremiacao torneio={torneio} />}

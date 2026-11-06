@@ -20,6 +20,14 @@ export function podeEditarTorneios(modoView: ModoView, auth: AuthState): boolean
   return modoView === "organizador" && (auth.isOrganizador || auth.isAdmin);
 }
 
+// Mesas e tempo da rodada: quem organiza e os admins sempre veem; os jogadores, só se o torneio liberar.
+// O tempo aparece na aba Mesas, então sem as mesas ele também fica escondido.
+export function partesDaRodadaVisiveis(t: Torneio, podeEditar: boolean, auth: Pick<AuthState, "isAdmin">) {
+  if (podeEditar || auth.isAdmin) return { mesas: true, tempo: true };
+  const mesas = !!t.mesasParaJogadores;
+  return { mesas, tempo: mesas && !!t.tempoParaJogadores };
+}
+
 export function torneiosVisiveis(torneios: Torneio[], modoView: ModoView, auth: AuthState): Torneio[] {
   if (!auth.session) return torneios;
   if (modoView === "admin" && auth.isAdmin) return torneios;

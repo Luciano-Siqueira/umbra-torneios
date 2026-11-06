@@ -26,7 +26,7 @@ function RelogioRodada({ torneio }: { torneio: Torneio }) {
   );
 }
 
-export function CartaoMinhaMesa({ minha }: { minha: MinhaMesa }) {
+export function CartaoMinhaMesa({ minha, mostrarTempo = true }: { minha: MinhaMesa; mostrarTempo?: boolean }) {
   const { torneio, jogador, mesa, colocacao, venceu } = minha;
 
   const nomeDe = (id: number) => torneio.jogadores.find((j) => j.id === id)?.nome ?? "?";
@@ -79,7 +79,7 @@ export function CartaoMinhaMesa({ minha }: { minha: MinhaMesa }) {
           )}
           <div className="text-sm mt-2" style={{ color: "var(--text-2)" }}>{status}</div>
         </div>
-        <RelogioRodada torneio={torneio} />
+        {mostrarTempo && <RelogioRodada torneio={torneio} />}
       </div>
     </div>
   );

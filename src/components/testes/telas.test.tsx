@@ -249,6 +249,28 @@ describe("rodadas e desempate", () => {
     expect(rodadasDe("Acabou")).toContain("4/4");
   });
 
+  it("o selo do card destaca em dourado o torneio em andamento", () => {
+    const criar = (nome: string, rodada: number, finalizado: boolean, dataCriacao = new Date().toISOString()) => ({
+      ...torneioCom("Pessoa"), id: nome, nome, qtdRodadas: 4, rodadaAtual: rodada, finalizado, dataCriacao, dataRodadaAtual: dataCriacao,
+    });
+    const antigo = new Date(Date.now() - 10 * 86_400_000).toISOString();
+    preparar("admin", { isAdmin: true }, [
+      criar("Novo", 0, false), criar("Jogando", 2, false), criar("Esquecido", 1, false, antigo), criar("Acabou", 4, true),
+    ]);
+    abrir(<TelaTorneios />);
+
+    const selo = (nome: string) => {
+      const card = screen.getAllByRole("heading", { level: 3, name: nome })[0].parentElement!;
+      return within(card).getByText(/ABERTO|RODADA|FINALIZADO/);
+    };
+    expect(selo("Novo").textContent).toContain("ABERTO");
+    expect(selo("Jogando").textContent).toContain("RODADA 2 DE 4");
+    expect(selo("Jogando").style.background).toBe("var(--brand-1)");
+    expect(selo("Esquecido").textContent).toContain("PARADO");
+    expect(selo("Esquecido").style.color).toBe("var(--warn)");
+    expect(selo("Acabou").textContent).toContain("♛");
+  });
+
   it("a regra de desempate aparece em vermelho acima da tabela, para todos", () => {
     render(<AbaRanking torneio={torneioCom("Pessoa")} />);
 
@@ -526,13 +548,43 @@ describe("trocar nome", () => {
 describe("abas do torneio", () => {
   const abas = () => screen.getAllByRole("button").map((b) => b.textContent ?? "");
 
-  it("jogador vê só Mesas, Ranking e Histórico", () => {
-    preparar("jogador", { nomesJogador: ["Pessoa"] }, [torneioCom("Pessoa")]);
+  it("jogador vê só Mesas, Ranking e Histórico quando as mesas estão liberadas", () => {
+    preparar("jogador", { nomesJogador: ["Pessoa"] }, [{ ...torneioCom("Pessoa"), mesasParaJogadores: true }]);
     abrir(<TelaTorneio />);
     const textos = abas().join(" | ");
 
     for (const visivel of ["Mesas", "Ranking", "Histórico"]) expect(textos).toContain(visivel);
     for (const oculta of ["Financeiro", "Premiação", "Sorteios", "Jogadores"]) expect(textos).not.toContain(oculta);
+  });
+
+  it("por padrão o jogador não vê as mesas", () => {
+    preparar("jogador", { nomesJogador: ["Pessoa"] }, [torneioCom("Pessoa")]);
+    abrir(<TelaTorneio />);
+    expect(abas().join(" | ")).not.toContain("Mesas");
+  });
+
+  it("admin no modo jogador vê as mesas mesmo sem liberar", () => {
+    preparar("jogador", { isAdmin: true, nomesJogador: ["Pessoa"] }, [torneioCom("Pessoa")]);
+    abrir(<TelaTorneio />);
+    expect(abas().join(" | ")).toContain("Mesas");
+  });
+
+  it("quem organiza libera mesas e temporizador para os jogadores", () => {
+    preparar("admin", { isAdmin: true }, [torneioCom("Pessoa")]);
+    // Só o local: a gravação e o aviso ao vivo são testados em sync.test
+    useStore.setState({ liberarParaJogadores: (dados) => useStore.getState().atualizarTorneio((t) => { Object.assign(t, dados); }) });
+    abrir(<TelaTorneio />);
+    fireEvent.click(screen.getAllByRole("button").find((b) => b.textContent?.includes("Mesas"))!);
+    const mesas = screen.getByRole("switch", { name: /^Mesas/ });
+    const tempo = screen.getByRole("switch", { name: /^Temporizador/ });
+    expect(mesas.getAttribute("aria-checked")).toBe("false");
+    expect((tempo as HTMLButtonElement).disabled).toBe(true);
+
+    fireEvent.click(mesas);
+    expect(useStore.getState().torneioAtivo()!.mesasParaJogadores).toBe(true);
+    expect((screen.getByRole("switch", { name: /^Temporizador/ }) as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(screen.getByRole("switch", { name: /^Temporizador/ }));
+    expect(useStore.getState().torneioAtivo()!.tempoParaJogadores).toBe(true);
   });
 
   it("admin vê também as abas de gestão", () => {

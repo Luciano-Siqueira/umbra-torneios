@@ -69,6 +69,7 @@ interface State {
   editarMesa: (mesaIdx: number) => void;
   finalizarTorneio: () => void;
   reabrirTorneio: () => void;
+  liberarParaJogadores: (dados: Partial<Pick<Torneio, "mesasParaJogadores" | "tempoParaJogadores">>) => void;
 }
 
 // Tela aberta, para o F5 voltar ao mesmo lugar (só nesta aba do navegador)
@@ -383,5 +384,10 @@ export const useStore = create<State>((set, get) => ({
         t.dataRodadaAtual = ult.dataInicio;
       }
     }, true);
+  },
+
+  // Grava antes de avisar: os jogadores baixam o torneio para ver a mudança
+  liberarParaJogadores: (dados) => {
+    get().atualizarEPublicar((t) => { Object.assign(t, dados); }, true);
   },
 }));
