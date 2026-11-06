@@ -216,6 +216,18 @@ body {
   0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(252,211,77,0.4); }
   50% { transform: scale(1.08); box-shadow: 0 0 0 12px rgba(252,211,77,0); }
 }
+/* Ponto "ao vivo" do selo de torneio em andamento */
+.ponto-ao-vivo {
+  width: 6px; height: 6px; border-radius: 9999px; background: #141414;
+  animation: pontoAoVivo 1.6s ease-in-out infinite;
+}
+@keyframes pontoAoVivo {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ponto-ao-vivo { animation: none; }
+}
 @keyframes shimmerText {
   0% { background-position: 0% 50%; }
   100% { background-position: 200% 50%; }

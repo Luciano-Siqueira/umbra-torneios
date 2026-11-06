@@ -261,7 +261,7 @@ describe("rodadas e desempate", () => {
 
     const selo = (nome: string) => {
       const card = screen.getAllByRole("heading", { level: 3, name: nome })[0].parentElement!;
-      return within(card).getByText(/ABERTO|RODADA|FINALIZADO/);
+      return within(card).getByText(/^(ABERTO|RODADA \d|PARADO|FINALIZADO)/);
     };
     expect(selo("Novo").textContent).toContain("ABERTO");
     expect(selo("Jogando").textContent).toContain("RODADA 2 DE 4");
