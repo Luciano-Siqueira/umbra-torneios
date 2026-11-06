@@ -5,7 +5,7 @@
 
 import { create } from "zustand";
 import type { Torneio, Mesa } from "./types";
-import { novoTorneio, novoJogador } from "./types";
+import { novoTorneio, novoJogador, podeAdicionarJogador } from "./types";
 import * as storage from "./storage";
 import * as sync from "./sync";
 import { parearRodada } from "./pareamento";
@@ -69,6 +69,7 @@ interface State {
   editarMesa: (mesaIdx: number) => void;
   finalizarTorneio: () => void;
   reabrirTorneio: () => void;
+  voltarAoInicio: () => void;
 }
 
 // Tela aberta, para o F5 voltar ao mesmo lugar (só nesta aba do navegador)
@@ -252,6 +253,7 @@ export const useStore = create<State>((set, get) => ({
 
   addJogador: (nome, deck, pago) => {
     get().atualizarEPublicarDepois((t) => {
+      if (!podeAdicionarJogador(t)) return;
       const j = novoJogador(t.proximoId, nome, deck, pago);
       t.proximoId += 1;
       t.jogadores.push(j);
@@ -381,6 +383,24 @@ export const useStore = create<State>((set, get) => ({
         t.rodadaAtual = ult.numero;
         t.mesas = ult.mesas;
         t.dataRodadaAtual = ult.dataInicio;
+      }
+    }, true);
+  },
+
+  // Só na rodada 1: desfaz o início, com os resultados já lançados, para refazer as inscrições
+  voltarAoInicio: () => {
+    get().atualizarEPublicar((t) => {
+      if (t.finalizado || t.rodadaAtual !== 1) return;
+      t.rodadaAtual = 0;
+      t.mesas = [];
+      t.rodadasFinalizadas = [];
+      t.dataRodadaAtual = "";
+      t.timer = null;
+      for (const j of t.jogadores) {
+        j.pontos = 0;
+        j.adversarios = [];
+        j.historicoColocacoes = [];
+        j.historicoGames = [];
       }
     }, true);
   },

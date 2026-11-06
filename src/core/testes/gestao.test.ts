@@ -48,6 +48,41 @@ describe("drop de jogador", () => {
   });
 });
 
+describe("rodada 1 ainda aceita mudanças", () => {
+  it("adiciona jogador na rodada 1, mas não a partir da 2", () => {
+    iniciar(4);
+    s().addJogador("Atrasado", "", true);
+    expect(torneio().jogadores).toHaveLength(5);
+
+    concluirRodada();
+    s().iniciarRodada();
+    s().addJogador("Muito atrasado", "", true);
+    expect(torneio().jogadores).toHaveLength(5);
+  });
+
+  it("voltar ao início apaga mesas e resultados e mantém os inscritos", () => {
+    iniciar(4);
+    concluirRodada();
+    s().voltarAoInicio();
+    expect(torneio().rodadaAtual).toBe(0);
+    expect(torneio().mesas).toHaveLength(0);
+    expect(torneio().jogadores).toHaveLength(4);
+    expect(torneio().jogadores.every((j) => j.pontos === 0 && j.historicoColocacoes.length === 0 && j.adversarios.length === 0)).toBe(true);
+
+    s().addJogador("J5", "", true);
+    s().iniciarRodada();
+    expect(torneio().mesas.flatMap((m) => m.jogadoresIds)).toHaveLength(5);
+  });
+
+  it("da rodada 2 em diante não volta ao início", () => {
+    iniciar(4);
+    concluirRodada();
+    s().iniciarRodada();
+    s().voltarAoInicio();
+    expect(torneio().rodadaAtual).toBe(2);
+  });
+});
+
 describe("prêmio pago", () => {
   it("registra, desfaz e tem prioridade sobre a estimativa", () => {
     iniciar(4);

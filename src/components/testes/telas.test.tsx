@@ -87,6 +87,27 @@ describe("encerrar torneio", () => {
   };
   const botao = (nome: RegExp) => screen.queryByRole("button", { name: nome });
 
+  it("voltar ao início só aparece na rodada 1", () => {
+    preparar("admin", { isAdmin: true }, [emAndamento(1, false)]);
+    const { unmount } = abrir(<AbaMesas torneio={emAndamento(1, false)} podeEditar />);
+    expect(botao(/Voltar ao início/)).toBeTruthy();
+    unmount();
+
+    abrir(<AbaMesas torneio={emAndamento(2, false)} podeEditar />);
+    expect(botao(/Voltar ao início/)).toBeNull();
+  });
+
+  it("adicionar jogador fica liberado na rodada 1 e travado na 2", () => {
+    preparar("admin", { isAdmin: true });
+    const { unmount } = abrir(<AbaJogadores torneio={emAndamento(1, false)} podeEditar />);
+    expect((botao(/Adicionar/) as HTMLButtonElement).disabled).toBe(false);
+    unmount();
+
+    abrir(<AbaJogadores torneio={emAndamento(2, false)} podeEditar />);
+    expect((botao(/Adicionar/) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(/Depois da rodada 1 não dá mais/)).toBeTruthy();
+  });
+
   it("a tela do torneio não tem mais botão de encerrar fora da aba Mesas", () => {
     const t = emAndamento(2, false);
     preparar("admin", { isAdmin: true }, [t]);
@@ -619,8 +640,8 @@ describe("mesas e tempo liberados na tela Usuários", () => {
 describe("abas do torneio", () => {
   const abas = () => screen.getAllByRole("button").map((b) => b.textContent ?? "");
 
-  it("jogador vê só Mesas, Ranking e Histórico quando as mesas estão liberadas", () => {
-    preparar("jogador", { nomesJogador: ["Pessoa"], verMesas: true }, [torneioCom("Pessoa")]);
+  it("no torneio finalizado o jogador vê Ranking e Histórico, e Mesas se liberadas", () => {
+    preparar("jogador", { nomesJogador: ["Pessoa"], verMesas: true }, [{ ...torneioCom("Pessoa"), finalizado: true }]);
     abrir(<TelaTorneio />);
     const textos = abas().join(" | ");
 
@@ -628,10 +649,27 @@ describe("abas do torneio", () => {
     for (const oculta of ["Financeiro", "Premiação", "Sorteios", "Jogadores"]) expect(textos).not.toContain(oculta);
   });
 
-  it("por padrão o jogador não vê as mesas", () => {
-    preparar("jogador", { nomesJogador: ["Pessoa"] }, [torneioCom("Pessoa")]);
+  it("com o torneio em andamento o jogador não vê nada dele", () => {
+    preparar("jogador", { nomesJogador: ["Pessoa"] }, [{ ...torneioCom("Pessoa"), rodadaAtual: 1 }]);
     abrir(<TelaTorneio />);
-    expect(abas().join(" | ")).not.toContain("Mesas");
+    const textos = abas().join(" | ");
+    for (const oculta of ["Mesas", "Ranking", "Histórico"]) expect(textos).not.toContain(oculta);
+    expect(screen.getByText(/aparecem aqui quando o torneio for finalizado/)).toBeTruthy();
+  });
+
+  it("em andamento, com as mesas liberadas, o jogador vê só Mesas", () => {
+    preparar("jogador", { nomesJogador: ["Pessoa"], verMesas: true }, [torneioCom("Pessoa")]);
+    abrir(<TelaTorneio />);
+    const textos = abas().join(" | ");
+    expect(textos).toContain("Mesas");
+    expect(textos).not.toContain("Ranking");
+    expect(textos).not.toContain("Histórico");
+  });
+
+  it("o desempenho do jogador ignora torneios em andamento", () => {
+    preparar("jogador", { nomesJogador: ["Pessoa"] }, [torneioCom("Pessoa")]);
+    abrir(<TelaAnalytics />);
+    expect(screen.queryByRole("heading", { name: /Partidas recentes/ })).toBeNull();
   });
 
   it("admin no modo jogador vê as mesas mesmo sem liberar", () => {
@@ -1082,7 +1120,7 @@ describe("métricas de decks no Analytics", () => {
   });
 
   it("os decks do jogador vêm logo acima do histórico de torneios", () => {
-    preparar("jogador", { nomesJogador: ["Pessoa"] }, [comDeck()]);
+    preparar("jogador", { nomesJogador: ["Pessoa"] }, [{ ...comDeck(), finalizado: true }]);
     abrir(<TelaAnalytics />);
 
     const titulos = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent ?? "");
@@ -1091,7 +1129,7 @@ describe("métricas de decks no Analytics", () => {
   });
 
   it("jogador vê os próprios decks, com o atual marcado, sem as métricas gerais", () => {
-    preparar("jogador", { nomesJogador: ["Pessoa"] }, [comDeck()]);
+    preparar("jogador", { nomesJogador: ["Pessoa"] }, [{ ...comDeck(), finalizado: true }]);
     abrir(<TelaAnalytics />);
 
     const secao = within(screen.getByRole("heading", { name: /Decks mais usados/ }).closest(".ds-card") as HTMLElement);
@@ -1104,7 +1142,7 @@ describe("métricas de decks no Analytics", () => {
 
 describe("desempenho do jogador", () => {
   it("o histórico de torneios vem depois de Partidas recentes", () => {
-    const t = torneioCom("Pessoa");
+    const t = { ...torneioCom("Pessoa"), finalizado: true };
     preparar("jogador", { nomesJogador: ["Pessoa"] }, [t]);
     abrir(<TelaAnalytics />);
 

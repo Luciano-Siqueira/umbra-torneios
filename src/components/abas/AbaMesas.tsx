@@ -23,6 +23,7 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
 }) {
   const iniciarRodada = useStore((s) => s.iniciarRodada);
   const resortearMesas = useStore((s) => s.resortearMesas);
+  const voltarAoInicio = useStore((s) => s.voltarAoInicio);
   const finalizarTorneio = useStore((s) => s.finalizarTorneio);
   const { toast } = useToast();
 
@@ -102,6 +103,19 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
     if (ok) {
       resortearMesas();
       toast("Mesas resorteadas", "sucesso");
+    }
+  };
+
+  const voltarInicio = async () => {
+    const ok = await confirmar({
+      titulo: "Voltar ao início",
+      mensagem: "O torneio volta para antes da rodada 1: as mesas e os resultados lançados nela serão apagados. Os jogadores continuam inscritos.\n\nDepois disso, você pode adicionar jogadores e iniciar de novo.",
+      textoOk: "Voltar ao início",
+      perigo: true,
+    });
+    if (ok) {
+      voltarAoInicio();
+      toast("Torneio de volta ao início", "sucesso");
     }
   };
 
@@ -358,6 +372,11 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
         {podeEditar && nenhumaFinalizada && (
           <button className="btn-warning" onClick={resortear} title="Refaz o pareamento desta rodada">
             🔀 Resortear mesas
+          </button>
+        )}
+        {podeEditar && torneio.rodadaAtual === 1 && !torneio.finalizado && (
+          <button className="btn-ghost" onClick={voltarInicio} title="Só na rodada 1: apaga as mesas e os resultados dela">
+            ⟲ Voltar ao início
           </button>
         )}
         {podeEditar && (

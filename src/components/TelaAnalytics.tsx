@@ -14,7 +14,7 @@ import {
   calcularDesempenho, listarNomesJogadores, mesmoJogador,
   type Conquista, type DesempenhoJogador, type EvolucaoJogador, type ResultadoMesa, type TorneioDoJogador,
 } from "../core/desempenho";
-import { podeEditarTorneios, torneiosVisiveis } from "../core/visibilidade";
+import { partesDoTorneioVisiveis, podeEditarTorneios, torneiosVisiveis } from "../core/visibilidade";
 import type { Torneio } from "../core/types";
 import { FUNDO_DE_TELA } from "../banner-image";
 import { formatarNumero, formatarReais } from "../core/formato";
@@ -26,9 +26,11 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
   const voltar = useStore((s) => s.voltarParaLista);
   const modoView = useStore((s) => s.modoView);
   const auth = useAuth();
-  // Admin vê todos, organizador os que criou e jogador aqueles em que jogou
+  // Admin vê todos, organizador os que criou e jogador aqueles em que jogou.
+  // O jogador só vê resultados de torneio finalizado.
   const torneios = useMemo(
-    () => torneiosVisiveis(torneiosTodos, modoView, auth),
+    () => torneiosVisiveis(torneiosTodos, modoView, auth)
+      .filter((t) => partesDoTorneioVisiveis(t, podeEditarTorneios(modoView, auth), auth).resultados),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [torneiosTodos, modoView, auth.session?.user?.id, auth.isAdmin, auth.isOrganizador, auth.nomesJogador]
   );

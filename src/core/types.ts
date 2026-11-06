@@ -69,6 +69,11 @@ export interface Torneio {
   premios?: Record<number, number>; // prêmio por jogador, único dado de pagamento que o participante recebe
 }
 
+// Inscrições ficam abertas até a rodada 1; da 2 em diante, o pareamento já depende dos resultados
+export function podeAdicionarJogador(t: Pick<Torneio, "finalizado" | "rodadaAtual">): boolean {
+  return !t.finalizado && t.rodadaAtual <= 1;
+}
+
 // ============================================================
 // Factories
 // ============================================================

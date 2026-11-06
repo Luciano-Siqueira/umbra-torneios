@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Torneio } from "../../core/types";
+import { podeAdicionarJogador, type Torneio } from "../../core/types";
 import { useStore } from "../../core/store";
 import { useToast } from "../ui/Toast";
 import { confirmar } from "../ui/Confirm";
@@ -47,6 +47,7 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
   const [sugestaoAtiva, setSugestaoAtiva] = useState(0);
 
   const rodadaAndamento = torneio.mesas.length > 0;
+  const podeAdicionar = podeAdicionarJogador(torneio);
   const ativos = torneio.jogadores.filter((j) => j.ativo);
 
   const jogadoresOrdenados = useMemo(
@@ -62,7 +63,7 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
 
   const adicionar = (nomeInput?: string) => {
     const n = (nomeInput ?? nome).trim();
-    if (!n) return;
+    if (!n || !podeAdicionar) return;
     if (torneio.jogadores.some((j) => j.nome.toLowerCase() === n.toLowerCase())) {
       toast(`"${n}" já está no torneio`, "aviso");
       return;
@@ -127,7 +128,7 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
                 if (e.key === "Escape") setSugestoes([]);
               }}
               placeholder="Nome do jogador..."
-              disabled={rodadaAndamento || torneio.finalizado}
+              disabled={!podeAdicionar}
             />
             {sugestoes.length > 0 && (
               <div className="absolute top-full left-0 right-0 bg-bg-card border border-bg-cardalt rounded-lg mt-1 z-20 max-h-48 overflow-y-auto shadow-2xl">
@@ -150,14 +151,24 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
             onMudar={setDeck}
             onEnter={() => adicionar()}
             placeholder="Deck ou comandante (opcional)"
-            disabled={rodadaAndamento || torneio.finalizado}
+            disabled={!podeAdicionar}
           />
           <button
             className="btn-primary"
             onClick={() => adicionar()}
-            disabled={rodadaAndamento || torneio.finalizado}
+            disabled={!podeAdicionar}
           >+ Adicionar</button>
         </div>
+        {!torneio.finalizado && torneio.rodadaAtual === 1 && (
+          <div className="text-xs mt-2" style={{ color: "var(--text-2)" }}>
+            Quem entrar agora joga a partir da rodada 2. Para incluir na rodada 1, resorteie as mesas ou use Voltar ao início na aba Mesas.
+          </div>
+        )}
+        {!podeAdicionar && !torneio.finalizado && (
+          <div className="text-xs mt-2" style={{ color: "var(--text-2)" }}>
+            Depois da rodada 1 não dá mais para adicionar jogadores.
+          </div>
+        )}
       </div>
       )}
 

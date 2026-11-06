@@ -5,7 +5,7 @@ import { useAoVivo } from "../core/useAoVivo";
 import { useVibrarFimDaRodada } from "../core/useTimer";
 import { encontrarMinhaMesa } from "../core/minhaMesa";
 import type { Torneio } from "../core/types";
-import { partesDaRodadaVisiveis, podeEditarTorneios } from "../core/visibilidade";
+import { partesDoTorneioVisiveis, podeEditarTorneios } from "../core/visibilidade";
 import { confirmar } from "./ui/Confirm";
 import { useToast } from "./ui/Toast";
 import { AuthChip } from "./AuthChip";
@@ -73,14 +73,14 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
     setAbaEscolhida(nova);
     try { sessionStorage.setItem(`mtg.aba.${torneioId}`, nova); } catch { /* ignore */ }
   };
-  const verRodada = partesDaRodadaVisiveis(podeEditar, auth);
+  const verRodada = partesDoTorneioVisiveis(torneio, podeEditar, auth);
   const abasVisiveis = podeEditar
     ? ABAS
-    : ABAS.filter((a) => ABAS_JOGADOR.includes(a.id) && (a.id !== "mesas" || verRodada.mesas));
+    : ABAS.filter((a) => ABAS_JOGADOR.includes(a.id) && (a.id === "mesas" ? verRodada.mesas : verRodada.resultados));
   // A aba salva pode não existir no modo atual: o F5 pode reabrir depois de trocar de modo
-  const aba: Aba = abasVisiveis.some((a) => a.id === abaEscolhida)
+  const aba: Aba | null = abasVisiveis.some((a) => a.id === abaEscolhida)
     ? abaEscolhida!
-    : podeEditar ? "jogadores" : verRodada.mesas ? "mesas" : "ranking";
+    : abasVisiveis[0]?.id ?? null;
 
   useAoVivo(torneio ? torneio.id : null, podeEditar);
 
@@ -228,6 +228,14 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
       <main className="flex-1 px-4 md:px-8 py-4 overflow-y-auto">
         {!podeEditar && verRodada.tempo && encontrarMinhaMesa([torneio], auth.nomesJogador)?.mesa && (
           <VibracaoFimDaRodada torneio={torneio} />
+        )}
+        {aba === null && (
+          <div className="card max-w-lg mx-auto text-center py-10 space-y-2">
+            <div className="text-lg font-semibold" style={{ color: "var(--text-strong)" }}>Torneio em andamento</div>
+            <div className="text-sm" style={{ color: "var(--text-2)" }}>
+              O ranking e o histórico aparecem aqui quando o torneio for finalizado.
+            </div>
+          </div>
         )}
         {aba === "jogadores" && <AbaJogadores torneio={torneio} podeEditar={podeEditar} />}
         {aba === "mesas" && <AbaMesas torneio={torneio} podeEditar={podeEditar} verTempo={verRodada.tempo} onIrParaAba={setAba} />}
