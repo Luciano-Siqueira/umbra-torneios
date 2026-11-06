@@ -1,5 +1,6 @@
 // Cartas de um deck, baixadas do MTGJSON só quando alguém abre o deck
 import type { DeckCommander } from "./decks";
+import { fichaDaScryfall, fichaDoMtgjson, type FichaDaCarta } from "./fichaDaCarta";
 
 const MTGJSON = "https://mtgjson.com/api/v5";
 const SCRYFALL_COLECAO = "https://api.scryfall.com/cards/collection";
@@ -12,6 +13,7 @@ export interface CartaDoDeck {
   tipo: string;
   imagem: string | null;
   forca?: string; // poder/resistência dos tokens de criatura
+  ficha: FichaDaCarta;
 }
 
 export type IdGrupo = "criaturas" | "encantamentos" | "magicas" | "artefatos" | "terrenos" | "outros";
@@ -64,11 +66,13 @@ function nomeDaCarta(nome: string): string {
 }
 
 function daCarta(c: any, tamanho: "normal" | "large"): CartaDoDeck {
+  const nome = nomeDaCarta(c.name);
   return {
-    nome: nomeDaCarta(c.name),
+    nome,
     quantidade: c.count ?? 1,
     tipo: c.type ?? "",
     imagem: imagemDaCarta(c.identifiers?.scryfallId, tamanho),
+    ficha: fichaDoMtgjson(c, nome),
   };
 }
 
@@ -177,6 +181,7 @@ export async function tokensPelasCartas(deck: any): Promise<CartaDoDeck[]> {
         tipo: parte.type_line ?? "",
         imagem: imagemDaCarta(parte.id),
         forca: d?.power !== undefined ? `${d.power}/${d.toughness}` : undefined,
+        ficha: fichaDaScryfall(parte, d),
       };
     })
     .sort((a, b) => a.nome.localeCompare(b.nome) || (a.forca ?? "").localeCompare(b.forca ?? ""));

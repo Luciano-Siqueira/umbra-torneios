@@ -610,7 +610,11 @@ describe("decks", () => {
     const deck = { data: {
       commander: [{ name: "Atraxa, Praetors' Voice", count: 1, type: "Legendary Creature", types: ["Creature"], identifiers: { scryfallId: "abcd1234" } }],
       mainBoard: [
-        { name: "Bicho", count: 1, type: "Creature", types: ["Creature"], identifiers: { scryfallId: "bi01" } },
+        {
+          name: "Bicho", count: 1, type: "Creature — Beast", types: ["Creature"], identifiers: { scryfallId: "bi01" },
+          manaCost: "{1}{G}", text: "{T}: Add {G}.", power: "2", toughness: "2", rarity: "uncommon", artist: "Fulana", setCode: "C16", number: "7",
+          foreignData: [{ language: "Portuguese (Brazil)", name: "Bichinho", type: "Criatura — Fera", text: "{T}: Adicione {G}." }],
+        },
         { name: "Floresta", count: 30, type: "Basic Land", types: ["Land"] },
         { name: "Raio", count: 1, type: "Instant", types: ["Instant"] },
       ],
@@ -702,6 +706,50 @@ describe("decks", () => {
       expect(within(screen.getByRole("dialog", { name: "Bicho" })).getByRole("img", { name: "Bicho" })).toBeTruthy();
       fireEvent.click(screen.getByRole("dialog"));
       expect(screen.queryByRole("dialog")).toBeNull();
+    });
+
+    it("a carta aberta mostra a ficha, com o texto em português e o preço em desenvolvimento", async () => {
+      (globalThis as any).__rede = async (url: string) =>
+        url.endsWith("DeckList.json") ? json(lista) : url.includes("Arquivo_C16") ? json(deck) : json({}, 404);
+      abrirDeck(/^Breed Lethality$/);
+      fireEvent.click(within(await screen.findByRole("region", { name: "Criaturas" })).getByRole("button", { name: "Ver a carta Bicho" }));
+
+      const ficha = within(screen.getByRole("region", { name: "Ficha da carta" }));
+      expect(ficha.getByRole("heading", { name: "Bicho" })).toBeTruthy();
+      expect(ficha.getByText("Bichinho")).toBeTruthy();
+      expect(ficha.getByText("Criatura — Fera")).toBeTruthy();
+      expect(ficha.getByText(/Adicione/)).toBeTruthy();
+      expect(ficha.getByText("· Incomum")).toBeTruthy();
+      expect(ficha.getByLabelText("Poder e resistência 2/2")).toBeTruthy();
+      expect(ficha.getByLabelText("Custo {1}{G}")).toBeTruthy();
+      expect(ficha.getByText("Em desenvolvimento")).toBeTruthy();
+      expect(ficha.getByText("Arte: Fulana")).toBeTruthy();
+
+      // Clicar dentro da ficha não fecha, e dá para trocar para o texto oficial em inglês
+      fireEvent.click(ficha.getByRole("button", { name: "Inglês" }));
+      expect(ficha.getByText("Creature — Beast")).toBeTruthy();
+      expect(ficha.getByText(/: Add/)).toBeTruthy();
+      expect(screen.getByRole("dialog", { name: "Bicho" })).toBeTruthy();
+
+      fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+
+    it("clicar no comandante abre a ficha dele, sem prévia ao passar o mouse", async () => {
+      (globalThis as any).__rede = async (url: string) =>
+        url.endsWith("DeckList.json") ? json(lista) : url.includes("Arquivo_C16") ? json(deck) : json({}, 404);
+      abrirDeck(/^Breed Lethality$/);
+      const comandante = within(await screen.findByRole("region", { name: "Comandante" })).getByRole("button", { name: "Ver a carta Atraxa, Praetors' Voice" });
+
+      fireEvent.pointerEnter(comandante, { pointerType: "mouse", clientX: 10, clientY: 10 });
+      await new Promise((fim) => setTimeout(fim, 200));
+      expect(screen.getAllByRole("img", { name: "Atraxa, Praetors' Voice" })).toHaveLength(1);
+
+      fireEvent.click(comandante);
+      const ficha = within(screen.getByRole("region", { name: "Ficha da carta" }));
+      expect(ficha.getByRole("heading", { name: "Atraxa, Praetors' Voice" })).toBeTruthy();
+      expect(ficha.getByText("Sem texto de regras.")).toBeTruthy();
+      expect(ficha.queryByRole("group", { name: "Idioma do texto" })).toBeNull();
     });
 
     it("na lista, passar o mouse no deck mostra o comandante, e clicar abre o deck", async () => {

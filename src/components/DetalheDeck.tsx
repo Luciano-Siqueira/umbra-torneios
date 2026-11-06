@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type HTMLAttributes } from "react";
 import { buscarDeckCompleto, type CartaDoDeck, type DeckCompleto, type IdGrupo } from "../core/deckCompleto";
 import { IconeEngrenagem, IconeEspiral, IconeEstrela, IconeGarra, IconeMoeda, IconeMontanha, IconeRaio } from "./ui/Icones";
 import type { DeckCommander } from "../core/decks";
@@ -22,7 +22,7 @@ function formatarData(iso: string) {
   return `${dia}/${mes}/${ano}`;
 }
 
-function CartaComandante({ carta }: { carta: CartaDoDeck }) {
+function CartaComandante({ carta, abrir }: { carta: CartaDoDeck; abrir: HTMLAttributes<HTMLElement> }) {
   const [semImagem, setSemImagem] = useState(!carta.imagem);
   return (
     <figure className="m-0 w-full max-w-[300px]">
@@ -34,13 +34,15 @@ function CartaComandante({ carta }: { carta: CartaDoDeck }) {
           {carta.nome}
         </div>
       ) : (
-        <img
-          src={carta.imagem!}
-          alt={carta.nome}
-          onError={() => setSemImagem(true)}
-          className="w-full aspect-[5/7] rounded-2xl object-cover"
-          style={{ boxShadow: "0 18px 50px -12px rgba(201,166,72,0.55)", background: "var(--ds-surface-2)" }}
-        />
+        <div {...abrir} className="rounded-2xl">
+          <img
+            src={carta.imagem!}
+            alt={carta.nome}
+            onError={() => setSemImagem(true)}
+            className="w-full aspect-[5/7] rounded-2xl object-cover block"
+            style={{ boxShadow: "0 18px 50px -12px rgba(201,166,72,0.55)", background: "var(--ds-surface-2)" }}
+          />
+        </div>
       )}
       <figcaption className="mt-3 text-center">
         <div className="font-bold" style={{ color: "var(--text-strong)" }}>{carta.nome}</div>
@@ -96,7 +98,13 @@ export function DetalheDeck({ deck, onVoltar }: { deck: DeckCommander; onVoltar:
             <div className="text-[11px] font-bold tracking-widest uppercase" style={{ color: "var(--brand-1)" }}>
               {dados.comandantes.length > 1 ? "Comandantes" : "Comandante"}
             </div>
-            {dados.comandantes.map((c) => <CartaComandante key={c.nome} carta={c} />)}
+            {dados.comandantes.map((c) => (
+              <CartaComandante
+                key={c.nome}
+                carta={c}
+                abrir={eventos({ nome: c.nome, imagens: c.imagem ? [{ src: c.imagem }] : [], ficha: c.ficha }, { apenasClique: true })}
+              />
+            ))}
           </section>
 
           {/* Em colunas, os grupos curtos não deixam buracos ao lado dos longos */}
@@ -114,7 +122,7 @@ export function DetalheDeck({ deck, onVoltar }: { deck: DeckCommander; onVoltar:
                   {g.cartas.map((c) => (
                     <li
                       key={c.nome}
-                      {...eventos({ nome: c.nome, imagens: c.imagem ? [{ src: c.imagem }] : [] })}
+                      {...eventos({ nome: c.nome, imagens: c.imagem ? [{ src: c.imagem }] : [], ficha: c.ficha })}
                       className="flex gap-2 py-1"
                       style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
                     >
@@ -149,7 +157,7 @@ export function DetalheDeck({ deck, onVoltar }: { deck: DeckCommander; onVoltar:
                   {dados.tokens.map((t) => (
                     <li
                       key={`${t.nome}|${t.forca}|${t.imagem}`}
-                      {...eventos({ nome: t.nome, imagens: t.imagem ? [{ src: t.imagem }] : [] })}
+                      {...eventos({ nome: t.nome, imagens: t.imagem ? [{ src: t.imagem }] : [], ficha: t.ficha })}
                       className="flex gap-2 py-1"
                       style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
                     >

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type HTMLAttributes } from "react";
 import { createPortal } from "react-dom";
+import type { FichaDaCarta } from "../../core/fichaDaCarta";
+import { FichaCarta } from "./FichaCarta";
 
 // reserva: endereço tentado se o primeiro falhar
 export interface ImagemDaCarta {
@@ -10,6 +12,7 @@ export interface ImagemDaCarta {
 export interface CartaVisivel {
   nome: string;
   imagens: ImagemDaCarta[]; // duas para decks com dois comandantes
+  ficha?: FichaDaCarta; // mostrada ao lado da imagem quando a carta é aberta por clique
 }
 
 interface Estado {
@@ -42,6 +45,7 @@ function Imagem({ imagem, nome, onFalha }: { imagem: ImagemDaCarta; nome: string
 
 // Imagem da carta ao passar o mouse e, ao clicar ou tocar, em destaque no meio da tela.
 // apenasPassarMouse: para linhas cujo clique já faz outra coisa, como abrir o deck.
+// apenasClique: para imagens grandes, em que mostrar a mesma imagem ao passar o mouse não ajuda.
 export function usePrevisaoDeCarta() {
   const [estado, setEstado] = useState<Estado | null>(null);
   const espera = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -59,7 +63,7 @@ export function usePrevisaoDeCarta() {
     return () => document.removeEventListener("keydown", aoTeclar);
   }, [estado?.fixo]);
 
-  const eventos = (carta: CartaVisivel, opcoes: { apenasPassarMouse?: boolean } = {}): HTMLAttributes<HTMLElement> => {
+  const eventos = (carta: CartaVisivel, opcoes: { apenasPassarMouse?: boolean; apenasClique?: boolean } = {}): HTMLAttributes<HTMLElement> => {
     if (carta.imagens.length === 0) return {};
     const mesma = (s: Estado | null) => s?.carta.nome === carta.nome;
     const fixar = () => {
@@ -88,7 +92,7 @@ export function usePrevisaoDeCarta() {
     };
     if (opcoes.apenasPassarMouse) return passarMouse;
     return {
-      ...passarMouse,
+      ...(opcoes.apenasClique ? {} : passarMouse),
       role: "button",
       tabIndex: 0,
       "aria-label": `Ver a carta ${carta.nome}`,
@@ -114,14 +118,38 @@ export function usePrevisaoDeCarta() {
       elemento = (
         <div
           role="dialog"
+          aria-modal="true"
           aria-label={carta.nome}
-          className="fixed inset-0 z-[80] flex items-center justify-center gap-4 p-6 flex-wrap"
+          className="fixed inset-0 z-[80] overflow-y-auto"
           style={{ background: "rgba(0,0,0,0.75)" }}
           onClick={fechar}
         >
-          {imagens.map((img, i) => (
-            <div key={i} style={{ width: `min(320px, ${80 / imagens.length}vw)`, aspectRatio: "488 / 680" }}>{img}</div>
-          ))}
+          {/* No celular, a ficha fica embaixo da imagem e a tela rola */}
+          <div className="min-h-full flex flex-col md:flex-row items-center justify-center gap-4 p-6">
+            <div className="flex gap-4 flex-wrap justify-center">
+              {imagens.map((img, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: carta.ficha ? `min(300px, ${70 / imagens.length}vw)` : `min(320px, ${80 / imagens.length}vw)`,
+                    aspectRatio: "488 / 680",
+                  }}
+                >
+                  {img}
+                </div>
+              ))}
+            </div>
+            {carta.ficha && <FichaCarta ficha={carta.ficha} />}
+          </div>
+          <button
+            type="button"
+            aria-label="Fechar"
+            className="fixed top-3 right-3 w-10 h-10 rounded-full text-xl flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.6)", color: "var(--text-strong)", border: "1px solid var(--line)" }}
+            onClick={fechar}
+          >
+            ×
+          </button>
         </div>
       );
     } else {
