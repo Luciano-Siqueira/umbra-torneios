@@ -6,6 +6,7 @@ import { contar } from "../core/formato";
 import { nomeDaCombinacao } from "../core/coresMagic";
 import { colecaoConhecida, nomeDaColecao } from "../core/colecoes";
 import { CoresMana } from "./ui/SimboloMana";
+import { usePrevisaoDeCarta } from "./ui/PrevisaoDeCarta";
 
 const ICONE_DO_GRUPO: Record<IdGrupo, (props: { tamanho?: number }) => JSX.Element> = {
   criaturas: IconeGarra,
@@ -53,6 +54,7 @@ export function DetalheDeck({ deck, onVoltar }: { deck: DeckCommander; onVoltar:
   const [dados, setDados] = useState<DeckCompleto | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [tentativa, setTentativa] = useState(0);
+  const { eventos, previsao } = usePrevisaoDeCarta();
 
   useEffect(() => {
     window.scrollTo?.({ top: 0 });
@@ -112,6 +114,7 @@ export function DetalheDeck({ deck, onVoltar }: { deck: DeckCommander; onVoltar:
                   {g.cartas.map((c) => (
                     <li
                       key={c.nome}
+                      {...eventos(c)}
                       className="flex gap-2 py-1"
                       style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
                     >
@@ -146,6 +149,7 @@ export function DetalheDeck({ deck, onVoltar }: { deck: DeckCommander; onVoltar:
                   {dados.tokens.map((t) => (
                     <li
                       key={`${t.nome}|${t.forca}|${t.imagem}`}
+                      {...eventos(t)}
                       className="flex gap-2 py-1"
                       style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
                     >
@@ -164,6 +168,8 @@ export function DetalheDeck({ deck, onVoltar }: { deck: DeckCommander; onVoltar:
           </div>
         </div>
       )}
+
+      {previsao}
 
       <div className="text-[11px] text-center" style={{ color: "var(--text-muted-ds)" }}>
         Listas: MTGJSON. Imagens: Scryfall. Magic: The Gathering pertence à Wizards of the Coast.

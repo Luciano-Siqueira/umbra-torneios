@@ -610,7 +610,7 @@ describe("decks", () => {
     const deck = { data: {
       commander: [{ name: "Atraxa, Praetors' Voice", count: 1, type: "Legendary Creature", types: ["Creature"], identifiers: { scryfallId: "abcd1234" } }],
       mainBoard: [
-        { name: "Bicho", count: 1, type: "Creature", types: ["Creature"] },
+        { name: "Bicho", count: 1, type: "Creature", types: ["Creature"], identifiers: { scryfallId: "bi01" } },
         { name: "Floresta", count: 30, type: "Basic Land", types: ["Land"] },
         { name: "Raio", count: 1, type: "Instant", types: ["Instant"] },
       ],
@@ -671,6 +671,46 @@ describe("decks", () => {
       expect(tokens.getByText("1/1")).toBeTruthy();
       expect(tokens.getByText(/que as cartas dele criam/)).toBeTruthy();
       expect(tokens.queryByText("0")).toBeNull();
+    });
+
+    it("passar o mouse na carta mostra a imagem, e sair esconde", async () => {
+      (globalThis as any).__rede = async (url: string) =>
+        url.endsWith("DeckList.json") ? json(lista) : url.includes("Arquivo_C16") ? json(deck) : json({}, 404);
+      abrirDeck(/^Breed Lethality$/);
+      const carta = within(await screen.findByRole("region", { name: "Criaturas" })).getByRole("button", { name: "Ver a carta Bicho" });
+
+      fireEvent.pointerEnter(carta, { pointerType: "mouse", clientX: 100, clientY: 200 });
+      const imagem = screen.getByRole("img", { name: "Bicho" }) as HTMLImageElement;
+      expect(imagem.src).toBe("https://cards.scryfall.io/normal/front/b/i/bi01.jpg");
+      expect(screen.queryByRole("dialog")).toBeNull();
+
+      fireEvent.pointerLeave(carta, { pointerType: "mouse" });
+      expect(screen.queryByRole("img", { name: "Bicho" })).toBeNull();
+
+      // Carta sem imagem não vira botão
+      expect(screen.queryByRole("button", { name: "Ver a carta Floresta" })).toBeNull();
+    });
+
+    it("no celular, tocar abre a carta em destaque e tocar de novo fecha", async () => {
+      (globalThis as any).__rede = async (url: string) =>
+        url.endsWith("DeckList.json") ? json(lista) : url.includes("Arquivo_C16") ? json(deck) : json({}, 404);
+      abrirDeck(/^Breed Lethality$/);
+      const carta = within(await screen.findByRole("region", { name: "Criaturas" })).getByRole("button", { name: "Ver a carta Bicho" });
+
+      fireEvent.pointerDown(carta, { pointerType: "touch" });
+      fireEvent.pointerEnter(carta, { pointerType: "touch" });
+      fireEvent.click(carta);
+      const destaque = screen.getByRole("dialog", { name: "Bicho" });
+      expect(within(destaque).getByRole("img", { name: "Bicho" })).toBeTruthy();
+
+      fireEvent.click(destaque);
+      expect(screen.queryByRole("dialog")).toBeNull();
+
+      // Pelo teclado também abre, e Esc fecha
+      fireEvent.keyDown(carta, { key: "Enter" });
+      expect(screen.getByRole("dialog", { name: "Bicho" })).toBeTruthy();
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(screen.queryByRole("dialog")).toBeNull();
     });
 
     it("sem conexão, avisa e permite tentar de novo", async () => {
