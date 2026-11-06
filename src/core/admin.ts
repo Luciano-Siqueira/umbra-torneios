@@ -101,3 +101,26 @@ export async function removerNomeDoUsuario(user_id: string, nome: string): Promi
     .eq("nome_jogador", nome);
   if (error) throw error;
 }
+
+// O que cada jogador vê no torneio; sem linha, fica tudo escondido
+export interface PermissaoJogador {
+  ver_mesas: boolean;
+  ver_tempo: boolean;
+}
+
+export async function listarPermissoesJogador(): Promise<{ porUsuario: Map<string, PermissaoJogador>; faltaTabela: boolean }> {
+  const { data, error } = await supabase.from("permissoes_jogador").select("user_id, ver_mesas, ver_tempo");
+  // Sem a tabela, a tela ainda abre e avisa para rodar o SQL
+  if (error) return { porUsuario: new Map(), faltaTabela: true };
+  return {
+    porUsuario: new Map((data ?? []).map((p: any) => [p.user_id, { ver_mesas: !!p.ver_mesas, ver_tempo: !!p.ver_tempo }])),
+    faltaTabela: false,
+  };
+}
+
+export async function definirPermissaoJogador(user_id: string, permissao: PermissaoJogador): Promise<void> {
+  const { error } = await supabase
+    .from("permissoes_jogador")
+    .upsert({ user_id, ...permissao, atualizado_em: new Date().toISOString() });
+  if (error) throw error;
+}

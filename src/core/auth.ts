@@ -9,6 +9,8 @@ export interface AuthState {
   isOrganizador: boolean;
   nomesJogador: string[];  // nomes vinculados ao usuário e aprovados
   nomesPendentes: string[]; // aguardando o admin aprovar
+  verMesas: boolean; // liberado pelo admin na tela Usuários
+  verTempo: boolean;
   loading: boolean;
   perfilCarregado: boolean; // true depois de ter o perfil (do cache ou do servidor)
   perfilErro: string | null; // falha na busca do perfil (diferente de "sem papel")
@@ -20,6 +22,8 @@ interface PerfilSalvo {
   isOrganizador: boolean;
   nomesJogador: string[];
   nomesPendentes?: string[];
+  verMesas?: boolean;
+  verTempo?: boolean;
 }
 
 const KEY_PERFIL = "mtg.perfil.v1";
@@ -30,6 +34,8 @@ const useAuthStore = create<AuthState>(() => ({
   isOrganizador: false,
   nomesJogador: [],
   nomesPendentes: [],
+  verMesas: false,
+  verTempo: false,
   loading: true,
   perfilCarregado: false,
   perfilErro: null,
@@ -67,16 +73,19 @@ async function carregarPerfil(userId: string) {
         isOrganizador: salvo.isOrganizador,
         nomesJogador: salvo.nomesJogador,
         nomesPendentes: salvo.nomesPendentes ?? [],
+        verMesas: !!salvo.verMesas,
+        verTempo: !!salvo.verTempo,
         perfilCarregado: true,
         perfilErro: null,
       }
     : { perfilCarregado: false, perfilErro: null });
 
-  const [adminRes, orgRes, jogadoresRes] = await Promise.all([
+  const [adminRes, orgRes, jogadoresRes, permissaoRes] = await Promise.all([
     supabase.from("admins").select("user_id").eq("user_id", userId).maybeSingle(),
     supabase.from("organizadores").select("user_id").eq("user_id", userId).maybeSingle(),
     // "*" para não quebrar enquanto o banco não tiver a coluna aprovado
     supabase.from("usuarios_jogadores").select("*").eq("user_id", userId),
+    supabase.from("permissoes_jogador").select("ver_mesas, ver_tempo").eq("user_id", userId).maybeSingle(),
   ]);
   if (busca !== ultimaBusca) return;
   buscandoUid = null;
@@ -96,6 +105,9 @@ async function carregarPerfil(userId: string) {
     isOrganizador: !!orgRes.data,
     nomesJogador: (jogadoresRes.data || []).filter((r: any) => r.aprovado !== false).map((r: any) => r.nome_jogador),
     nomesPendentes: (jogadoresRes.data || []).filter((r: any) => r.aprovado === false).map((r: any) => r.nome_jogador),
+    // Sem a tabela ou sem linha, fica escondido: não é erro de perfil
+    verMesas: !!permissaoRes.data?.ver_mesas,
+    verTempo: !!permissaoRes.data?.ver_tempo,
   };
   localStorage.setItem(KEY_PERFIL, JSON.stringify(perfil));
   useAuthStore.setState({
@@ -103,6 +115,8 @@ async function carregarPerfil(userId: string) {
     isOrganizador: perfil.isOrganizador,
     nomesJogador: perfil.nomesJogador,
     nomesPendentes: perfil.nomesPendentes,
+    verMesas: !!perfil.verMesas,
+    verTempo: !!perfil.verTempo,
     perfilCarregado: true,
     perfilErro: null,
   });
@@ -117,6 +131,8 @@ function limparPerfil() {
     isOrganizador: false,
     nomesJogador: [],
     nomesPendentes: [],
+    verMesas: false,
+    verTempo: false,
     perfilCarregado: true,
     perfilErro: null,
   });

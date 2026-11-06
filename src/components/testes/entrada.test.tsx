@@ -30,6 +30,8 @@ function conta(parcial: Partial<AuthState>): AuthState {
     isOrganizador: false,
     nomesJogador: ["Ana"],
     nomesPendentes: [],
+    verMesas: false,
+    verTempo: false,
     loading: false,
     perfilCarregado: true,
     perfilErro: null,

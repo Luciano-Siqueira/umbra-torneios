@@ -6,7 +6,6 @@ import { useVibrarFimDaRodada } from "../core/useTimer";
 import { encontrarMinhaMesa } from "../core/minhaMesa";
 import type { Torneio } from "../core/types";
 import { partesDaRodadaVisiveis, podeEditarTorneios } from "../core/visibilidade";
-import { PainelVisaoJogadores } from "./PainelVisaoJogadores";
 import { confirmar } from "./ui/Confirm";
 import { useToast } from "./ui/Toast";
 import { AuthChip } from "./AuthChip";
@@ -74,7 +73,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
     setAbaEscolhida(nova);
     try { sessionStorage.setItem(`mtg.aba.${torneioId}`, nova); } catch { /* ignore */ }
   };
-  const verRodada = torneio ? partesDaRodadaVisiveis(torneio, podeEditar, auth) : { mesas: false, tempo: false };
+  const verRodada = partesDaRodadaVisiveis(podeEditar, auth);
   const abasVisiveis = podeEditar
     ? ABAS
     : ABAS.filter((a) => ABAS_JOGADOR.includes(a.id) && (a.id !== "mesas" || verRodada.mesas));
@@ -231,7 +230,6 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
           <VibracaoFimDaRodada torneio={torneio} />
         )}
         {aba === "jogadores" && <AbaJogadores torneio={torneio} podeEditar={podeEditar} />}
-        {aba === "mesas" && podeEditar && <PainelVisaoJogadores torneio={torneio} />}
         {aba === "mesas" && <AbaMesas torneio={torneio} podeEditar={podeEditar} verTempo={verRodada.tempo} onIrParaAba={setAba} />}
         {aba === "ranking" && <AbaRanking torneio={torneio} />}
         {aba === "financeiro" && <AbaFinanceiro torneio={torneio} />}

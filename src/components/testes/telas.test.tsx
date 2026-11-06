@@ -10,6 +10,7 @@ import { TelaTorneios } from "../TelaTorneios";
 import { TelaTorneio } from "../TelaTorneio";
 import { TelaAnalytics } from "../TelaAnalytics";
 import { TelaDecks } from "../TelaDecks";
+import { TelaUsuarios } from "../TelaUsuarios";
 import { TelaVincularNome } from "../TelaVincularNome";
 import { AbaJogadores } from "../abas/AbaJogadores";
 import { AbaMesas } from "../abas/AbaMesas";
@@ -43,6 +44,8 @@ function conta(parcial: Partial<AuthState> = {}): AuthState {
     isOrganizador: false,
     nomesJogador: [],
     nomesPendentes: [],
+    verMesas: false,
+    verTempo: false,
     loading: false,
     perfilCarregado: true,
     perfilErro: null,
@@ -545,11 +548,79 @@ describe("trocar nome", () => {
   });
 });
 
+describe("mesas e tempo liberados na tela Usuários", () => {
+  afterEach(() => { delete (globalThis as any).__rede; });
+
+  const redeDeUsuarios = (permissoes: object[]) => {
+    const gravados: any[] = [];
+    (globalThis as any).__rede = async (url: string, init?: RequestInit) => {
+      const json = (corpo: unknown, status = 200) =>
+        new Response(JSON.stringify(corpo), { status, headers: { "content-type": "application/json" } });
+      if (url.includes("listar_usuarios")) {
+        return json([{ user_id: "j1", email: "jog@teste.local", eh_admin: false, eh_organizador: false, nomes_jogador: ["Jog"] }]);
+      }
+      if (url.includes("permissoes_jogador")) {
+        if (init?.method === "POST") { gravados.push(JSON.parse(String(init.body))); return json([], 201); }
+        return json(permissoes);
+      }
+      return json([]);
+    };
+    return gravados;
+  };
+
+  it("o admin liga as mesas e depois o tempo de um jogador", async () => {
+    const gravados = redeDeUsuarios([]);
+    preparar("admin", { isAdmin: true });
+    abrir(<TelaUsuarios />);
+
+    const mesas = await screen.findByRole("switch", { name: "Mesas para Jog" });
+    const tempo = screen.getByRole("switch", { name: "Tempo para Jog" }) as HTMLButtonElement;
+    expect(mesas.getAttribute("aria-checked")).toBe("false");
+    expect(tempo.disabled).toBe(true);
+
+    fireEvent.click(mesas);
+    await waitFor(() => expect(mesas.getAttribute("aria-checked")).toBe("true"));
+    expect(gravados[0]).toMatchObject({ user_id: "j1", ver_mesas: true, ver_tempo: false });
+
+    await waitFor(() => expect(tempo.disabled).toBe(false));
+    fireEvent.click(tempo);
+    await waitFor(() => expect(tempo.getAttribute("aria-checked")).toBe("true"));
+    expect(gravados[1]).toMatchObject({ ver_mesas: true, ver_tempo: true });
+  });
+
+  it("sem a tabela no banco, avisa para rodar o SQL", async () => {
+    (globalThis as any).__rede = async (url: string) => url.includes("permissoes_jogador")
+      ? new Response(JSON.stringify({ message: "relation does not exist" }), { status: 404, headers: { "content-type": "application/json" } })
+      : new Response(JSON.stringify(url.includes("listar_usuarios") ? [] : []), { status: 200, headers: { "content-type": "application/json" } });
+    preparar("admin", { isAdmin: true });
+    abrir(<TelaUsuarios />);
+    expect(await screen.findByText(/permissoes_jogador.sql/)).toBeTruthy();
+  });
+
+  it("o relógio da rodada só aparece com o tempo liberado", () => {
+    const t = torneioCom("Pessoa");
+    t.jogadores.push(novoJogador(3, "Terceira Pessoa", "", true));
+    t.rodadaAtual = 1;
+    t.mesas = [{
+      numero: 1, rodada: 1, jogadoresIds: [1, 2, 3], finalizada: false, vencedorId: null, eliminacoes: [], empateTopoIds: [],
+    } as unknown as Torneio["mesas"][number]];
+    preparar("jogador", { nomesJogador: ["Pessoa"], verMesas: true }, [t]);
+
+    const { unmount } = abrir(<AbaMesas torneio={t} podeEditar={false} verTempo />);
+    expect(screen.getByText(/Aguardando o início do tempo/)).toBeTruthy();
+    unmount();
+
+    abrir(<AbaMesas torneio={t} podeEditar={false} verTempo={false} />);
+    expect(screen.getAllByText("Mesa 1").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Aguardando o início do tempo/)).toBeNull();
+  });
+});
+
 describe("abas do torneio", () => {
   const abas = () => screen.getAllByRole("button").map((b) => b.textContent ?? "");
 
   it("jogador vê só Mesas, Ranking e Histórico quando as mesas estão liberadas", () => {
-    preparar("jogador", { nomesJogador: ["Pessoa"] }, [{ ...torneioCom("Pessoa"), mesasParaJogadores: true }]);
+    preparar("jogador", { nomesJogador: ["Pessoa"], verMesas: true }, [torneioCom("Pessoa")]);
     abrir(<TelaTorneio />);
     const textos = abas().join(" | ");
 
@@ -567,24 +638,6 @@ describe("abas do torneio", () => {
     preparar("jogador", { isAdmin: true, nomesJogador: ["Pessoa"] }, [torneioCom("Pessoa")]);
     abrir(<TelaTorneio />);
     expect(abas().join(" | ")).toContain("Mesas");
-  });
-
-  it("quem organiza libera mesas e temporizador para os jogadores", () => {
-    preparar("admin", { isAdmin: true }, [torneioCom("Pessoa")]);
-    // Só o local: a gravação e o aviso ao vivo são testados em sync.test
-    useStore.setState({ liberarParaJogadores: (dados) => useStore.getState().atualizarTorneio((t) => { Object.assign(t, dados); }) });
-    abrir(<TelaTorneio />);
-    fireEvent.click(screen.getAllByRole("button").find((b) => b.textContent?.includes("Mesas"))!);
-    const mesas = screen.getByRole("switch", { name: /^Mesas/ });
-    const tempo = screen.getByRole("switch", { name: /^Temporizador/ });
-    expect(mesas.getAttribute("aria-checked")).toBe("false");
-    expect((tempo as HTMLButtonElement).disabled).toBe(true);
-
-    fireEvent.click(mesas);
-    expect(useStore.getState().torneioAtivo()!.mesasParaJogadores).toBe(true);
-    expect((screen.getByRole("switch", { name: /^Temporizador/ }) as HTMLButtonElement).disabled).toBe(false);
-    fireEvent.click(screen.getByRole("switch", { name: /^Temporizador/ }));
-    expect(useStore.getState().torneioAtivo()!.tempoParaJogadores).toBe(true);
   });
 
   it("admin vê também as abas de gestão", () => {

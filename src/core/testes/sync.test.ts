@@ -186,16 +186,6 @@ describe("ao vivo", () => {
     expect(linha).not.toHaveProperty("jogadores");
   });
 
-  it("liberar mesas e tempo aos jogadores grava o torneio e avisa ao vivo", async () => {
-    pedidos = [];
-    s().liberarParaJogadores({ mesasParaJogadores: true });
-    s().liberarParaJogadores({ tempoParaJogadores: true });
-    await esperar(50);
-    expect(s().torneioAtivo()!.mesasParaJogadores).toBe(true);
-    expect(s().torneioAtivo()!.tempoParaJogadores).toBe(true);
-    expect(aoVivo().length).toBeGreaterThan(0);
-  });
-
   it("controles do timer gravam e publicam, e nova rodada zera", async () => {
     s().iniciarRodada();
     await esperar(50);

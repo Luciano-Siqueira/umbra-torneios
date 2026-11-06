@@ -4,8 +4,8 @@ import { useAuth } from "../core/auth";
 import {
   listarUsuarios, definirPapel, deletarUsuario, enviarResetSenha,
   renomearJogador, adicionarNome, removerNomeDoUsuario,
-  listarNomesPendentes, aprovarNome,
-  type NomePendente, type UsuarioInfo,
+  listarNomesPendentes, aprovarNome, listarPermissoesJogador, definirPermissaoJogador,
+  type NomePendente, type PermissaoJogador, type UsuarioInfo,
 } from "../core/admin";
 import { useToast } from "./ui/Toast";
 import { confirmar } from "./ui/Confirm";
@@ -31,13 +31,17 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
   const [editando, setEditando] = useState<UsuarioInfo | null>(null);
   const [confirmandoAdmin, setConfirmandoAdmin] = useState<UsuarioInfo | null>(null);
   const [pendentes, setPendentes] = useState<NomePendente[]>([]);
+  const [permissoes, setPermissoes] = useState<Map<string, PermissaoJogador>>(new Map());
+  const [faltaTabelaPermissoes, setFaltaTabelaPermissoes] = useState(false);
 
   const carregar = async () => {
     setCarregando(true);
     try {
-      const [u, p] = await Promise.all([listarUsuarios(), listarNomesPendentes()]);
+      const [u, p, perm] = await Promise.all([listarUsuarios(), listarNomesPendentes(), listarPermissoesJogador()]);
       setUsuarios(u);
       setPendentes(p);
+      setPermissoes(perm.porUsuario);
+      setFaltaTabelaPermissoes(perm.faltaTabela);
     } catch (e: any) {
       toast("Erro: " + e.message, "erro");
     } finally {
@@ -112,6 +116,25 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
         ? { ...x, eh_admin: novo.admin, eh_organizador: novo.organizador }
         : x));
       toast(`Papéis atualizados`, "sucesso");
+    } catch (e: any) {
+      toast("Erro: " + e.message, "erro");
+    } finally {
+      setSalvando(null);
+    }
+  };
+
+  const permissaoDe = (u: UsuarioInfo): PermissaoJogador =>
+    permissoes.get(u.user_id) ?? { ver_mesas: false, ver_tempo: false };
+
+  // O tempo fica na aba Mesas: desligar as mesas desliga o tempo junto
+  const alternarPermissao = async (u: UsuarioInfo, campo: keyof PermissaoJogador) => {
+    const atual = permissaoDe(u);
+    const nova = { ...atual, [campo]: !atual[campo] };
+    if (!nova.ver_mesas) nova.ver_tempo = false;
+    setSalvando(u.user_id);
+    try {
+      await definirPermissaoJogador(u.user_id, nova);
+      setPermissoes((prev) => new Map(prev).set(u.user_id, nova));
     } catch (e: any) {
       toast("Erro: " + e.message, "erro");
     } finally {
@@ -237,6 +260,12 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
           </div>
         )}
 
+        {faltaTabelaPermissoes && (
+          <div className="text-xs" style={{ color: "var(--warn)" }}>
+            ⚠ Para liberar mesas e tempo aos jogadores, rode o arquivo supabase/permissoes_jogador.sql no Supabase.
+          </div>
+        )}
+
         {carregando ? (
           <div className="text-center py-12 text-fg-dim">Carregando usuários...</div>
         ) : filtrados.length === 0 ? (
@@ -255,6 +284,8 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                     <th className="text-left py-3 px-4"><IconePessoa tamanho={13} /> Jogador</th>
                     <th className="text-center py-3 px-2"><IconeCoroa tamanho={13} /> Admin</th>
                     <th className="text-center py-3 px-2"><IconeAlvo tamanho={13} /> Organizador</th>
+                    <th className="text-center py-3 px-2" title="O jogador vê a aba Mesas e a própria mesa">Mesas</th>
+                    <th className="text-center py-3 px-2" title="O jogador vê o tempo da rodada. Precisa das mesas">Tempo</th>
                     <th className="text-right py-3 px-4">Ações</th>
                   </tr>
                 </thead>
@@ -303,6 +334,24 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                           corAtivo="var(--brand-2)"
                           disabled={salvando === u.user_id}
                           onClick={() => togglePapel(u, "organizador")}
+                        />
+                      </td>
+                      <td className="py-2 px-2 text-center">
+                        <ToggleButton
+                          rotulo={`Mesas para ${u.nomes_jogador[0] || u.email}`}
+                          ativo={u.eh_admin || permissaoDe(u).ver_mesas}
+                          corAtivo="var(--brand-1)"
+                          disabled={u.eh_admin || faltaTabelaPermissoes || salvando === u.user_id}
+                          onClick={() => alternarPermissao(u, "ver_mesas")}
+                        />
+                      </td>
+                      <td className="py-2 px-2 text-center">
+                        <ToggleButton
+                          rotulo={`Tempo para ${u.nomes_jogador[0] || u.email}`}
+                          ativo={u.eh_admin || permissaoDe(u).ver_tempo}
+                          corAtivo="var(--brand-1)"
+                          disabled={u.eh_admin || faltaTabelaPermissoes || !permissaoDe(u).ver_mesas || salvando === u.user_id}
+                          onClick={() => alternarPermissao(u, "ver_tempo")}
                         />
                       </td>
                       <td className="py-2 px-4">
@@ -599,11 +648,12 @@ function KpiMini({ label, valor, cor }: { label: React.ReactNode; valor: string;
   );
 }
 
-function ToggleButton({ ativo, corAtivo, disabled, onClick }: {
-  ativo: boolean; corAtivo: string; disabled?: boolean; onClick: () => void;
+function ToggleButton({ ativo, corAtivo, disabled, onClick, rotulo }: {
+  ativo: boolean; corAtivo: string; disabled?: boolean; onClick: () => void; rotulo?: string;
 }) {
   return (
     <button
+      type="button" role="switch" aria-checked={ativo} aria-label={rotulo}
       onClick={onClick} disabled={disabled}
       className="relative w-12 h-6 rounded-full transition-colors active:scale-95"
       style={{ background: ativo ? corAtivo : "var(--line)", opacity: disabled ? 0.4 : 1 }}
