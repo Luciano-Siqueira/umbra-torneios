@@ -1175,5 +1175,11 @@ describe("easter egg", () => {
 
     fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByRole("dialog", { name: /Avanti/ })).toBeNull();
+
+    for (let i = 0; i < 10; i++) fireEvent.click(simbolo);
+    fireEvent.click(screen.getByRole("dialog", { name: /Avanti/ }));
+    expect(screen.getByRole("dialog", { name: /Avanti/ })).toBeTruthy(); // clicar dentro não fecha
+    fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
+    expect(screen.queryByRole("dialog", { name: /Avanti/ })).toBeNull();
   });
 });

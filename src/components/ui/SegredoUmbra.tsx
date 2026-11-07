@@ -42,26 +42,36 @@ function TelaSegredo({ onFechar }: { onFechar: () => void }) {
     return () => window.removeEventListener("keydown", aoTeclar);
   }, [onFechar]);
 
+  // Janela no meio da tela; o clique fora dela também fecha
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Avanti, Palestra!"
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 p-6 cursor-pointer"
-      style={{ background: "radial-gradient(circle at center, #0b8a4a 0%, #006437 55%, #003d22 100%)" }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}
       onClick={onFechar}
     >
-      {imagem < IMAGENS.length && (
-        <img
-          src={IMAGENS[imagem]}
-          alt="Palmeiras"
-          onError={() => setImagem((i) => i + 1)}
-          className="max-w-[min(90vw,520px)] max-h-[70vh] object-contain drop-shadow-2xl"
-        />
-      )}
-      <div className="text-center text-white">
-        <div className="text-4xl md:text-6xl font-black tracking-wide">AVANTI, PALESTRA!</div>
-        <div className="text-sm mt-3 opacity-80">Toque em qualquer lugar para voltar</div>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Avanti, Palestra!"
+        className="relative w-full max-w-sm rounded-2xl p-6 pt-10 flex flex-col items-center gap-4 shadow-2xl"
+        style={{ background: "radial-gradient(circle at center, #0b8a4a 0%, #006437 60%, #003d22 100%)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          aria-label="Fechar"
+          onClick={onFechar}
+          className="absolute top-2 right-2 w-9 h-9 rounded-full flex items-center justify-center text-2xl leading-none text-white hover:bg-white/15 transition"
+        >×</button>
+        {imagem < IMAGENS.length && (
+          <img
+            src={IMAGENS[imagem]}
+            alt="Palmeiras"
+            onError={() => setImagem((i) => i + 1)}
+            className="max-w-full max-h-[50vh] object-contain drop-shadow-2xl"
+          />
+        )}
+        <div className="text-3xl font-black tracking-wide text-white text-center">AVANTI, PALESTRA!</div>
       </div>
     </div>
   );
