@@ -13,7 +13,8 @@ import { calcularMetricas, metricasRecentes } from "../core/metricas";
 import { ranking } from "../core/resultados";
 import { podeEditarTorneios, torneioParado, torneiosVisiveis } from "../core/visibilidade";
 import { BANNER_IMAGE } from "../banner-image";
-import { IconeDecks, SimboloUmbra } from "./ui/LogoUmbra";
+import { IconeDecks } from "./ui/LogoUmbra";
+import { SegredoUmbra } from "./ui/SegredoUmbra";
 import { IconeAnalytics, IconeBaixar, IconeCaixa, IconeDado, IconeDocumento, IconeLapis, IconeLixeira, IconePasta, IconeUsuarios } from "./ui/Icones";
 import { SimboloMana, type CorMana } from "./ui/SimboloMana";
 import { ItemMenu, MenuBarra, TituloMenu } from "./ui/MenuBarra";
@@ -179,7 +180,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             boxShadow: "0 20px 60px -20px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.08)",
           }}
         >
-          <span className="flex items-center pl-2 pr-1"><SimboloUmbra tamanho={26} /></span>
+          <span className="flex items-center pl-2 pr-1"><SegredoUmbra tamanho={26} /></span>
           <span className="md:hidden flex-1 min-w-0 truncate font-semibold" style={{ color: "var(--text-strong)" }}>Torneios</span>
 
           {/* CTA principal — só admin vê */}

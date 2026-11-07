@@ -11,6 +11,7 @@ import { TelaTorneio } from "../TelaTorneio";
 import { TelaAnalytics } from "../TelaAnalytics";
 import { TelaDecks } from "../TelaDecks";
 import { TelaUsuarios } from "../TelaUsuarios";
+import { SegredoUmbra } from "../ui/SegredoUmbra";
 import { TelaVincularNome } from "../TelaVincularNome";
 import { AbaJogadores } from "../abas/AbaJogadores";
 import { AbaMesas } from "../abas/AbaMesas";
@@ -1159,5 +1160,20 @@ describe("desempenho do jogador", () => {
     const historico = screen.getByRole("heading", { name: /Histórico de torneios/ });
     expect(recentes.compareDocumentPosition(historico) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.queryByText(/Forma recente/)).toBeNull();
+  });
+});
+
+describe("easter egg", () => {
+  it("10 cliques seguidos no símbolo Umbra abrem a tela, e Esc fecha", () => {
+    render(<SegredoUmbra />);
+    const simbolo = screen.getByRole("img", { name: "Umbra" });
+    for (let i = 0; i < 9; i++) fireEvent.click(simbolo);
+    expect(screen.queryByRole("dialog", { name: /Avanti/ })).toBeNull();
+
+    fireEvent.click(simbolo);
+    expect(screen.getByRole("dialog", { name: /Avanti/ })).toBeTruthy();
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: /Avanti/ })).toBeNull();
   });
 });
