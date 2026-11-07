@@ -83,6 +83,24 @@ describe("rodada 1 ainda aceita mudanças", () => {
   });
 });
 
+describe("pagamento no torneio finalizado", () => {
+  it("não desmarca quem pagou até reabrir, mas ainda marca quem pagar depois", () => {
+    iniciar(4);
+    s().editarJogador(1, { pago: false });
+    concluirRodada();
+    s().finalizarTorneio();
+
+    s().editarJogador(2, { pago: false });
+    expect(jogador(2).pago).toBe(true);
+    s().editarJogador(1, { pago: true });
+    expect(jogador(1).pago).toBe(true);
+
+    s().reabrirTorneio();
+    s().editarJogador(2, { pago: false });
+    expect(jogador(2).pago).toBe(false);
+  });
+});
+
 describe("prêmio pago", () => {
   it("registra, desfaz e tem prioridade sobre a estimativa", () => {
     iniciar(4);

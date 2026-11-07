@@ -230,7 +230,7 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
                   <tr key={j.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     {podeEditar && (
                     <td className="py-1.5 px-2">
-                      <CaixaPago pago={j.pago} nome={j.nome} onClick={() => alternarPago(j.id, j.pago)} />
+                      <CaixaPago pago={j.pago} nome={j.nome} travado={torneio.finalizado} onClick={() => alternarPago(j.id, j.pago)} />
                     </td>
                     )}
                     <td className="py-1.5 px-2">

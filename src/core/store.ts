@@ -273,7 +273,8 @@ export const useStore = create<State>((set, get) => ({
       if (!j) return;
       if (dados.nome !== undefined) j.nome = dados.nome;
       if (dados.deck !== undefined) j.deck = dados.deck;
-      if (dados.pago !== undefined) j.pago = dados.pago;
+      // Finalizado, quem pagou só pode ser desmarcado depois de reabrir
+      if (dados.pago !== undefined && !(t.finalizado && j.pago && !dados.pago)) j.pago = dados.pago;
     });
   },
 

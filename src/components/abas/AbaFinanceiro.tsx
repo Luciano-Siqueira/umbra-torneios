@@ -59,7 +59,7 @@ export function AbaFinanceiro({ torneio }: { torneio: Torneio }) {
           <div className="space-y-1">
             {pagos.map((j) => (
               <div key={j.id} className="flex items-center gap-3 p-2 hover:bg-bg-cardalt rounded">
-                <CaixaPago pago nome={j.nome} onClick={() => editarJogador(j.id, { pago: false })} />
+                <CaixaPago pago nome={j.nome} travado={torneio.finalizado} onClick={() => editarJogador(j.id, { pago: false })} />
                 <span className="flex-1">{j.nome}</span>
                 <span className="text-xs text-sucesso">{formatarReais(torneio.taxaInscricao)}</span>
               </div>

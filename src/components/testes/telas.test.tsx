@@ -97,6 +97,15 @@ describe("encerrar torneio", () => {
     expect(botao(/Voltar ao início/)).toBeNull();
   });
 
+  it("no torneio finalizado a caixa de quem pagou fica travada", () => {
+    const t = { ...emAndamento(1, true), finalizado: true };
+    t.jogadores[1] = { ...t.jogadores[1], pago: false };
+    preparar("admin", { isAdmin: true }, [t]);
+    abrir(<AbaJogadores torneio={t} podeEditar />);
+    expect((screen.getByRole("button", { name: "Pessoa: pago" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: "Outra Pessoa: não pago" }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
   it("adicionar jogador fica liberado na rodada 1 e travado na 2", () => {
     preparar("admin", { isAdmin: true });
     const { unmount } = abrir(<AbaJogadores torneio={emAndamento(1, false)} podeEditar />);
