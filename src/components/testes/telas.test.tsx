@@ -1185,7 +1185,7 @@ describe("desempenho do jogador", () => {
 });
 
 describe("easter egg", () => {
-  it("10 cliques seguidos no símbolo Umbra abrem a tela, e Esc fecha", () => {
+  it("10 cliques seguidos no símbolo Umbra abrem a tela, e só o X fecha", () => {
     render(<SegredoUmbra />);
     const simbolo = screen.getByRole("img", { name: "Umbra" });
     for (let i = 0; i < 9; i++) fireEvent.click(simbolo);
@@ -1195,11 +1195,10 @@ describe("easter egg", () => {
     expect(screen.getByRole("dialog", { name: /Avanti/ })).toBeTruthy();
 
     fireEvent.keyDown(window, { key: "Escape" });
-    expect(screen.queryByRole("dialog", { name: /Avanti/ })).toBeNull();
-
-    for (let i = 0; i < 10; i++) fireEvent.click(simbolo);
+    fireEvent.click(screen.getByRole("dialog", { name: /Avanti/ }).parentElement!); // fora da janela
     fireEvent.click(screen.getByRole("dialog", { name: /Avanti/ }));
-    expect(screen.getByRole("dialog", { name: /Avanti/ })).toBeTruthy(); // clicar dentro não fecha
+    expect(screen.getByRole("dialog", { name: /Avanti/ })).toBeTruthy();
+
     fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
     expect(screen.queryByRole("dialog", { name: /Avanti/ })).toBeNull();
   });

@@ -38,18 +38,19 @@ export function SegredoUmbra({ tamanho = 26 }: { tamanho?: number }) {
 function TelaSegredo({ onFechar }: { onFechar: () => void }) {
   const [imagem, setImagem] = useState(0);
 
-  useEffect(() => {
-    const aoTeclar = (e: KeyboardEvent) => { if (e.key === "Escape") onFechar(); };
-    window.addEventListener("keydown", aoTeclar);
-    return () => window.removeEventListener("keydown", aoTeclar);
-  }, [onFechar]);
+  // O X já recebe o foco: Enter ou espaço também fecham pelo teclado
+  const fechar = useRef<HTMLButtonElement>(null);
+  useEffect(() => { fechar.current?.focus(); }, []);
 
-  // Janela no meio da tela; o clique fora dela também fecha
+  // Janela no meio da tela, com o resto embaçado em verde. Só o X fecha
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}
-      onClick={onFechar}
+      style={{
+        background: "rgba(0, 100, 55, 0.45)",
+        backdropFilter: "blur(10px) saturate(140%)",
+        WebkitBackdropFilter: "blur(10px) saturate(140%)",
+      }}
     >
       <div
         role="dialog"
@@ -57,9 +58,9 @@ function TelaSegredo({ onFechar }: { onFechar: () => void }) {
         aria-label="Avanti, Palestra!"
         className="relative w-full max-w-sm rounded-2xl p-6 pt-10 flex flex-col items-center gap-4 shadow-2xl"
         style={{ background: "radial-gradient(circle at center, #0b8a4a 0%, #006437 60%, #003d22 100%)" }}
-        onClick={(e) => e.stopPropagation()}
       >
         <button
+          ref={fechar}
           type="button"
           aria-label="Fechar"
           onClick={onFechar}
