@@ -204,6 +204,27 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
             ))}
 
             <div style={{ borderTop: "1px solid var(--line)" }}>
+              <a
+                href="privacidade.html"
+                target="_blank"
+                rel="noopener"
+                onClick={() => setAbrindoMenu(false)}
+                className="block w-full text-left px-3 py-2 text-[11px] hover:bg-white/5 transition"
+                style={{ color: "var(--text-2)" }}
+              >
+                Política de privacidade
+              </a>
+              <button
+                onClick={() => { setAbrindoMenu(false); setExcluindoConta(true); }}
+                className="block w-full text-left px-3 py-2 text-[11px] hover:bg-white/5 transition"
+                style={{ color: "var(--text-2)" }}
+              >
+                Excluir minha conta
+              </button>
+            </div>
+
+            {/* Sair fica por último, separado */}
+            <div style={{ borderTop: "1px solid var(--line)" }}>
               <button
                 onClick={async () => {
                   setAbrindoMenu(false);
@@ -225,23 +246,6 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
               >
                 ⏻ Sair
               </button>
-              <button
-                onClick={() => { setAbrindoMenu(false); setExcluindoConta(true); }}
-                className="block w-full text-left px-3 py-2 text-[11px] hover:bg-white/5 transition"
-                style={{ color: "var(--text-2)" }}
-              >
-                Excluir minha conta
-              </button>
-              <a
-                href="privacidade.html"
-                target="_blank"
-                rel="noopener"
-                onClick={() => setAbrindoMenu(false)}
-                className="block w-full text-left px-3 py-2 text-[11px] hover:bg-white/5 transition"
-                style={{ color: "var(--text-2)" }}
-              >
-                Política de privacidade
-              </a>
             </div>
           </div>
         </>
