@@ -5,7 +5,7 @@ const CLIQUES_PARA_ABRIR = 10;
 const PAUSA_MAXIMA_MS = 1500; // parou de clicar por mais que isso, a contagem recomeça
 
 // A imagem fica em public/. Tenta os formatos mais comuns antes de mostrar só o texto
-const IMAGENS = ["segredo.webp", "segredo.jpg", "segredo.png"];
+const IMAGENS = ["segredo.jpg", "segredo.webp", "segredo.png"];
 
 // Easter egg: 10 cliques seguidos no símbolo Umbra abrem a tela do Palmeiras
 export function SegredoUmbra({ tamanho = 26 }: { tamanho?: number }) {

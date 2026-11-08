@@ -3,7 +3,7 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "br.app.umbra.torneios",
+      "package_name": "br.com.umbraarena.torneios",
       "sha256_cert_fingerprints": [
         "SHA256_DA_CHAVE_DE_ASSINATURA_DA_GOOGLE",
         "SHA256_DA_SUA_CHAVE_DE_ENVIO"
