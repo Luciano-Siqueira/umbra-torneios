@@ -30,5 +30,8 @@ create policy "permissoes_escrita_admin" on public.permissoes_jogador
 
 commit;
 
+-- Faz o site enxergar a mudança na hora
+notify pgrst, 'reload schema';
+
 -- Conferência: mostra quem já tem algo liberado
 select user_id, ver_mesas, ver_tempo from public.permissoes_jogador order by atualizado_em desc;

@@ -1,4 +1,5 @@
 import { PropsWithChildren, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 interface Props {
   open: boolean;
@@ -26,7 +27,8 @@ export function Modal({
   }, [open, onClose]);
 
   if (!open) return null;
-  return (
+  // No body: aberto de dentro de uma barra com backdrop-filter, o fixed ficaria preso nela e fora do centro
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 animate-fadeIn p-4"
       onMouseDown={(e) => { if (fecharAoClicarFora && e.target === e.currentTarget) onClose(); }}
@@ -42,6 +44,7 @@ export function Modal({
         )}
         <div className="p-6 overflow-y-auto">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

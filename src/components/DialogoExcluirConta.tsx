@@ -29,7 +29,11 @@ export function DialogoExcluirConta({ aberto, email, onFechar, onExcluida }: {
       setSenha("");
       onExcluida();
     } catch (e: any) {
-      setErro(e?.message ?? "Não foi possível excluir a conta.");
+      const msg: string = e?.message ?? "";
+      // Função ainda não criada no banco: mensagem do Supabase em inglês não ajuda quem usa o app
+      setErro(/could not find the function/i.test(msg)
+        ? "A exclusão de conta ainda não está disponível. Avise um administrador."
+        : msg || "Não foi possível excluir a conta.");
     } finally {
       setExcluindo(false);
     }

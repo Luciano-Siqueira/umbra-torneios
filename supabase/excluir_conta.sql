@@ -54,5 +54,8 @@ grant execute on function public.excluir_minha_conta(text) to authenticated;
 
 commit;
 
+-- Faz o site enxergar a função nova na hora (sem isso pode dar "Could not find the function")
+notify pgrst, 'reload schema';
+
 -- Conferência: deve mostrar a função
 select proname from pg_proc where proname = 'excluir_minha_conta';

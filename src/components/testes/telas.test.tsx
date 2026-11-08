@@ -589,6 +589,8 @@ describe("excluir a própria conta", () => {
     abrir(<AuthChip auth={conta({ nomesJogador: ["Alguém"] })} onSair={sair} />);
     fireEvent.click(screen.getAllByRole("button")[0]);
     fireEvent.click(screen.getByRole("button", { name: "Excluir minha conta" }));
+    // Fora da barra com desfoque, direto no body: assim o pop-up fica no meio da tela
+    expect(screen.getByText("Excluir minha conta", { selector: "h2" }).closest(".fixed")!.parentElement).toBe(document.body);
 
     fireEvent.click(screen.getByRole("button", { name: "Excluir conta" }));
     expect(screen.getByRole("alert").textContent).toMatch(/senha/);

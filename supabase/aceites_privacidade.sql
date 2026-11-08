@@ -28,6 +28,9 @@ grant execute on function public.listar_aceites_privacidade() to authenticated;
 
 commit;
 
+-- Faz o site enxergar a mudança na hora
+notify pgrst, 'reload schema';
+
 -- Conferência: quantas contas já aceitaram alguma versão
 -- (direto na tabela: no SQL Editor não há usuário logado, e a função exige admin)
 select count(*) filter (where raw_user_meta_data ? 'privacidade_versao') as aceitaram, count(*) as contas
