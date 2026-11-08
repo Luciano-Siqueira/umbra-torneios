@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "../core/store";
 import { BANNER_IMAGE } from "../banner-image";
 import manaPathsData from "../mana-paths.json";
@@ -7,13 +7,34 @@ import { TelaLogin } from "./TelaLogin";
 
 const MANA_PATHS: Record<string, string> = manaPathsData;
 
+// No computador os símbolos vão para os cantos; no celular, para uma fileira logo abaixo da arte
 const SIMBOLOS = [
-  { sym: "w", cor: "#f9f5e3", xFinal: 5,  yFinal: 10, delay: 0.0 },
-  { sym: "u", cor: "#5b9bd5", xFinal: 92, yFinal: 12, delay: 0.1 },
-  { sym: "b", cor: "#c4b5fd", xFinal: 4,  yFinal: 78, delay: 0.2 },
-  { sym: "r", cor: "#e15b5b", xFinal: 94, yFinal: 70, delay: 0.3 },
-  { sym: "g", cor: "#7bc47f", xFinal: 88, yFinal: 90, delay: 0.4 },
+  { sym: "w", cor: "#f9f5e3", xFinal: 5,  yFinal: 10, xCel: 26, delay: 0.0 },
+  { sym: "u", cor: "#5b9bd5", xFinal: 92, yFinal: 12, xCel: 38, delay: 0.1 },
+  { sym: "b", cor: "#c4b5fd", xFinal: 4,  yFinal: 78, xCel: 50, delay: 0.2 },
+  { sym: "r", cor: "#e15b5b", xFinal: 94, yFinal: 70, xCel: 62, delay: 0.3 },
+  { sym: "g", cor: "#7bc47f", xFinal: 88, yFinal: 90, xCel: 74, delay: 0.4 },
 ];
+
+// Banner 1800x1004. No celular, a imagem cobrindo a altura cortava "TOURNAMENT SYSTEM" nas laterais;
+// com 150% da largura o título inteiro aparece. O conteúdo vai abaixo da arte, sem cobrir os dragões.
+const LARGURA_BANNER_CEL = 150; // em vw
+const ALTURA_BANNER_CEL = LARGURA_BANNER_CEL * 1004 / 1800;
+const FILEIRA_DE_MANA_CEL = `${(ALTURA_BANNER_CEL * 0.8).toFixed(1)}vw`; // centro da fileira, sobre o fim da arte
+const INICIO_DO_CONTEUDO_CEL = `calc(${(ALTURA_BANNER_CEL * 0.8).toFixed(1)}vw + 36px)`;
+
+function useCelular() {
+  const consulta = "(max-width: 767px)";
+  const [celular, setCelular] = useState(() => typeof window !== "undefined" && !!window.matchMedia?.(consulta).matches);
+  useEffect(() => {
+    const m = window.matchMedia?.(consulta);
+    if (!m) return;
+    const mudar = () => setCelular(m.matches);
+    m.addEventListener?.("change", mudar);
+    return () => m.removeEventListener?.("change", mudar);
+  }, []);
+  return celular;
+}
 
 export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () => void } = {}) {
   const irPara = useStore((s) => s.irPara);
@@ -21,6 +42,7 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
   const temTorneios = torneios.length > 0;
   const auth = useAuth();
   const [loginAberto, setLoginAberto] = useState(false);
+  const celular = useCelular();
 
   const handleEntrar = () => {
     if (auth.session) {
@@ -33,7 +55,14 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
   return (
     <div
       className="min-h-screen relative overflow-hidden flex flex-col"
-      style={{
+      style={celular ? {
+        // A imagem some aos poucos no fundo escuro
+        backgroundColor: "#0a0a0a",
+        backgroundImage: `linear-gradient(to bottom, rgba(10,10,10,0) 50%, #0a0a0a 100%), url(${BANNER_IMAGE})`,
+        backgroundSize: `${LARGURA_BANNER_CEL}vw ${ALTURA_BANNER_CEL}vw, ${LARGURA_BANNER_CEL}vw auto`,
+        backgroundPosition: "center top",
+        backgroundRepeat: "no-repeat",
+      } : {
         backgroundImage: `linear-gradient(to bottom,
           rgba(10,10,10,0.1) 0%,
           rgba(10,10,10,0.3) 50%,
@@ -48,9 +77,10 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
           key={s.sym}
           sym={s.sym}
           cor={s.cor}
-          xFinal={s.xFinal}
-          yFinal={s.yFinal}
+          xFinal={`${celular ? s.xCel : s.xFinal}%`}
+          yFinal={celular ? FILEIRA_DE_MANA_CEL : `${s.yFinal}%`}
           delay={s.delay}
+          celular={celular}
         />
       ))}
 
@@ -58,10 +88,14 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
       {/* O título "SYSTEM" do banner termina em 34,4% da altura da imagem (proporção 1800x1004) */}
       <div
         className="relative z-10 flex-1 flex flex-col items-center justify-start px-6 pb-8 text-center"
-        style={{ paddingTop: "calc(max(34.4vh, 19.2vw) + 16px)" }}
+        style={{
+          paddingTop: celular
+            ? INICIO_DO_CONTEUDO_CEL
+            : "calc(max(34.4vh, 19.2vw) + 16px)",
+        }}
       >
         <div
-          className="text-xs md:text-sm font-mono tracking-[0.5em] mb-4 md:mb-6 opacity-0"
+          className="text-[10px] md:text-sm font-mono tracking-[0.3em] md:tracking-[0.5em] whitespace-nowrap mb-5 md:mb-6 opacity-0"
           style={{
             color: "var(--brand-1)",
             animation: "fadeInUp 0.6s ease-out 0.4s forwards",
@@ -83,7 +117,7 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
             style={{ background: "radial-gradient(circle, rgba(201,166,72,0.5), transparent 70%)" }}
           />
           <div
-            className="relative px-14 py-5 md:px-20 md:py-6 font-black text-xl md:text-2xl tracking-[0.4em] border-2"
+            className="relative px-10 py-4 md:px-20 md:py-6 font-black text-lg md:text-2xl tracking-[0.3em] md:tracking-[0.4em] border-2"
             style={{
               background: "linear-gradient(135deg, rgba(201,166,72,0.1) 0%, rgba(139,0,0,0.1) 100%)",
               borderImage: "linear-gradient(135deg, var(--brand-1), var(--brand-2)) 1",
@@ -110,7 +144,7 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
 
         {/* Info de login + hint */}
         <div
-          className="mt-6 flex flex-col items-center gap-2 opacity-0"
+          className="mt-4 md:mt-6 flex flex-col items-center gap-2 opacity-0"
           style={{ animation: "fadeInUp 0.6s ease-out 1s forwards" }}
         >
           {auth.loading ? (
@@ -132,7 +166,7 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
         </div>
 
         {/* Features em pills */}
-        <div className="mt-10 md:mt-14 flex flex-wrap items-center justify-center gap-2 max-w-3xl">
+        <div className="my-auto py-7 md:py-0 md:mb-0 md:mt-14 flex flex-wrap items-center justify-center gap-2 max-w-3xl">
           {[
             { icon: "⚔", txt: "Pareamento automático" },
             { icon: "🏆", txt: "Ranking OMW/GW/OGW" },
@@ -178,10 +212,12 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
 }
 
 function ManaFlutuante({
-  sym, cor, xFinal, yFinal, delay,
+  sym, cor, xFinal, yFinal, delay, celular,
 }: {
-  sym: string; cor: string; xFinal: number; yFinal: number; delay: number;
+  sym: string; cor: string; xFinal: string; yFinal: string; delay: number; celular: boolean;
 }) {
+  // A flutuação troca o transform. No celular ela vai no círculo, para a fileira ficar centralizada
+  const flutuar = `floatY ${4 + delay * 0.5}s ease-in-out ${1 + delay}s infinite`;
   const animName = `voaPara_${sym}`;
   const keyframes = `
     @keyframes ${animName} {
@@ -196,7 +232,7 @@ function ManaFlutuante({
         opacity: 1;
       }
       100% {
-        left: ${xFinal}%; top: ${yFinal}%;
+        left: ${xFinal}; top: ${yFinal};
         transform: translate(-50%, -50%) scale(1) rotate(0deg);
         opacity: 0.85;
       }
@@ -212,14 +248,15 @@ function ManaFlutuante({
           left: "50%",
           top: "50%",
           opacity: 0,
-          animation: `${animName} 0.8s cubic-bezier(0.34, 1.3, 0.64, 1) ${delay}s forwards, floatY ${4 + delay * 0.5}s ease-in-out ${1 + delay}s infinite`,
+          animation: `${animName} 0.8s cubic-bezier(0.34, 1.3, 0.64, 1) ${delay}s forwards${celular ? "" : `, ${flutuar}`}`,
         }}
       >
         <div
-          className="w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center"
+          className="w-9 h-9 md:w-16 md:h-16 rounded-full flex items-center justify-center"
           style={{
             background: `radial-gradient(circle, ${cor}, ${cor}99)`,
             boxShadow: `0 0 30px ${cor}cc, 0 0 60px ${cor}66, inset 0 2px 10px rgba(255,255,255,0.3)`,
+            animation: celular ? flutuar : undefined,
           }}
         >
           <svg viewBox="0 0 32 32" width="60%" height="60%" fill="var(--page-1)">
