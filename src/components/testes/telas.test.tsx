@@ -12,6 +12,7 @@ import { TelaAnalytics } from "../TelaAnalytics";
 import { TelaDecks } from "../TelaDecks";
 import { TelaUsuarios } from "../TelaUsuarios";
 import { SegredoUmbra } from "../ui/SegredoUmbra";
+import { VERSAO_PRIVACIDADE } from "../../core/privacidade";
 import { TelaVincularNome } from "../TelaVincularNome";
 import { AbaJogadores } from "../abas/AbaJogadores";
 import { AbaMesas } from "../abas/AbaMesas";
@@ -619,6 +620,31 @@ describe("mesas e tempo liberados na tela Usuários", () => {
     };
     return gravados;
   };
+
+  it("mostra quem aceitou a política de privacidade", async () => {
+    (globalThis as any).__rede = async (url: string) => {
+      const json = (corpo: unknown) => new Response(JSON.stringify(corpo), { status: 200, headers: { "content-type": "application/json" } });
+      if (url.includes("listar_usuarios")) {
+        return json([
+          { user_id: "a1", email: "aceitou@teste.local", eh_admin: false, eh_organizador: false, nomes_jogador: ["Aceitou"] },
+          { user_id: "p1", email: "pendente@teste.local", eh_admin: false, eh_organizador: false, nomes_jogador: ["Pendente"] },
+        ]);
+      }
+      if (url.includes("listar_aceites_privacidade")) {
+        return json([
+          { user_id: "a1", versao: VERSAO_PRIVACIDADE, aceita_em: "2026-11-08T15:00:00Z" },
+          { user_id: "p1", versao: null, aceita_em: null },
+        ]);
+      }
+      return json([]);
+    };
+    preparar("admin", { isAdmin: true });
+    abrir(<TelaUsuarios />);
+
+    expect(await screen.findByText("✓ Aceitou")).toBeTruthy();
+    expect(screen.getByText("Pendente", { selector: "span" })).toBeTruthy();
+    expect(screen.getByText(/1 de 2 aceitaram a política/)).toBeTruthy();
+  });
 
   it("o admin liga as mesas e depois o tempo de um jogador", async () => {
     const gravados = redeDeUsuarios([]);

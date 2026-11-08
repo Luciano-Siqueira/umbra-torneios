@@ -5,6 +5,7 @@ import {
   listarUsuarios, definirPapel, deletarUsuario, enviarResetSenha,
   renomearJogador, adicionarNome, removerNomeDoUsuario,
   listarNomesPendentes, aprovarNome, listarPermissoesJogador, definirPermissaoJogador,
+  listarAceitesPrivacidade, type AceitePrivacidade,
   type NomePendente, type PermissaoJogador, type UsuarioInfo,
 } from "../core/admin";
 import { useToast } from "./ui/Toast";
@@ -12,6 +13,7 @@ import { confirmar } from "./ui/Confirm";
 import { IconeAlvo, IconeCoroa, IconePessoa, IconeUsuarios } from "./ui/Icones";
 import { FUNDO_DE_TELA } from "../banner-image";
 import { AuthChip } from "./AuthChip";
+import { VERSAO_PRIVACIDADE } from "../core/privacidade";
 
 interface Props {
   onPedirLogin?: () => void;
@@ -33,11 +35,17 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
   const [pendentes, setPendentes] = useState<NomePendente[]>([]);
   const [permissoes, setPermissoes] = useState<Map<string, PermissaoJogador>>(new Map());
   const [faltaTabelaPermissoes, setFaltaTabelaPermissoes] = useState(false);
+  const [aceites, setAceites] = useState<Map<string, AceitePrivacidade>>(new Map());
+  const [faltaFuncaoAceites, setFaltaFuncaoAceites] = useState(false);
 
   const carregar = async () => {
     setCarregando(true);
     try {
-      const [u, p, perm] = await Promise.all([listarUsuarios(), listarNomesPendentes(), listarPermissoesJogador()]);
+      const [u, p, perm, ac] = await Promise.all([
+        listarUsuarios(), listarNomesPendentes(), listarPermissoesJogador(), listarAceitesPrivacidade(),
+      ]);
+      setAceites(ac.porUsuario);
+      setFaltaFuncaoAceites(ac.faltaFuncao);
       setUsuarios(u);
       setPendentes(p);
       setPermissoes(perm.porUsuario);
@@ -260,6 +268,17 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
           </div>
         )}
 
+        {faltaFuncaoAceites && (
+          <div className="text-xs" style={{ color: "var(--warn)" }}>
+            ⚠ Para ver quem aceitou a política de privacidade, rode o arquivo supabase/aceites_privacidade.sql no Supabase.
+          </div>
+        )}
+        {!faltaFuncaoAceites && usuarios.length > 0 && (
+          <div className="text-xs" style={{ color: "var(--text-2)" }}>
+            🔒 {usuarios.filter((u) => aceites.get(u.user_id)?.versao === VERSAO_PRIVACIDADE).length} de {usuarios.length} aceitaram a política de privacidade.
+          </div>
+        )}
+
         {faltaTabelaPermissoes && (
           <div className="text-xs" style={{ color: "var(--warn)" }}>
             ⚠ Para liberar mesas e tempo aos jogadores, rode o arquivo supabase/permissoes_jogador.sql no Supabase.
@@ -286,6 +305,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                     <th className="text-center py-3 px-2"><IconeAlvo tamanho={13} /> Organizador</th>
                     <th className="text-center py-3 px-2" title="O jogador vê a aba Mesas e a própria mesa">Mesas</th>
                     <th className="text-center py-3 px-2" title="O jogador vê o tempo da rodada. Precisa das mesas">Tempo</th>
+                    <th className="text-center py-3 px-2">Privacidade</th>
                     <th className="text-right py-3 px-4">Ações</th>
                   </tr>
                 </thead>
@@ -353,6 +373,9 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                           disabled={u.eh_admin || faltaTabelaPermissoes || !permissaoDe(u).ver_mesas || salvando === u.user_id}
                           onClick={() => alternarPermissao(u, "ver_tempo")}
                         />
+                      </td>
+                      <td className="py-2 px-2 text-center">
+                        <SeloPrivacidade aceite={aceites.get(u.user_id)} semDados={faltaFuncaoAceites} />
                       </td>
                       <td className="py-2 px-4">
                         <div className="flex items-center gap-1 justify-end">
@@ -645,6 +668,24 @@ function KpiMini({ label, valor, cor }: { label: React.ReactNode; valor: string;
       <div className="text-[10px] font-bold tracking-widest uppercase" style={{ color: cor }}>{label}</div>
       <div className="text-2xl font-bold tabular-nums mt-1" style={{ color: "var(--text-strong)" }}>{valor}</div>
     </div>
+  );
+}
+
+function SeloPrivacidade({ aceite, semDados }: { aceite?: AceitePrivacidade; semDados: boolean }) {
+  if (semDados) return <span className="text-[11px] text-fg-muted">—</span>;
+  const quando = aceite?.aceita_em ? new Date(aceite.aceita_em).toLocaleDateString("pt-BR") : "";
+  const [texto, cor, titulo] = aceite?.versao === VERSAO_PRIVACIDADE
+    ? ["✓ Aceitou", "var(--good)", `Aceitou em ${quando}`]
+    : aceite?.versao
+      ? ["Versão antiga", "var(--warn)", `Aceitou a versão de ${aceite.versao}; vai ver a nova ao entrar`]
+      : ["Pendente", "var(--warn)", "Ainda não aceitou; vai ver o aviso ao entrar"];
+  return (
+    <span className="text-[11px] whitespace-nowrap" style={{ color: cor }} title={titulo}>
+      {texto}
+      {aceite?.versao === VERSAO_PRIVACIDADE && quando && (
+        <span className="block text-[10px] text-fg-dim">{quando}</span>
+      )}
+    </span>
   );
 }
 

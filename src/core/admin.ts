@@ -124,3 +124,18 @@ export async function definirPermissaoJogador(user_id: string, permissao: Permis
     .upsert({ user_id, ...permissao, atualizado_em: new Date().toISOString() });
   if (error) throw error;
 }
+
+// Quem aceitou a política de privacidade e quando (supabase/aceites_privacidade.sql)
+export interface AceitePrivacidade {
+  versao: string | null;
+  aceita_em: string | null;
+}
+
+export async function listarAceitesPrivacidade(): Promise<{ porUsuario: Map<string, AceitePrivacidade>; faltaFuncao: boolean }> {
+  const { data, error } = await supabase.rpc("listar_aceites_privacidade");
+  if (error) return { porUsuario: new Map(), faltaFuncao: true };
+  return {
+    porUsuario: new Map(((data ?? []) as any[]).map((a) => [a.user_id, { versao: a.versao ?? null, aceita_em: a.aceita_em ?? null }])),
+    faltaFuncao: false,
+  };
+}

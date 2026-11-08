@@ -232,6 +232,16 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
               >
                 Excluir minha conta
               </button>
+              <a
+                href="privacidade.html"
+                target="_blank"
+                rel="noopener"
+                onClick={() => setAbrindoMenu(false)}
+                className="block w-full text-left px-3 py-2 text-[11px] hover:bg-white/5 transition"
+                style={{ color: "var(--text-2)" }}
+              >
+                Política de privacidade
+              </a>
             </div>
           </div>
         </>

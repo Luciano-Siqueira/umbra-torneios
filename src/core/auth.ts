@@ -1,6 +1,7 @@
 // Autenticação Supabase + flags de admin/jogador (estado único para todas as telas)
 import { create } from "zustand";
 import { supabase } from "./supabaseClient";
+import { guardarAceiteLocal, VERSAO_PRIVACIDADE } from "./privacidade";
 import type { Session } from "@supabase/supabase-js";
 
 export interface AuthState {
@@ -168,6 +169,15 @@ export async function sair() {
   localStorage.removeItem("mtg.torneios.v1");
   localStorage.removeItem("mtg.modoView");
   localStorage.removeItem(KEY_PERFIL);
+}
+
+// Registra na conta que a pessoa aceitou esta versão da política de privacidade
+export async function aceitarPrivacidade(uid: string): Promise<void> {
+  guardarAceiteLocal(uid);
+  const { error } = await supabase.auth.updateUser({
+    data: { privacidade_versao: VERSAO_PRIVACIDADE, privacidade_aceita_em: new Date().toISOString() },
+  });
+  if (error) console.warn("Aceite da privacidade guardado só neste aparelho", error.message);
 }
 
 // Apaga a conta de quem está logado; a senha é conferida no banco

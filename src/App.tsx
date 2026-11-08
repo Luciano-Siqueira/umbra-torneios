@@ -15,6 +15,8 @@ import { listarTorneios } from "./core/storage";
 import { definirAvisoEnvio, puxarDoServidor, resolverConflito, retomarEnvios } from "./core/sync";
 import { confirmar } from "./components/ui/Confirm";
 import { AvisoEnderecoNovo } from "./components/AvisoEnderecoNovo";
+import { AvisoPrivacidade } from "./components/AvisoPrivacidade";
+import { precisaAceitarPrivacidade } from "./core/privacidade";
 
 // Telas carregadas só quando abertas
 const TelaAnalytics = lazy(() =>
@@ -48,6 +50,7 @@ function AppInner() {
   const [loginAberto, setLoginAberto] = useState(false);
   const [vincularAberto, setVincularAberto] = useState(false);
   const [semConexao, setSemConexao] = useState(false);
+  const [, aceitouPrivacidade] = useState(0); // redesenha na hora, mesmo sem internet para gravar na conta
 
   // Dentro de um torneio quem atualiza é o useAoVivo
   useListaAtualizada(!!auth.session && tela !== "torneio");
@@ -133,8 +136,10 @@ function AppInner() {
     if (!auth.loading && auth.session && tela === "splash") irPara("torneios");
   }, [auth.loading, auth.session, tela, irPara]);
 
+  // A política vem primeiro; os outros avisos esperam o aceite
+  const precisaPrivacidade = !auth.loading && precisaAceitarPrivacidade(auth.session?.user);
   const precisaVincularNome = !auth.loading && auth.perfilCarregado && !!auth.session && !auth.isAdmin
-    && auth.nomesJogador.length === 0 && auth.nomesPendentes.length === 0;
+    && auth.nomesJogador.length === 0 && auth.nomesPendentes.length === 0 && !precisaPrivacidade;
 
   // Enquanto confere a sessão salva, ou logo antes de ir para os torneios, a tela de entrada não aparece
   const conferindoSessao = auth.loading || !!auth.session;
@@ -172,8 +177,16 @@ function AppInner() {
         }}
       />
 
+      {precisaPrivacidade && auth.session && (
+        <AvisoPrivacidade
+          uid={auth.session.user.id}
+          onAceito={() => aceitouPrivacidade((n) => n + 1)}
+          onSair={() => irPara("splash")}
+        />
+      )}
+
       {/* Só depois de entrar, e não junto com a vinculação de nome */}
-      {tela !== "splash" && auth.perfilCarregado && !precisaVincularNome && (
+      {tela !== "splash" && auth.perfilCarregado && !precisaVincularNome && !precisaPrivacidade && (
         <AvisoEnderecoNovo usuario={auth.session?.user} />
       )}
 

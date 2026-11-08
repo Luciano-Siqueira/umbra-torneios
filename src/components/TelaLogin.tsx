@@ -136,6 +136,15 @@ export function TelaLogin({ aberta, onFechar, onSucesso }: Props) {
             </div>
           )}
 
+          {modo === "signup" && (
+            <div className="text-[11px]" style={{ color: "var(--text-2)" }}>
+              Ao criar a conta, você concorda com a{" "}
+              <a href="privacidade.html" target="_blank" rel="noopener" className="underline" style={{ color: "var(--brand-1)" }}>
+                política de privacidade
+              </a>.
+            </div>
+          )}
+
           {erro && (
             <div
               className="text-xs p-2.5 rounded-lg"
