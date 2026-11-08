@@ -28,10 +28,18 @@ export function IconeDecks({ tamanho = 24, cor = "var(--brand-1)" }: { tamanho?:
   );
 }
 
+// Lua com a espada em forma de T: o símbolo do Umbra Arena, igual ao ícone do app (public/favicon.svg)
 export function SimboloUmbra({ tamanho = 24 }: { tamanho?: number }) {
   return (
     <svg width={tamanho} height={tamanho} viewBox="59 12 52 52" role="img" aria-label="Umbra">
       <path d={CRESCENTE} fill="#c9a648" />
+      {/* A espada vem do desenho de 512 px do ícone, trazida para a escala do crescente */}
+      <g fill="#c9a648" transform="translate(98 13.26) scale(0.152941) translate(-367.15 -94.24)">
+        <circle cx="338" cy="168" r="13" />
+        <rect x="330" y="178" width="16" height="28" />
+        <rect x="290" y="206" width="96" height="18" rx="9" />
+        <path d="M326 228 L350 228 L350 318 L338 350 L326 318 Z" />
+      </g>
     </svg>
   );
 }
