@@ -2,7 +2,7 @@
 
 Sistema web de gerenciamento de torneios de MTG multiplayer. Parte da marca **Umbra** (latim pra "sombra"), que vai se expandir pra TCG retail, consultoria de dados e serviços de sommelier de cerveja artesanal.
 
-- **Produção**: https://umbra-torneios.vercel.app
+- **Produção**: https://torneios.umbraarena.com.br (também responde em umbra-torneios.vercel.app)
 - **Repo**: https://github.com/Luciano-Siqueira/umbra-torneios
 - **Owner**: HerrSiqueira
 

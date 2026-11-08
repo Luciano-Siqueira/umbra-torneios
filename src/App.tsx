@@ -14,6 +14,7 @@ import { publicarAoVivo } from "./core/aoVivo";
 import { listarTorneios } from "./core/storage";
 import { definirAvisoEnvio, puxarDoServidor, resolverConflito, retomarEnvios } from "./core/sync";
 import { confirmar } from "./components/ui/Confirm";
+import { AvisoEnderecoNovo } from "./components/AvisoEnderecoNovo";
 
 // Telas carregadas só quando abertas
 const TelaAnalytics = lazy(() =>
@@ -132,6 +133,9 @@ function AppInner() {
     if (!auth.loading && auth.session && tela === "splash") irPara("torneios");
   }, [auth.loading, auth.session, tela, irPara]);
 
+  const precisaVincularNome = !auth.loading && auth.perfilCarregado && !!auth.session && !auth.isAdmin
+    && auth.nomesJogador.length === 0 && auth.nomesPendentes.length === 0;
+
   // Enquanto confere a sessão salva, ou logo antes de ir para os torneios, a tela de entrada não aparece
   const conferindoSessao = auth.loading || !!auth.session;
 
@@ -168,13 +172,15 @@ function AppInner() {
         }}
       />
 
+      {/* Só depois de entrar, e não junto com a vinculação de nome */}
+      {tela !== "splash" && auth.perfilCarregado && !precisaVincularNome && (
+        <AvisoEnderecoNovo usuario={auth.session?.user} />
+      )}
+
       {/* Vinculação obrigatória de nome pra não-admin que acabou de criar conta */}
       <TelaVincularNome
         onCancelar={vincularAberto ? () => setVincularAberto(false) : undefined}
-        aberta={
-          vincularAberto ||
-          (!auth.loading && auth.perfilCarregado && !!auth.session && !auth.isAdmin && auth.nomesJogador.length === 0 && auth.nomesPendentes.length === 0)
-        }
+        aberta={vincularAberto || precisaVincularNome}
         onConcluido={async () => {
           setVincularAberto(false);
           const res = await puxarDoServidor();
