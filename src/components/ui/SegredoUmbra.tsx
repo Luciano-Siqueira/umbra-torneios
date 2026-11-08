@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { SimboloUmbra } from "./LogoUmbra";
 
 const CLIQUES_PARA_ABRIR = 10;
@@ -28,7 +29,8 @@ export function SegredoUmbra({ tamanho = 26 }: { tamanho?: number }) {
       <span className="flex items-center select-none" onClick={clicar}>
         <SimboloUmbra tamanho={tamanho} />
       </span>
-      {aberto && <TelaSegredo onFechar={() => setAberto(false)} />}
+      {/* No body: a barra do menu tem backdrop-filter, que prenderia a janela fixa dentro dela */}
+      {aberto && createPortal(<TelaSegredo onFechar={() => setAberto(false)} />, document.body)}
     </>
   );
 }
