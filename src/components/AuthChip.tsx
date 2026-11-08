@@ -5,6 +5,7 @@ import { useStore, type ModoView } from "../core/store";
 import { useToast } from "./ui/Toast";
 import { confirmar } from "./ui/Confirm";
 import { IconeAlvo, IconeCadeado, IconeCoroa, IconePessoa } from "./ui/Icones";
+import { DialogoExcluirConta } from "./DialogoExcluirConta";
 
 interface Props {
   auth: AuthState;
@@ -41,6 +42,7 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
 
   const { toast } = useToast();
   const [abrindoMenu, setAbrindoMenu] = useState(false);
+  const [excluindoConta, setExcluindoConta] = useState(false);
   const raiz = useRef<HTMLDivElement>(null);
   const [abrirParaDireita, setAbrirParaDireita] = useState(false);
 
@@ -223,10 +225,23 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
               >
                 ⏻ Sair
               </button>
+              <button
+                onClick={() => { setAbrindoMenu(false); setExcluindoConta(true); }}
+                className="block w-full text-left px-3 py-2 text-[11px] hover:bg-white/5 transition"
+                style={{ color: "var(--text-2)" }}
+              >
+                Excluir minha conta
+              </button>
             </div>
           </div>
         </>
       )}
+      <DialogoExcluirConta
+        aberto={excluindoConta}
+        email={auth.session?.user?.email ?? ""}
+        onFechar={() => setExcluindoConta(false)}
+        onExcluida={() => { setExcluindoConta(false); toast("Sua conta foi excluída", "info"); onSair?.(); }}
+      />
     </div>
   );
 }

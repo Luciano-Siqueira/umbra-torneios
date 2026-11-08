@@ -24,12 +24,14 @@ const contas = vi.hoisted(() => ({
   atual: {} as AuthState,
   vincularNome: vi.fn(async () => {}),
   trocarNome: vi.fn(async () => {}),
+  excluirMinhaConta: vi.fn(async (_senha: string) => {}),
 }));
 
 vi.mock("../../core/auth", () => ({
   useAuth: () => contas.atual,
   vincularNome: contas.vincularNome,
   trocarNome: contas.trocarNome,
+  excluirMinhaConta: contas.excluirMinhaConta,
   desvincularNome: vi.fn(async () => {}),
   sair: vi.fn(async () => {}),
 }));
@@ -576,6 +578,25 @@ describe("trocar nome", () => {
     expect(opcao(conta({ nomesJogador: ["Alguém"] }))).toBe(true);
     expect(opcao(conta({ nomesPendentes: ["Alguém"] }))).toBe(true);
     expect(opcao(conta({ isAdmin: true }))).toBe(false);
+  });
+});
+
+describe("excluir a própria conta", () => {
+  it("o menu da conta abre a exclusão, que pede a senha antes de excluir", async () => {
+    preparar("jogador", {});
+    const sair = vi.fn();
+    abrir(<AuthChip auth={conta({ nomesJogador: ["Alguém"] })} onSair={sair} />);
+    fireEvent.click(screen.getAllByRole("button")[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Excluir minha conta" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Excluir conta" }));
+    expect(screen.getByRole("alert").textContent).toMatch(/senha/);
+    expect(contas.excluirMinhaConta).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText("Sua senha"), { target: { value: "segredo123" } });
+    fireEvent.click(screen.getByRole("button", { name: "Excluir conta" }));
+    await waitFor(() => expect(sair).toHaveBeenCalled());
+    expect(contas.excluirMinhaConta).toHaveBeenCalledWith("segredo123");
   });
 });
 

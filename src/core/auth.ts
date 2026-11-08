@@ -170,6 +170,13 @@ export async function sair() {
   localStorage.removeItem(KEY_PERFIL);
 }
 
+// Apaga a conta de quem está logado; a senha é conferida no banco
+export async function excluirMinhaConta(senha: string): Promise<void> {
+  const { error } = await supabase.rpc("excluir_minha_conta", { p_senha: senha });
+  if (error) throw error;
+  await sair();
+}
+
 // Vincula nome ao usuário atual
 export async function vincularNome(nome: string): Promise<void> {
   const { data: sess } = await supabase.auth.getSession();
