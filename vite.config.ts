@@ -11,6 +11,7 @@ export default defineConfig({
       includeAssets: ["favicon.svg", "privacidade.html", "excluir-conta.html"],
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,webp,png}"], // inclui o banner no cache offline
+        globIgnores: ["screenshots/**"], // só para a instalação e a loja; não precisam ficar no aparelho
       },
       manifest: {
         // id, start_url e scope fixos: o app Android (TWA) fica ligado a eles
@@ -20,12 +21,14 @@ export default defineConfig({
         name: "Umbra Torneios",
         short_name: "Umbra Torneios",
         lang: "pt-BR",
+        dir: "ltr",
         description: "Gestão de torneios de MTG multiplayer",
         categories: ["games", "sports", "utilities"],
         prefer_related_applications: false,
         theme_color: "#0a0a0a",
         background_color: "#0a0a0a",
         display: "standalone",
+        display_override: ["standalone"],
         orientation: "portrait",
         icons: [
           {
@@ -51,6 +54,13 @@ export default defineConfig({
             type: "image/png",
             purpose: "maskable",
           },
+        ],
+        // Prints em 1080x1920 com dados de exemplo: aparecem na tela de instalação do Android
+        screenshots: [
+          { src: "screenshots/splash.png", sizes: "1080x1920", type: "image/png", form_factor: "narrow", label: "Tela inicial" },
+          { src: "screenshots/lista.png", sizes: "1080x1920", type: "image/png", form_factor: "narrow", label: "Seus torneios e o que está em andamento" },
+          { src: "screenshots/mesas.png", sizes: "1080x1920", type: "image/png", form_factor: "narrow", label: "Mesas da rodada com o tempo correndo" },
+          { src: "screenshots/ranking.png", sizes: "1080x1920", type: "image/png", form_factor: "narrow", label: "Ranking com o desempate oficial" },
         ],
       },
     }),

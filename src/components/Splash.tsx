@@ -7,14 +7,20 @@ import { TelaLogin } from "./TelaLogin";
 
 const MANA_PATHS: Record<string, string> = manaPathsData;
 
-// No computador os símbolos vão para os cantos; no celular, para uma fileira logo abaixo da arte
+// Os símbolos voam para uma fileira logo abaixo do título. "posicao" vai de -2 a 2 a partir do centro
 const SIMBOLOS = [
-  { sym: "w", cor: "#f9f5e3", xFinal: 5,  yFinal: 10, xCel: 26, delay: 0.0 },
-  { sym: "u", cor: "#5b9bd5", xFinal: 92, yFinal: 12, xCel: 38, delay: 0.1 },
-  { sym: "b", cor: "#c4b5fd", xFinal: 4,  yFinal: 78, xCel: 50, delay: 0.2 },
-  { sym: "r", cor: "#e15b5b", xFinal: 94, yFinal: 70, xCel: 62, delay: 0.3 },
-  { sym: "g", cor: "#7bc47f", xFinal: 88, yFinal: 90, xCel: 74, delay: 0.4 },
+  { sym: "w", cor: "#f9f5e3", posicao: -2, delay: 0.0 },
+  { sym: "u", cor: "#5b9bd5", posicao: -1, delay: 0.1 },
+  { sym: "b", cor: "#c4b5fd", posicao: 0,  delay: 0.2 },
+  { sym: "r", cor: "#e15b5b", posicao: 1,  delay: 0.3 },
+  { sym: "g", cor: "#7bc47f", posicao: 2,  delay: 0.4 },
 ];
+const ESPACO_CEL = "12vw"; // entre os centros dos símbolos
+const ESPACO_PC = "88px";
+
+// No computador o título "SYSTEM" termina em max(34,4vh, 19,2vw); a fileira fica logo abaixo dele
+const FILEIRA_DE_MANA_PC = "calc(max(34.4vh, 19.2vw) + 52px)";
+const INICIO_DO_CONTEUDO_PC = "calc(max(34.4vh, 19.2vw) + 112px)";
 
 // Banner 1800x1004. No celular, a imagem cobrindo a altura cortava "TOURNAMENT SYSTEM" nas laterais;
 // com 150% da largura o título inteiro aparece. O conteúdo vai abaixo da arte, sem cobrir os dragões.
@@ -71,16 +77,15 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
         backgroundPosition: "center top",
       }}
     >
-      {/* Símbolos decorativos nos cantos (animação curta) */}
+      {/* Símbolos de mana em fileira abaixo do título (animação curta) */}
       {SIMBOLOS.map((s) => (
         <ManaFlutuante
           key={s.sym}
           sym={s.sym}
           cor={s.cor}
-          xFinal={`${celular ? s.xCel : s.xFinal}%`}
-          yFinal={celular ? FILEIRA_DE_MANA_CEL : `${s.yFinal}%`}
+          xFinal={`calc(50% + ${s.posicao} * ${celular ? ESPACO_CEL : ESPACO_PC})`}
+          yFinal={celular ? FILEIRA_DE_MANA_CEL : FILEIRA_DE_MANA_PC}
           delay={s.delay}
-          celular={celular}
         />
       ))}
 
@@ -91,7 +96,7 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
         style={{
           paddingTop: celular
             ? INICIO_DO_CONTEUDO_CEL
-            : "calc(max(34.4vh, 19.2vw) + 16px)",
+            : INICIO_DO_CONTEUDO_PC,
         }}
       >
         <div
@@ -212,11 +217,11 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
 }
 
 function ManaFlutuante({
-  sym, cor, xFinal, yFinal, delay, celular,
+  sym, cor, xFinal, yFinal, delay,
 }: {
-  sym: string; cor: string; xFinal: string; yFinal: string; delay: number; celular: boolean;
+  sym: string; cor: string; xFinal: string; yFinal: string; delay: number;
 }) {
-  // A flutuação troca o transform. No celular ela vai no círculo, para a fileira ficar centralizada
+  // A flutuação troca o transform: fica no círculo, para a fileira continuar centralizada
   const flutuar = `floatY ${4 + delay * 0.5}s ease-in-out ${1 + delay}s infinite`;
   const animName = `voaPara_${sym}`;
   const keyframes = `
@@ -248,7 +253,7 @@ function ManaFlutuante({
           left: "50%",
           top: "50%",
           opacity: 0,
-          animation: `${animName} 0.8s cubic-bezier(0.34, 1.3, 0.64, 1) ${delay}s forwards${celular ? "" : `, ${flutuar}`}`,
+          animation: `${animName} 0.8s cubic-bezier(0.34, 1.3, 0.64, 1) ${delay}s forwards`,
         }}
       >
         <div
@@ -256,7 +261,7 @@ function ManaFlutuante({
           style={{
             background: `radial-gradient(circle, ${cor}, ${cor}99)`,
             boxShadow: `0 0 30px ${cor}cc, 0 0 60px ${cor}66, inset 0 2px 10px rgba(255,255,255,0.3)`,
-            animation: celular ? flutuar : undefined,
+            animation: flutuar,
           }}
         >
           <svg viewBox="0 0 32 32" width="60%" height="60%" fill="var(--page-1)">
