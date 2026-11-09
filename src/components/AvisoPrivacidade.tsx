@@ -26,10 +26,12 @@ export function AvisoPrivacidade({ uid, onAceito, onSair }: { uid: string; onAce
       <div className="space-y-4 text-sm" style={{ color: "var(--text-label)" }}>
         <p>Antes de continuar, veja como o Umbra Torneios usa seus dados:</p>
         <ul className="list-disc pl-5 space-y-1.5" style={{ color: "var(--text-2)" }}>
-          <li>Guardamos seu e-mail, seu nome de jogador e os dados dos torneios: mesas, resultados e ranking.</li>
+          <li>Guardamos seu e-mail, seu nome de jogador e os dados dos torneios: mesas, resultados e ranking.
+            Alguns serviços que usamos ficam fora do Brasil.</li>
           <li>Do pagamento da inscrição, só a marcação de quem pagou, vista apenas por quem organiza.</li>
           <li>Não vendemos dados, não mostramos anúncios e não usamos rastreadores.</li>
-          <li>Você pode excluir sua conta quando quiser, pelo menu da conta.</li>
+          <li>Você pode pedir acesso, correção ou exclusão dos seus dados, e excluir a conta pelo menu da conta.</li>
+          <li>Menores de 18 anos usam com a autorização dos pais ou responsáveis.</li>
         </ul>
         <a
           href="privacidade.html"

@@ -14,6 +14,9 @@
     a { color: #c9a648; }
     .data { color: #8a8a8a; font-size: 0.9rem; }
     li { margin: 4px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { text-align: left; vertical-align: top; padding: 8px 6px; border-bottom: 1px solid #262626; }
+    th { color: #f5f5f5; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -22,28 +25,51 @@
   <div class="data">Umbra Torneios · atualizada em 9 de novembro de 2026</div>
 
   <p>O Umbra Torneios é um app para organizar torneios de Magic multiplayer: inscrições, mesas,
-    tempo das rodadas, ranking e histórico. Esta página explica quais dados usamos e por quê.</p>
+    tempo das rodadas, ranking e histórico. Esta página explica quais dados pessoais usamos, por quê,
+    por quanto tempo e quais são os seus direitos, conforme a Lei Geral de Proteção de Dados
+    (Lei 13.709/2018, a LGPD).</p>
+
+  <h2>Quem é o responsável</h2>
+  <p>O responsável pelos dados (controlador) é a <b>Umbra Arena</b>, que mantém o Umbra Torneios em
+    <a href="https://torneios.umbraarena.com.br">torneios.umbraarena.com.br</a>. Para qualquer assunto
+    sobre seus dados, o canal é <a href="mailto:contato@umbraarena.com.br">contato@umbraarena.com.br</a>.</p>
 
   <h2>Dados que guardamos</h2>
   <ul>
-    <li><b>Conta:</b> seu e-mail e sua senha. A senha é guardada cifrada pelo Supabase, nosso
-      provedor de login e banco de dados; ninguém consegue lê-la.</li>
+    <li><b>Conta:</b> seu e-mail e sua senha. A senha é guardada cifrada; ninguém consegue lê-la.
+      Também guardamos a data em que você aceitou esta política.</li>
     <li><b>Nome de jogador:</b> o nome que você vincula à conta, para encontrar seus torneios,
       sua mesa e seu desempenho.</li>
-    <li><b>Dados dos torneios:</b> nomes dos inscritos, decks, mesas, resultados, pontos e prêmios.</li>
+    <li><b>Dados dos torneios:</b> nomes dos inscritos, decks, mesas, resultados, pontos e prêmios.
+      Quem organiza pode inscrever pessoas que não têm conta no app; nesse caso, guardamos só o nome
+      informado e os resultados daquela pessoa.</li>
     <li><b>Pagamentos da inscrição:</b> só a marcação de quem pagou. Não pedimos nem guardamos
       cartão, conta bancária ou documentos. Essa informação é vista apenas por quem organiza o
       torneio e pelos administradores.</li>
-    <li><b>Assinaturas Pro (Jogador Pro e Organizador Pro):</b> se você assinar, guardamos o número
-      do pagamento no Mercado Pago, o plano, o valor, a data e até quando o Pro vale. O Pix é feito no app do seu banco e
-      processado pelo Mercado Pago; não recebemos nem guardamos dados bancários ou de cartão.</li>
+    <li><b>Notificações:</b> se você ligar os avisos no aparelho, guardamos o endereço técnico que o
+      navegador cria para receber notificações. Ele não identifica você fora do app.</li>
+    <li><b>Planos Pro (Jogador Pro e Organizador Pro):</b> se você assinar, guardamos o número do
+      pagamento no Mercado Pago, o plano, o valor, a data e até quando o plano vale. O Pix é feito no
+      app do seu banco e processado pelo Mercado Pago; não recebemos dados bancários ou de cartão.</li>
+    <li><b>Registros de acesso:</b> nossos provedores registram, por segurança, o endereço IP e o
+      horário dos acessos.</li>
     <li><b>No seu aparelho:</b> uma cópia dos torneios e da sua sessão, para o app abrir rápido e
-      funcionar sem internet por alguns momentos.</li>
+      funcionar sem internet por alguns momentos. Ao sair da conta, essa cópia é apagada.</li>
   </ul>
+  <p>Não pedimos CPF, telefone, endereço ou dados sensíveis.</p>
 
-  <h2>Para que usamos</h2>
-  <p>Só para o funcionamento do app: entrar na conta, montar as mesas, calcular o ranking e mostrar
-    o histórico. Não vendemos dados, não mostramos anúncios e não usamos rastreadores de publicidade.</p>
+  <h2>Para que usamos e com qual base legal</h2>
+  <table>
+    <tr><th>Uso</th><th>Base legal (LGPD, art. 7º)</th></tr>
+    <tr><td>Criar e manter sua conta, montar as mesas, controlar o tempo, calcular o ranking e mandar
+      as notificações que você ligou</td><td>Execução do serviço que você pediu (inciso V)</td></tr>
+    <tr><td>Manter o histórico e o ranking dos torneios já jogados, inclusive de quem foi inscrito
+      sem conta</td><td>Interesse legítimo de organizadores e participantes em registrar os resultados
+      (inciso IX)</td></tr>
+    <tr><td>Registros de pagamento dos planos Pro e registros de acesso</td><td>Cumprimento de
+      obrigação legal (inciso II), como as leis fiscais e o Marco Civil da Internet</td></tr>
+  </table>
+  <p>Não vendemos dados, não mostramos anúncios e não usamos rastreadores de publicidade.</p>
 
   <h2>Quem vê o quê</h2>
   <ul>
@@ -51,20 +77,63 @@
     <li>Quem organiza vê e edita os próprios torneios. Administradores gerenciam todos e as contas.</li>
   </ul>
 
-  <h2>Serviços de terceiros</h2>
+  <h2>Serviços que usamos</h2>
+  <p>Estes serviços tratam dados em nosso nome, só para o funcionamento do app:</p>
   <ul>
     <li><b>Supabase:</b> login e banco de dados.</li>
     <li><b>Vercel:</b> hospedagem do site.</li>
-    <li><b>Mercado Pago:</b> só para quem assina um plano Pro. Recebe seu e-mail e o valor
-      para gerar a cobrança Pix, conforme a política de privacidade dele.</li>
+    <li><b>Resend:</b> envio dos e-mails do app (confirmação de conta, nova senha, convites e avisos
+      aos administradores).</li>
+    <li><b>ImprovMX:</b> recebe as mensagens enviadas para o nosso e-mail de contato.</li>
+    <li><b>Serviço de notificações do navegador</b> (Google, Apple, Microsoft ou Mozilla, conforme o
+      aparelho): entrega os avisos que você ligou. Recebe só o texto do aviso.</li>
+    <li><b>Mercado Pago:</b> só para quem assina um plano Pro. Recebe seu e-mail e o valor para gerar
+      a cobrança Pix, conforme a política de privacidade dele.</li>
     <li><b>Scryfall e MTGJSON:</b> imagens e listas de cartas. O aparelho baixa as imagens direto
       deles; nenhum dado da sua conta é enviado.</li>
   </ul>
-  <p>Os dados trafegam sempre com criptografia (HTTPS).</p>
+  <p>Alguns desses serviços guardam dados em servidores fora do Brasil, como nos Estados Unidos e na
+    Europa. Nós os escolhemos por adotarem cláusulas contratuais e medidas de segurança compatíveis
+    com a LGPD (art. 33). Os dados trafegam sempre com criptografia (HTTPS).</p>
 
-  <h2>Excluir sua conta</h2>
-  <p>Você pode excluir a conta a qualquer momento pelo próprio app. Veja como em
-    <a href="excluir-conta.html">Excluir minha conta</a>.</p>
+  <h2>Por quanto tempo guardamos</h2>
+  <ul>
+    <li><b>Conta, nomes vinculados, permissões e notificações:</b> enquanto a conta existir. Ao
+      excluir a conta, são apagados na hora.</li>
+    <li><b>Torneios, resultados e ranking:</b> enquanto o histórico do torneio existir, porque
+      guardam os resultados de todos os participantes. Você pode pedir a troca do seu nome por um
+      nome genérico.</li>
+    <li><b>Registros de pagamento dos planos Pro:</b> pelo prazo exigido pelas leis fiscais
+      (em geral, 5 anos). Ao excluir a conta, ficam só o número, o valor e a data, sem ligação com você.</li>
+    <li><b>Registros de acesso:</b> pelo tempo definido pelos provedores, no mínimo os 6 meses
+      exigidos pelo Marco Civil da Internet.</li>
+  </ul>
+
+  <h2>Seus direitos</h2>
+  <p>Pela LGPD (art. 18), você pode pedir a qualquer momento:</p>
+  <ul>
+    <li>confirmação de que tratamos seus dados e acesso a eles;</li>
+    <li>correção de dados incompletos ou errados;</li>
+    <li>anonimização, bloqueio ou eliminação de dados desnecessários;</li>
+    <li>portabilidade dos seus dados;</li>
+    <li>eliminação dos dados, inclusive pela <a href="excluir-conta.html">exclusão da conta</a>;</li>
+    <li>informação sobre com quem compartilhamos seus dados;</li>
+    <li>oposição a um uso que você considere indevido.</li>
+  </ul>
+  <p>Peça pelo <a href="mailto:contato@umbraarena.com.br">contato@umbraarena.com.br</a>, de preferência
+    a partir do e-mail da sua conta. Respondemos em até 15 dias. Se não ficar satisfeito, você também
+    pode procurar a Autoridade Nacional de Proteção de Dados (ANPD).</p>
+
+  <h2>Crianças e adolescentes</h2>
+  <p>O app não é feito para crianças. Menores de 18 anos devem usar com o conhecimento e a autorização
+    dos pais ou responsáveis, que podem pedir a exclusão dos dados pelo e-mail de contato.</p>
+
+  <h2>Segurança</h2>
+  <p>O acesso aos dados é controlado no próprio banco: cada pessoa só lê o que pode ver. Senhas e chaves
+    ficam cifradas. Se acontecer um incidente que possa trazer risco a você, avisamos você e a ANPD.</p>
+
+  <h2>Mudanças nesta política</h2>
+  <p>Quando esta política mudar de forma importante, o app mostra o aviso de novo para você ler e aceitar.</p>
 
   <h2>Contato</h2>
   <p>Dúvidas ou pedidos sobre seus dados: <a href="mailto:contato@umbraarena.com.br">contato@umbraarena.com.br</a>.</p>

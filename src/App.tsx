@@ -113,6 +113,7 @@ function AppInner() {
     const dono = auth.session?.user?.id ?? "";
     if (localStorage.getItem(KEY_DONO_CACHE) !== dono) {
       localStorage.removeItem("mtg.torneios.v1");
+      localStorage.removeItem("mtg.jogadores.v1");
       localStorage.setItem(KEY_DONO_CACHE, dono);
     }
     if (dono) retomarEnvios();

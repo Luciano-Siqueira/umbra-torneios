@@ -211,10 +211,19 @@ export async function registrar(email: string, senha: string) {
 
 export async function sair() {
   await supabase.auth.signOut();
-  // Limpa cache local — próximo login puxa fresh do servidor
-  localStorage.removeItem("mtg.torneios.v1");
-  localStorage.removeItem("mtg.modoView");
-  localStorage.removeItem(KEY_PERFIL);
+  // Apaga do aparelho os dados da conta e dos torneios (LGPD: aparelho compartilhado, como o tablet da loja).
+  // O próximo login baixa tudo de novo do servidor.
+  for (const chave of [
+    "mtg.torneios.v1",       // torneios, com nomes e pagamentos
+    "mtg.jogadores.v1",      // lista de nomes de jogadores
+    "mtg.envios.pendentes",  // alterações ainda não enviadas (quem sai já foi avisado)
+    "mtg.torneios.versoes",
+    "mtg.torneios.dono",
+    "mtg.modoView",
+    KEY_PERFIL,
+  ]) {
+    try { localStorage.removeItem(chave); } catch { /* sem armazenamento */ }
+  }
 }
 
 // Registra na conta que a pessoa aceitou esta versão da política de privacidade

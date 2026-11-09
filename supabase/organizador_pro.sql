@@ -57,7 +57,7 @@ create policy "assinaturas_pro_leitura" on public.assinaturas_pro
 -- Cada cobrança Pix criada. O id é o do pagamento no Mercado Pago.
 create table if not exists public.pagamentos_pro (
   id text primary key,
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete set null,  -- sem dono depois que a conta é excluída
   plano text not null default 'jogador',
   valor_centavos int not null,
   dias int not null,
@@ -74,6 +74,31 @@ alter table public.pagamentos_pro alter column plano set default 'jogador';
 alter table public.pagamentos_pro drop constraint if exists pagamentos_pro_plano;
 alter table public.pagamentos_pro add constraint pagamentos_pro_plano check (plano in ('jogador', 'organizador'));
 create index if not exists pagamentos_pro_usuario on public.pagamentos_pro (user_id, criado_em desc);
+
+-- LGPD: ao excluir a conta, o pagamento continua registrado (obrigação fiscal), mas sem ligação com
+-- a pessoa e sem o código Pix. Vale para a exclusão pelo app e pela tela Usuários.
+alter table public.pagamentos_pro alter column user_id drop not null;
+alter table public.pagamentos_pro drop constraint if exists pagamentos_pro_user_id_fkey;
+alter table public.pagamentos_pro add constraint pagamentos_pro_user_id_fkey
+  foreign key (user_id) references auth.users(id) on delete set null;
+
+create or replace function public.pagamento_pro_sem_dono()
+returns trigger
+language plpgsql
+as $fn$
+begin
+  new.qr_code := null;
+  new.qr_code_base64 := null;
+  return new;
+end;
+$fn$;
+
+drop trigger if exists pagamento_pro_sem_dono on public.pagamentos_pro;
+create trigger pagamento_pro_sem_dono
+  before update of user_id on public.pagamentos_pro
+  for each row
+  when (old.user_id is not null and new.user_id is null)
+  execute function public.pagamento_pro_sem_dono();
 
 alter table public.pagamentos_pro enable row level security;
 revoke all on public.pagamentos_pro from public, anon, authenticated;

@@ -1,7 +1,7 @@
 // Aceite da política de privacidade (public/privacidade.html).
 // Fica guardado na própria conta (user_metadata do Supabase), então vale em todos os aparelhos.
 // Ao mudar a política de forma importante, troque a versão: todos veem o aviso de novo.
-export const VERSAO_PRIVACIDADE = "2026-11-08";
+export const VERSAO_PRIVACIDADE = "2026-11-09"; // LGPD: responsável, bases legais, prazos e direitos
 
 const chaveLocal = (uid: string) => `mtg.privacidade.${uid}`;
 
