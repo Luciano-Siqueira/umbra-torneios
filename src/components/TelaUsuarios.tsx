@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { IconeAlerta, IconeBusca, IconeCadeado as IconeCadeadoUsuarios, IconeCheck, IconeChave, IconeEnvelope, IconeLapis, IconeLixeira, IconeVoltar } from "./ui/Icones";
 import { useStore } from "../core/store";
 import { formatarData, listarAssinaturasPro, proAtivo } from "../core/pro";
+import { DialogoProUsuario } from "./DialogoProUsuario";
 import type { ProAte } from "../core/auth";
 import { useAuth } from "../core/auth";
 import {
@@ -35,6 +36,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
   const [busca, setBusca] = useState("");
   const [salvando, setSalvando] = useState<string | null>(null);
   const [editando, setEditando] = useState<UsuarioInfo | null>(null);
+  const [proDe, setProDe] = useState<UsuarioInfo | null>(null);
   const [confirmandoAdmin, setConfirmandoAdmin] = useState<UsuarioInfo | null>(null);
   const [pendentes, setPendentes] = useState<NomePendente[]>([]);
   const [permissoes, setPermissoes] = useState<Map<string, PermissaoJogador>>(new Map());
@@ -331,6 +333,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                     <th className="text-left py-3 px-4"><IconePessoa tamanho={13} /> Jogador</th>
                     <th className="text-center py-3 px-2"><IconeCoroa tamanho={13} /> Admin</th>
                     <th className="text-center py-3 px-2"><IconeAlvo tamanho={13} /> Organizador</th>
+                    <th className="text-center py-3 px-2" title="Plano Pro de cada pessoa. Toque para dar ou tirar dias">Pro</th>
                     <th className="text-center py-3 px-2" title="O jogador vê a aba Mesas e a própria mesa">Mesas</th>
                     <th className="text-center py-3 px-2" title="O jogador vê o tempo da rodada. Precisa das mesas">Tempo</th>
                     <th className="text-center py-3 px-2">Privacidade</th>
@@ -346,14 +349,6 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                         </div>
                         <div className="text-[10px] text-fg-dim">
                           {new Date(u.criado_em).toLocaleDateString("pt-BR")}
-                          {(["organizador", "jogador"] as const).map((plano) => {
-                            const ate = assinaturasPro.get(u.user_id)?.[plano];
-                            return proAtivo(ate) ? (
-                              <span key={plano} className="ml-2 font-bold whitespace-nowrap" style={{ color: "var(--brand-1)" }}>
-                                {plano === "organizador" ? "ORGANIZADOR" : "JOGADOR"} PRO até {formatarData(ate!)}
-                              </span>
-                            ) : null;
-                          })}
                         </div>
                       </td>
                       <td className="py-2 px-4">
@@ -390,6 +385,13 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                           corAtivo="var(--brand-2)"
                           disabled={salvando === u.user_id}
                           onClick={() => togglePapel(u, "organizador")}
+                        />
+                      </td>
+                      <td className="py-2 px-2 text-center">
+                        <SeloPro
+                          usuario={u}
+                          pro={assinaturasPro.get(u.user_id)}
+                          onClick={() => setProDe(u)}
                         />
                       </td>
                       <td className="py-2 px-2 text-center">
@@ -444,8 +446,19 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
         )}
       </main>
 
-      {/* Modal de edição de nomes */}
       <DialogoAvisos aberto={avisosAberto} onFechar={() => setAvisosAberto(false)} />
+
+      {proDe && (
+        <DialogoProUsuario
+          usuario={proDe}
+          pro={assinaturasPro.get(proDe.user_id)}
+          onFechar={() => setProDe(null)}
+          onMudou={async () => setAssinaturasPro(await listarAssinaturasPro())}
+          toast={toast}
+        />
+      )}
+
+      {/* Modal de edição de nomes */}
 
       {editando && (
         <ModalEditarNomes
@@ -767,6 +780,33 @@ function CartaoConvite({ onConvidado }: { onConvidado: (email: string, aviso?: s
       </div>
       {erro && <div role="alert" className="text-xs" style={{ color: "var(--critical)" }}>{erro}</div>}
     </form>
+  );
+}
+
+// Plano Pro em dia na tabela: Organizador (que inclui o Jogador), Jogador ou nenhum
+function SeloPro({ usuario, pro, onClick }: { usuario: UsuarioInfo; pro?: ProAte; onClick: () => void }) {
+  const org = proAtivo(pro?.organizador) ? pro!.organizador! : null;
+  const jog = proAtivo(pro?.jogador) ? pro!.jogador! : null;
+  const quem = usuario.nomes_jogador[0] || usuario.email;
+  const [texto, ate] = usuario.eh_admin
+    ? ["Admin", null]
+    : org ? ["Organizador", org] : jog ? ["Jogador", jog] : ["—", null];
+  const temPro = usuario.eh_admin || !!org || !!jog;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`Planos Pro de ${quem}`}
+      title={usuario.eh_admin ? "Administrador tem todos os recursos Pro" : "Dar ou tirar dias de Pro"}
+      className="text-[11px] whitespace-nowrap rounded-full px-2 py-0.5 border hover:bg-white/5 transition"
+      style={temPro
+        ? { color: "var(--brand-1)", borderColor: "rgba(201,166,72,0.4)", background: "rgba(201,166,72,0.08)" }
+        : { color: "var(--text-2)", borderColor: "var(--line)" }}
+    >
+      {texto}
+      {ate && <span className="block text-[10px]" style={{ color: "var(--text-2)" }}>até {formatarData(ate)}</span>}
+      {org && jog && <span className="block text-[10px]" style={{ color: "var(--text-2)" }}>+ Jogador até {formatarData(jog)}</span>}
+    </button>
   );
 }
 

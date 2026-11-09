@@ -152,6 +152,25 @@ $$;
 revoke all on function public.conceder_pro(uuid, int, text) from public, anon;
 grant execute on function public.conceder_pro(uuid, int, text) to authenticated;
 
+-- Admin encerra um plano na hora (a validade passa a ser agora)
+create or replace function public.revogar_pro(p_user uuid, p_plano text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.eh_admin() then
+    raise exception 'Só administradores podem tirar o Pro';
+  end if;
+  update public.assinaturas_pro
+     set pro_ate = least(pro_ate, now()), atualizado_em = now()
+   where user_id = p_user and plano = p_plano;
+end;
+$$;
+revoke all on function public.revogar_pro(uuid, text) from public, anon;
+grant execute on function public.revogar_pro(uuid, text) to authenticated;
+
 commit;
 
 -- Faz o site enxergar as tabelas novas na hora

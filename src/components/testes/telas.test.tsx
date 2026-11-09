@@ -649,6 +649,40 @@ describe("mesas e tempo liberados na tela Usuários", () => {
     return gravados;
   };
 
+  it("a coluna Pro mostra o plano e o admin dá dias de cortesia", async () => {
+    const daqui10 = new Date(Date.now() + 10 * 86_400_000).toISOString();
+    const concedidos: any[] = [];
+    (globalThis as any).__rede = async (url: string, init?: RequestInit) => {
+      const json = (corpo: unknown, status = 200) =>
+        new Response(JSON.stringify(corpo), { status, headers: { "content-type": "application/json" } });
+      if (url.includes("listar_usuarios")) {
+        return json([
+          { user_id: "j1", email: "jog@teste.local", eh_admin: false, eh_organizador: false, nomes_jogador: ["Jog"] },
+          { user_id: "o1", email: "org@teste.local", eh_admin: false, eh_organizador: true, nomes_jogador: ["Org"] },
+        ]);
+      }
+      if (url.includes("rpc/conceder_pro")) {
+        concedidos.push(JSON.parse(String(init?.body)));
+        return json(daqui10);
+      }
+      if (url.includes("assinaturas_pro")) return json([{ user_id: "o1", plano: "organizador", pro_ate: daqui10 }]);
+      return json([]);
+    };
+    preparar("admin", { isAdmin: true });
+    abrir(<TelaUsuarios />);
+
+    const doOrg = await screen.findByRole("button", { name: "Planos Pro de Org" });
+    expect(doOrg.textContent).toMatch(/Organizador/);
+    const doJog = screen.getByRole("button", { name: "Planos Pro de Jog" });
+    expect(doJog.textContent).toBe("—");
+
+    fireEvent.click(doJog);
+    expect(screen.getByRole("radio", { name: "Jogador Pro" }).getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: "90 dias" }));
+    fireEvent.click(screen.getByRole("button", { name: "Dar 90 dias de Jogador Pro" }));
+    await waitFor(() => expect(concedidos[0]).toEqual({ p_user: "j1", p_dias: 90, p_plano: "jogador" }));
+  });
+
   it("o admin convida por e-mail, com o nome de jogador opcional", async () => {
     const convites: any[] = [];
     (globalThis as any).__rede = async (url: string, init?: RequestInit) => {

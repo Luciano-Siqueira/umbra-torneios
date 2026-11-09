@@ -71,6 +71,19 @@ export async function listarAssinaturasPro(): Promise<Map<string, ProAte>> {
   return mapa;
 }
 
+// Admin: dá dias de cortesia (soma à validade atual) e devolve a nova validade
+export async function concederPro(uid: string, dias: number, plano: Plano): Promise<string> {
+  const { data, error } = await supabase.rpc("conceder_pro", { p_user: uid, p_dias: dias, p_plano: plano });
+  if (error) throw error;
+  return data as string;
+}
+
+// Admin: encerra o plano na hora
+export async function revogarPro(uid: string, plano: Plano): Promise<void> {
+  const { error } = await supabase.rpc("revogar_pro", { p_user: uid, p_plano: plano });
+  if (error) throw error;
+}
+
 async function chamar(corpo: Record<string, unknown>): Promise<any> {
   const { data, error } = await supabase.functions.invoke("pagamento-pro", { body: corpo });
   if (error) {
