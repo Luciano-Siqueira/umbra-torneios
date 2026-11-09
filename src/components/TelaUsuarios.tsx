@@ -221,7 +221,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
       className="min-h-screen text-fg"
       style={FUNDO_DE_TELA}
     >
-      <div className="px-4 md:px-8 py-4 flex items-center gap-3">
+      <div className="relative z-[45] px-4 md:px-8 py-4 flex items-center gap-3">
         <button className="btn-ghost hidden md:block" onClick={voltar}><IconeVoltar cor="currentColor" /> Voltar</button>
         <h1 className="text-xl md:text-3xl font-bold flex items-center gap-2 min-w-0" style={{ color: "var(--text-strong)" }}>
           <IconeUsuarios tamanho={28} /> Gerenciar Usuários

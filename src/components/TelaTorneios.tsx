@@ -189,7 +189,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
       }}
     >
       {/* Topbar fixa estilo navbar */}
-      <div className="sticky top-0 z-30 px-4 md:px-8 py-3"
+      <div className="sticky top-0 z-[45] px-4 md:px-8 py-3"
         style={{
           background: "linear-gradient(to bottom, rgba(10,10,10,0.85) 0%, rgba(10,10,10,0.0) 100%)",
         }}

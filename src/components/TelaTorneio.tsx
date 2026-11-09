@@ -117,7 +117,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
       style={FUNDO_DE_TELA}
     >
       {/* Topo no mesmo vidro da lista de torneios: voltar, marca, nome com o selo e a conta */}
-      <header className="px-3 md:px-8 pt-3 md:pt-4 pb-3">
+      <header className="relative z-[45] px-3 md:px-8 pt-3 md:pt-4 pb-3">
         <div
           className="flex items-center gap-2 md:gap-3 rounded-full pl-1.5 pr-2 md:pr-3 py-1.5 border"
           style={{
