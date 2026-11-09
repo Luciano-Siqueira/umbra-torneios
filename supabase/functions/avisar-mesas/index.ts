@@ -10,8 +10,12 @@
 // Notificações de torneio são do Jogador Pro (o Organizador Pro inclui): recebe quem tem o Pro em dia,
 // sem depender da liberação de Mesas e Tempo. Admins recebem sempre.
 //
+// Quem pede: o app de quem organiza (com login) ou o próprio banco, a cada minuto, para os avisos de
+// tempo (supabase/avisos_do_tempo.sql), com o cabeçalho x-avisos-segredo guardado no cofre.
+//
 // Segredos (Supabase → Edge Functions → Secrets): VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT.
-// Publicar: Edge Functions → avisar-mesas → editar, colar este arquivo e Deploy.
+// Publicar: Edge Functions → avisar-mesas → editar, colar este arquivo, DESLIGAR "Verify JWT"
+// (o banco não manda login; a função confere o login ou o segredo sozinha) e Deploy.
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
 
@@ -47,10 +51,19 @@ Deno.serve(async (req) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
-  const { data: quem } = await servidor.auth.getUser(token);
-  if (!quem?.user) return resposta(401, { erro: "Entre na sua conta" });
-  const uid = quem.user.id;
+  // Pedido do banco (avisos de tempo a cada minuto) ou de uma pessoa logada
+  let uid = "";
+  const segredo = req.headers.get("x-avisos-segredo") ?? "";
+  const doServidor = segredo !== "";
+  if (doServidor) {
+    const { data: confere } = await servidor.rpc("segredo_avisos_confere", { p_segredo: segredo });
+    if (confere !== true) return resposta(401, { erro: "Segredo inválido" });
+  } else {
+    const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+    const { data: quem } = await servidor.auth.getUser(token);
+    if (!quem?.user) return resposta(401, { erro: "Entre na sua conta" });
+    uid = quem.user.id;
+  }
 
   let tipo: Tipo = "mesa";
   let torneioId = "";
@@ -65,6 +78,8 @@ Deno.serve(async (req) => {
   } catch {
     return resposta(400, { erro: "Pedido inválido" });
   }
+  // O banco só pede os avisos de tempo
+  if (doServidor && tipo !== "extra" && tipo !== "ultimo_turno") return resposta(403, { erro: "Tipo não permitido" });
 
   // O admin pode desligar cada tipo na tela Usuários. Sem a tabela, tudo fica ligado.
   const { data: config } = await servidor.from("config_avisos").select("*").eq("id", 1).maybeSingle();
@@ -99,7 +114,7 @@ Deno.serve(async (req) => {
 
     // Só admin ou quem criou o torneio
     const { data: privado } = await servidor.from("torneio_privado").select("criado_por").eq("torneio_id", torneioId).maybeSingle();
-    if (!idsAdmins.includes(uid) && privado?.criado_por !== uid) {
+    if (!doServidor && !idsAdmins.includes(uid) && privado?.criado_por !== uid) {
       return resposta(403, { erro: "Só quem organiza o torneio pode mandar avisos" });
     }
 

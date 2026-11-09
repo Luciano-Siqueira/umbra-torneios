@@ -26,8 +26,8 @@ export function avisoDoMomento(torneio: Torneio, agora: number): TipoAviso | nul
   return null;
 }
 
-// Fica no aparelho de quem organiza, com o torneio aberto: avisa os jogadores quando começa o
-// tempo extra e quando ele acaba (último turno de cada um). A função só manda cada aviso uma vez, mesmo com vários aparelhos abertos.
+// Reserva do aviso que o banco já manda a cada minuto (supabase/avisos_do_tempo.sql): fica no aparelho
+// de quem organiza, com o torneio aberto, e pede os avisos de tempo extra e de último turno. A função só manda cada aviso uma vez, mesmo com vários aparelhos abertos.
 export function AvisosDoTempo({ torneio }: { torneio: Torneio }) {
   const [agora, setAgora] = useState(agoraMs);
   const pedidos = useRef(new Set<string>());
