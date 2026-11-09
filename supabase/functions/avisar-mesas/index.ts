@@ -7,8 +7,8 @@
 //   aprovacao  — aos admins: um nome de jogador aguarda aprovação
 // Quais tipos saem é escolhido pelo admin na tela Usuários (tabela config_avisos). Dentro disso,
 // quem organiza com o Organizador Pro (ou é admin) escolhe por torneio (dados.avisos).
-// Notificações de torneio são do Jogador Pro (o Organizador Pro inclui): só recebe quem tem o Pro em dia
-// e, para mesas e tempo, também "Mesas" (e "Tempo") liberado pelo admin. Admins recebem sempre.
+// Notificações de torneio são do Jogador Pro (o Organizador Pro inclui): recebe quem tem o Pro em dia,
+// sem depender da liberação de Mesas e Tempo. Admins recebem sempre.
 //
 // Segredos (Supabase → Edge Functions → Secrets): VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT.
 // Publicar: Edge Functions → avisar-mesas → editar, colar este arquivo e Deploy.
@@ -156,15 +156,9 @@ Deno.serve(async (req) => {
       .gt("pro_ate", new Date().toISOString());
     const comPro = new Set<string>([...idsAdmins, ...(assinaturas ?? []).map((a) => a.user_id as string)]);
 
-    // Permissões da tela Usuários (sem a tabela, só admins veem mesas e tempo), e só com o Pro
-    const { data: permissoes } = await servidor.from("permissoes_jogador").select("user_id, ver_mesas, ver_tempo");
-    const verMesas = new Set<string>(idsAdmins);
-    const verTempo = new Set<string>(idsAdmins);
-    for (const p of (permissoes ?? []) as { user_id: string; ver_mesas: boolean; ver_tempo: boolean }[]) {
-      if (!comPro.has(p.user_id)) continue;
-      if (p.ver_mesas) verMesas.add(p.user_id);
-      if (p.ver_mesas && p.ver_tempo) verTempo.add(p.user_id);
-    }
+    // Mesa e tempo no celular: todo mundo com o Pro (a liberação do admin só vale dentro do app, sem Pro)
+    const verMesas = comPro;
+    const verTempo = comPro;
 
     const avisar = (nome: string | undefined, podeVer: Set<string> | null, msg: Mensagem) => {
       if (!nome) return;

@@ -37,6 +37,11 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
   const [salvando, setSalvando] = useState<string | null>(null);
   const [editando, setEditando] = useState<UsuarioInfo | null>(null);
   const [proDe, setProDe] = useState<UsuarioInfo | null>(null);
+  // Com Pro em dia, mesas e tempo ficam liberados sem depender das chaves
+  const temProNaTabela = (u: UsuarioInfo) => {
+    const p = assinaturasPro.get(u.user_id);
+    return proAtivo(p?.jogador) || proAtivo(p?.organizador);
+  };
   const [confirmandoAdmin, setConfirmandoAdmin] = useState<UsuarioInfo | null>(null);
   const [pendentes, setPendentes] = useState<NomePendente[]>([]);
   const [permissoes, setPermissoes] = useState<Map<string, PermissaoJogador>>(new Map());
@@ -306,7 +311,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
         )}
 
         <div className="text-xs" style={{ color: "var(--text-2)" }}>
-          Com Mesas liberado, todo jogador vê a própria mesa. Tempo, as outras mesas e as notificações só valem com o Jogador Pro ou o Organizador Pro em dia.
+          Quem tem Jogador Pro ou Organizador Pro vê mesas e tempo e recebe as notificações sempre. Sem Pro, Mesas liberado mostra só a própria mesa.
         </div>
 
         {faltaTabelaPermissoes && (
@@ -334,8 +339,8 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                     <th className="text-center py-3 px-2"><IconeCoroa tamanho={13} /> Admin</th>
                     <th className="text-center py-3 px-2"><IconeAlvo tamanho={13} /> Organizador</th>
                     <th className="text-center py-3 px-2" title="Plano Pro de cada pessoa. Toque para dar ou tirar dias">Pro</th>
-                    <th className="text-center py-3 px-2" title="O jogador vê a aba Mesas e a própria mesa">Mesas</th>
-                    <th className="text-center py-3 px-2" title="O jogador vê o tempo da rodada. Precisa das mesas">Tempo</th>
+                    <th className="text-center py-3 px-2" title="Sem Pro, o jogador vê só a própria mesa. Com Pro, fica sempre aceso">Mesas</th>
+                    <th className="text-center py-3 px-2" title="O tempo da rodada é do Jogador Pro: aceso para quem tem o plano">Tempo</th>
                     <th className="text-center py-3 px-2">Privacidade</th>
                     <th className="text-right py-3 px-4">Ações</th>
                   </tr>
@@ -397,18 +402,18 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                       <td className="py-2 px-2 text-center">
                         <ToggleButton
                           rotulo={`Mesas para ${u.nomes_jogador[0] || u.email}`}
-                          ativo={u.eh_admin || permissaoDe(u).ver_mesas}
+                          ativo={u.eh_admin || temProNaTabela(u) || permissaoDe(u).ver_mesas}
                           corAtivo="var(--brand-1)"
-                          disabled={u.eh_admin || faltaTabelaPermissoes || salvando === u.user_id}
+                          disabled={u.eh_admin || temProNaTabela(u) || faltaTabelaPermissoes || salvando === u.user_id}
                           onClick={() => alternarPermissao(u, "ver_mesas")}
                         />
                       </td>
                       <td className="py-2 px-2 text-center">
                         <ToggleButton
                           rotulo={`Tempo para ${u.nomes_jogador[0] || u.email}`}
-                          ativo={u.eh_admin || permissaoDe(u).ver_tempo}
+                          ativo={u.eh_admin || temProNaTabela(u)}
                           corAtivo="var(--brand-1)"
-                          disabled={u.eh_admin || faltaTabelaPermissoes || !permissaoDe(u).ver_mesas || salvando === u.user_id}
+                          disabled
                           onClick={() => alternarPermissao(u, "ver_tempo")}
                         />
                       </td>

@@ -13,7 +13,7 @@ import { podeVenderNoApp } from "../core/plataforma";
 const INTERVALO_CONSULTA_MS = 5000;
 
 const BENEFICIOS_JOGADOR: { icone: ReactNode; texto: string }[] = [
-  { icone: <IconeAmpulheta />, texto: "O tempo da rodada e todas as mesas do torneio no app (sem o Pro, só a sua mesa)." },
+  { icone: <IconeAmpulheta />, texto: "Sua mesa, todas as mesas e o tempo da rodada no app, sem esperar a liberação do administrador." },
   { icone: <IconeSino />, texto: "Notificações no celular: sua mesa, tempo extra, último turno e fim do torneio." },
   { icone: <IconeDecks tamanho={16} />, texto: "Decks: todos os decks Commander, com as cartas e as cores." },
   { icone: <IconeAnalytics />, texto: "Analytics: seu desempenho, rivais, conquistas e evolução." },
@@ -120,11 +120,6 @@ export function DialogoPro({ aberto, onFechar, plano }: { aberto: boolean; onFec
             </li>
           ))}
         </ul>
-        {plano === "jogador" && (
-          <p className="text-xs" style={{ color: "var(--text-2)" }}>
-            Mesas, tempo e notificações aparecem quando o administrador libera para você.
-          </p>
-        )}
 
         {!status.ehAdmin && !venda && !ativoAte && !incluidoNoOrganizador && (
           <p className="text-xs" style={{ color: "var(--text-2)" }}>

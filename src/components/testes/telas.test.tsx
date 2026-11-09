@@ -735,7 +735,7 @@ describe("mesas e tempo liberados na tela Usuários", () => {
     expect(screen.getByText(/1 de 2 aceitaram a política/)).toBeTruthy();
   });
 
-  it("o admin liga as mesas e depois o tempo de um jogador", async () => {
+  it("o admin libera a mesa de quem não tem Pro; o tempo é só do Pro", async () => {
     const gravados = redeDeUsuarios([]);
     preparar("admin", { isAdmin: true });
     abrir(<TelaUsuarios />);
@@ -744,15 +744,30 @@ describe("mesas e tempo liberados na tela Usuários", () => {
     const tempo = screen.getByRole("switch", { name: "Tempo para Jog" }) as HTMLButtonElement;
     expect(mesas.getAttribute("aria-checked")).toBe("false");
     expect(tempo.disabled).toBe(true);
+    expect(tempo.getAttribute("aria-checked")).toBe("false");
 
     fireEvent.click(mesas);
     await waitFor(() => expect(mesas.getAttribute("aria-checked")).toBe("true"));
     expect(gravados[0]).toMatchObject({ user_id: "j1", ver_mesas: true, ver_tempo: false });
+    expect(tempo.disabled).toBe(true);
+  });
 
-    await waitFor(() => expect(tempo.disabled).toBe(false));
-    fireEvent.click(tempo);
-    await waitFor(() => expect(tempo.getAttribute("aria-checked")).toBe("true"));
-    expect(gravados[1]).toMatchObject({ ver_mesas: true, ver_tempo: true });
+  it("com Pro, mesas e tempo ficam acesos sem depender das chaves", async () => {
+    const daqui10 = new Date(Date.now() + 10 * 86_400_000).toISOString();
+    (globalThis as any).__rede = async (url: string) => {
+      const json = (corpo: unknown) => new Response(JSON.stringify(corpo), { status: 200, headers: { "content-type": "application/json" } });
+      if (url.includes("listar_usuarios")) {
+        return json([{ user_id: "j1", email: "jog@teste.local", eh_admin: false, eh_organizador: false, nomes_jogador: ["Jog"] }]);
+      }
+      if (url.includes("assinaturas_pro")) return json([{ user_id: "j1", plano: "jogador", pro_ate: daqui10 }]);
+      return json([]);
+    };
+    preparar("admin", { isAdmin: true });
+    abrir(<TelaUsuarios />);
+    const mesas = await screen.findByRole("switch", { name: "Mesas para Jog" });
+    await waitFor(() => expect(mesas.getAttribute("aria-checked")).toBe("true"));
+    expect((mesas as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByRole("switch", { name: "Tempo para Jog" }).getAttribute("aria-checked")).toBe("true");
   });
 
   it("sem a tabela no banco, avisa para rodar o SQL", async () => {
