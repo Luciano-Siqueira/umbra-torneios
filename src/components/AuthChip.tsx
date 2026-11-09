@@ -108,7 +108,8 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
         >
           {modoView === "admin" ? "ADMIN" : modoView === "organizador" ? "ORGANIZADOR" : "JOGADOR"}
         </span>
-        <span className="text-xs truncate max-w-[90px] md:max-w-[140px]" style={{ color: "var(--text-label)" }}>
+        {/* Em celular bem estreito só o ícone aparece, para o logo caber; o menu mostra a conta inteira */}
+        <span className="text-xs truncate hidden min-[420px]:inline max-w-[72px] sm:max-w-[90px] md:max-w-[140px]" style={{ color: "var(--text-label)" }}>
           {modoView === "jogador" && auth.nomesJogador[0] ? auth.nomesJogador[0] : emailCurto}
         </span>
       </button>

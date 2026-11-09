@@ -16,7 +16,7 @@ import { BANNER_IMAGE } from "../banner-image";
 import { EscritaUmbra, IconeDecks } from "./ui/LogoUmbra";
 import { SegredoUmbra } from "./ui/SegredoUmbra";
 import { CartaoAvisos } from "./CartaoAvisos";
-import { filtrarTorneios } from "../core/buscaTorneios";
+import { filtrarPorPeriodo, filtrarTorneios } from "../core/buscaTorneios";
 import { IconeAnalytics, IconeBaixar, IconeCaixa, IconeDado, IconeDocumento, IconeLapis, IconeLixeira, IconePasta, IconeUsuarios } from "./ui/Icones";
 import { SimboloMana, type CorMana } from "./ui/SimboloMana";
 import { ItemMenu, MenuBarra, TituloMenu } from "./ui/MenuBarra";
@@ -67,6 +67,8 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
   const [nomesDasContas, setNomesDasContas] = useState<Map<string, string>>(new Map());
   const [emailsDasContas, setEmailsDasContas] = useState<Map<string, string>>(new Map());
   const [busca, setBusca] = useState("");
+  const [periodoDe, setPeriodoDe] = useState(""); // AAAA-MM-DD, do calendário
+  const [periodoAte, setPeriodoAte] = useState("");
   // Só o admin consulta a lista de contas. Conta sem nome vinculado fica sem a linha "Criado por"
   useEffect(() => {
     if (!verCriador) {
@@ -91,9 +93,14 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
   // Busca só para quem gerencia: o admin acha também por quem organizou (nome ou e-mail)
   const mostrarBusca = podeEditar && torneios.length > 0;
   const torneiosDaLista = mostrarBusca
-    ? filtrarTorneios(torneios, busca, (t) =>
-        verCriador && t.criadoPor ? `${nomesDasContas.get(t.criadoPor) ?? ""} ${emailsDasContas.get(t.criadoPor) ?? ""}` : "")
+    ? filtrarPorPeriodo(
+        filtrarTorneios(torneios, busca, (t) =>
+          verCriador && t.criadoPor ? `${nomesDasContas.get(t.criadoPor) ?? ""} ${emailsDasContas.get(t.criadoPor) ?? ""}` : ""),
+        periodoDe,
+        periodoAte,
+      )
     : torneios;
+  const filtrando = Boolean(busca.trim() || periodoDe || periodoAte);
   const ult30 = metricasRecentes(torneios, 30);
   const ultimoCampeao = (() => {
     const finalizados = torneios
@@ -193,7 +200,8 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
           }}
         >
           <span className="flex items-center pl-2 pr-1"><SegredoUmbra tamanho={26} /></span>
-          <span className="flex-1 md:flex-none min-w-0 truncate pr-2"><EscritaUmbra tamanho={15} /></span>
+          {/* O logo nunca encolhe; quem cede espaço em tela estreita é o nome da conta */}
+          <span className="flex-1 md:flex-none pr-1"><EscritaUmbra tamanho={14} /></span>
 
           {/* CTA principal — só admin vê */}
           {podeEditar && (
@@ -468,25 +476,65 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
         ) : (
           <>
           {mostrarBusca && (
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
+            <div
+              className="flex flex-wrap items-center gap-2 mb-4 p-2.5 rounded-2xl border"
+              style={{ background: "rgba(15,15,15,0.78)", borderColor: "rgba(201,166,72,0.18)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
+            >
               <input
                 type="search"
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                placeholder={verCriador ? "🔎 Buscar por torneio, organizador ou data" : "🔎 Buscar por torneio ou data"}
+                placeholder={verCriador ? "🔎 Buscar por torneio ou organizador" : "🔎 Buscar por torneio"}
                 aria-label="Buscar torneios"
-                className="input flex-1 sm:max-w-md"
+                className="input flex-1 min-w-[200px] sm:max-w-md"
               />
-              {busca.trim() && (
-                <span className="text-xs" style={{ color: "var(--text-2)" }}>
-                  {torneiosDaLista.length} de {contar(torneios.length, "torneio")}
-                </span>
+              {/* Período pela data de criação: o campo de data abre o calendário do aparelho */}
+              <div className="flex gap-2 w-full sm:w-auto">
+              <label className="flex flex-1 min-w-0 items-center gap-1.5 text-xs" style={{ color: "var(--text-label)" }}>
+                De
+                <input
+                  type="date"
+                  value={periodoDe}
+                  max={periodoAte || undefined}
+                  onChange={(e) => setPeriodoDe(e.target.value)}
+                  aria-label="Criados a partir de"
+                  className="input !py-1.5 !px-2 min-w-0 w-full sm:w-[9.5rem]"
+                  style={{ colorScheme: "dark" }}
+                />
+              </label>
+              <label className="flex flex-1 min-w-0 items-center gap-1.5 text-xs" style={{ color: "var(--text-label)" }}>
+                Até
+                <input
+                  type="date"
+                  value={periodoAte}
+                  min={periodoDe || undefined}
+                  onChange={(e) => setPeriodoAte(e.target.value)}
+                  aria-label="Criados até"
+                  className="input !py-1.5 !px-2 min-w-0 w-full sm:w-[9.5rem]"
+                  style={{ colorScheme: "dark" }}
+                />
+              </label>
+              </div>
+              {filtrando && (
+                <>
+                  <button
+                    type="button"
+                    className="text-xs underline"
+                    style={{ color: "var(--brand-1)" }}
+                    onClick={() => { setBusca(""); setPeriodoDe(""); setPeriodoAte(""); }}
+                  >
+                    Limpar
+                  </button>
+                  <span className="text-xs" style={{ color: "var(--text-2)" }}>
+                    {torneiosDaLista.length} de {contar(torneios.length, "torneio")}
+                  </span>
+                </>
               )}
             </div>
           )}
           {torneiosDaLista.length === 0 ? (
             <div className="text-center py-12 text-sm" style={{ color: "var(--text-2)" }}>
-              Nenhum torneio encontrado para "{busca.trim()}". Tente o nome, {verCriador ? "quem organizou, " : ""}o mês ou uma data como 08/11.
+              Nenhum torneio encontrado com esses filtros. Tente outro nome{verCriador ? ", outra pessoa" : ""} ou um período maior.
             </div>
           ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">

@@ -30,3 +30,20 @@ export function filtrarTorneios(
     return palavras.every((p) => onde.includes(p));
   });
 }
+
+// "AAAA-MM-DD" no fuso do aparelho, o mesmo formato do campo de calendário (input type="date")
+export function diaLocal(iso: string | undefined): string {
+  const d = new Date(iso ?? "");
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// Período pela data de criação; "de" e "ate" são opcionais e incluem o próprio dia
+export function filtrarPorPeriodo(torneios: Torneio[], de: string, ate: string): Torneio[] {
+  if (!de && !ate) return torneios;
+  return torneios.filter((t) => {
+    const dia = diaLocal(t.dataCriacao);
+    if (!dia) return false;
+    return (!de || dia >= de) && (!ate || dia <= ate);
+  });
+}

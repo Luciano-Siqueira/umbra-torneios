@@ -1337,6 +1337,20 @@ describe("busca na lista de torneios", () => {
     expect(screen.queryByRole("heading", { level: 3, name: "Copa Sul" })).toBeNull();
   });
 
+  it("o calendário filtra pelo período de criação", () => {
+    const antigo = { ...criar("Copa Antiga"), dataCriacao: "2026-01-10T12:00:00" };
+    const novo = { ...criar("Copa Nova"), dataCriacao: "2026-11-05T12:00:00" };
+    preparar("organizador", { isOrganizador: true, session: { user: { id: "u1" } } as any }, [
+      { ...antigo, criadoPor: "u1" }, { ...novo, criadoPor: "u1" },
+    ]);
+    abrir(<TelaTorneios />);
+    fireEvent.change(screen.getByLabelText("Criados a partir de"), { target: { value: "2026-11-01" } });
+    expect(screen.queryByRole("heading", { level: 3, name: "Copa Antiga" })).toBeNull();
+    expect(screen.getAllByRole("heading", { level: 3, name: "Copa Nova" }).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "Limpar" }));
+    expect(screen.getAllByRole("heading", { level: 3, name: "Copa Antiga" }).length).toBeGreaterThan(0);
+  });
+
   it("organizador busca por torneio ou data; jogador não tem a barra", () => {
     preparar("organizador", { isOrganizador: true, session: { user: { id: "u1" } } as any }, [criar("Liga Norte", "u1")]);
     abrir(<TelaTorneios />);
