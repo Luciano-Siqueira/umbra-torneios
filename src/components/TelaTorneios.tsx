@@ -18,7 +18,10 @@ import { SegredoUmbra } from "./ui/SegredoUmbra";
 import { CartaoAvisos } from "./CartaoAvisos";
 import { SeloStatus } from "./ui/SeloStatus";
 import { filtrarPorPeriodo, filtrarTorneios } from "../core/buscaTorneios";
-import { IconeAnalytics, IconeBaixar, IconeCaixa, IconeDado, IconeDocumento, IconeLapis, IconeLixeira, IconePasta, IconeUsuarios } from "./ui/Icones";
+import {
+  IconeAlerta, IconeAnalytics, IconeBaixar, IconeBusca, IconeCaixa, IconeDado, IconeDocumento, IconeHistorico,
+  IconeLapis, IconeLixeira, IconePasta, IconePlay, IconeRaio, IconeReiniciar, IconeTrofeu, IconeUsuarios,
+} from "./ui/Icones";
 import { SimboloMana, type CorMana } from "./ui/SimboloMana";
 import { ItemMenu, MenuBarra, TituloMenu } from "./ui/MenuBarra";
 import { contar, formatarNumero, formatarReais } from "../core/formato";
@@ -330,6 +333,68 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
 
       {/* Faixa "Em andamento" + KPIs rápidos — colados abaixo do menu */}
       <div className="px-4 md:px-8 space-y-4 mb-4 mt-2">
+        {/* Busca e período no topo, logo abaixo do menu */}
+        {mostrarBusca && (
+          <div
+            className="flex flex-wrap items-center gap-2 p-2.5 rounded-2xl border"
+            style={{ background: "rgba(15,15,15,0.78)", borderColor: "rgba(201,166,72,0.18)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
+          >
+            <span className="relative flex-1 min-w-[200px] sm:max-w-md">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"><IconeBusca /></span>
+            <input
+              type="search"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder={verCriador ? "Buscar por torneio ou organizador" : "Buscar por torneio"}
+              aria-label="Buscar torneios"
+              className="input w-full !pl-9"
+            />
+            </span>
+            {/* Período pela data de criação: o campo de data abre o calendário do aparelho */}
+            <div className="flex gap-2 w-full sm:w-auto">
+            <label className="flex flex-1 min-w-0 items-center gap-1.5 text-xs" style={{ color: "var(--text-label)" }}>
+              De
+              <input
+                type="date"
+                value={periodoDe}
+                max={periodoAte || undefined}
+                onChange={(e) => setPeriodoDe(e.target.value)}
+                aria-label="Criados a partir de"
+                className="input !py-1.5 !px-2 min-w-0 w-full sm:w-[9.5rem]"
+                style={{ colorScheme: "dark" }}
+              />
+            </label>
+            <label className="flex flex-1 min-w-0 items-center gap-1.5 text-xs" style={{ color: "var(--text-label)" }}>
+              Até
+              <input
+                type="date"
+                value={periodoAte}
+                min={periodoDe || undefined}
+                onChange={(e) => setPeriodoAte(e.target.value)}
+                aria-label="Criados até"
+                className="input !py-1.5 !px-2 min-w-0 w-full sm:w-[9.5rem]"
+                style={{ colorScheme: "dark" }}
+              />
+            </label>
+            </div>
+            {filtrando && (
+              <>
+                <button
+                  type="button"
+                  className="text-xs underline"
+                  style={{ color: "var(--brand-1)" }}
+                  onClick={() => { setBusca(""); setPeriodoDe(""); setPeriodoAte(""); }}
+                >
+                  Limpar
+                </button>
+                <span className="text-xs" style={{ color: "var(--text-2)" }}>
+                  {torneiosDaLista.length} de {contar(torneios.length, "torneio")}
+                </span>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Avisos da mesa: só para quem pode ver as mesas */}
         {auth.session && (auth.verMesas || auth.isAdmin) && <CartaoAvisos uid={auth.session.user.id} />}
         {torneioEmAndamento && (
@@ -352,7 +417,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
                 border: "1px solid rgba(252,211,77,0.35)",
                 animation: "pulseAtivo 2s ease-in-out infinite",
               }}
-            >⚡</div>
+            ><IconeRaio tamanho={28} cor="currentColor" /></div>
             <div className="flex-1 min-w-0">
               <div className="text-[11px] font-bold tracking-widest uppercase" style={{ color: "var(--warn)" }}>
                 EM ANDAMENTO
@@ -372,7 +437,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
                 boxShadow: "0 4px 16px -4px rgba(252,211,77,0.5)",
               }}
               onClick={(e) => { e.stopPropagation(); abrirTorneio(torneioEmAndamento.id); }}
-            >▶ Continuar</button>
+            ><span className="inline-flex items-center gap-1.5"><IconePlay cor="currentColor" /> Continuar</span></button>
           </div>
         )}
 
@@ -387,7 +452,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             }}
           >
             <span className="flex-1 min-w-[200px]">
-              ⚠ <b style={{ color: "var(--text-strong)" }}>{t.nome}</b> está parado na rodada {t.rodadaAtual} há mais de 3 dias.
+              <IconeAlerta cor="var(--warn)" /> <b style={{ color: "var(--text-strong)" }}>{t.nome}</b> está parado na rodada {t.rodadaAtual} há mais de 3 dias.
               Abra para finalizar ou continuar.
             </span>
             <button className="btn-ghost text-sm" onClick={() => abrirTorneio(t.id)}>Abrir</button>
@@ -426,7 +491,8 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
               corBorda="rgba(201,166,72,0.25)"
               corLabel="var(--brand-1)"
               label="Último campeão"
-              valor={ultimoCampeao ? `🏆 ${ultimoCampeao.nome}` : "—"}
+              valor={ultimoCampeao ? ultimoCampeao.nome : "—"}
+              icone={ultimoCampeao ? <IconeTrofeu /> : undefined}
               sub={ultimoCampeao ? ultimoCampeao.torneio : "nenhum torneio finalizado"}
               valorPequeno
             />
@@ -449,7 +515,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
               WebkitBackdropFilter: "blur(10px)",
             }}
           >
-            <div className="text-5xl mb-4">🏆</div>
+            <div className="mb-4 flex justify-center"><IconeTrofeu tamanho={48} /></div>
             <div className="text-xl font-bold mb-2" style={{ color: "var(--text-strong)" }}>
               {auth.isAdmin ? "Nenhum torneio ainda" : "Nenhum torneio para mostrar"}
             </div>
@@ -470,69 +536,12 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
                 className="text-xs px-4 py-2 rounded-full border transition hover:bg-white/5"
                 style={{ color: "var(--brand-1)", borderColor: "rgba(201,166,72,0.3)" }}
               >
-                ↻ Atualizar
+                <IconeReiniciar cor="currentColor" /> Atualizar
               </button>
             )}
           </div>
         ) : (
           <>
-          {mostrarBusca && (
-            <div
-              className="flex flex-wrap items-center gap-2 mb-4 p-2.5 rounded-2xl border"
-              style={{ background: "rgba(15,15,15,0.78)", borderColor: "rgba(201,166,72,0.18)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
-            >
-              <input
-                type="search"
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                placeholder={verCriador ? "🔎 Buscar por torneio ou organizador" : "🔎 Buscar por torneio"}
-                aria-label="Buscar torneios"
-                className="input flex-1 min-w-[200px] sm:max-w-md"
-              />
-              {/* Período pela data de criação: o campo de data abre o calendário do aparelho */}
-              <div className="flex gap-2 w-full sm:w-auto">
-              <label className="flex flex-1 min-w-0 items-center gap-1.5 text-xs" style={{ color: "var(--text-label)" }}>
-                De
-                <input
-                  type="date"
-                  value={periodoDe}
-                  max={periodoAte || undefined}
-                  onChange={(e) => setPeriodoDe(e.target.value)}
-                  aria-label="Criados a partir de"
-                  className="input !py-1.5 !px-2 min-w-0 w-full sm:w-[9.5rem]"
-                  style={{ colorScheme: "dark" }}
-                />
-              </label>
-              <label className="flex flex-1 min-w-0 items-center gap-1.5 text-xs" style={{ color: "var(--text-label)" }}>
-                Até
-                <input
-                  type="date"
-                  value={periodoAte}
-                  min={periodoDe || undefined}
-                  onChange={(e) => setPeriodoAte(e.target.value)}
-                  aria-label="Criados até"
-                  className="input !py-1.5 !px-2 min-w-0 w-full sm:w-[9.5rem]"
-                  style={{ colorScheme: "dark" }}
-                />
-              </label>
-              </div>
-              {filtrando && (
-                <>
-                  <button
-                    type="button"
-                    className="text-xs underline"
-                    style={{ color: "var(--brand-1)" }}
-                    onClick={() => { setBusca(""); setPeriodoDe(""); setPeriodoAte(""); }}
-                  >
-                    Limpar
-                  </button>
-                  <span className="text-xs" style={{ color: "var(--text-2)" }}>
-                    {torneiosDaLista.length} de {contar(torneios.length, "torneio")}
-                  </span>
-                </>
-              )}
-            </div>
-          )}
           {torneiosDaLista.length === 0 ? (
             <div className="text-center py-12 text-sm" style={{ color: "var(--text-2)" }}>
               Nenhum torneio encontrado com esses filtros. Tente outro nome{verCriador ? ", outra pessoa" : ""} ou um período maior.
@@ -665,7 +674,7 @@ function CardTorneio({
 
         {/* Data */}
         <div className="text-xs mt-1.5 flex items-center gap-1.5" style={{ color: "var(--text-2)" }}>
-          <span>◷</span> {data}
+          <IconeHistorico tamanho={13} cor="currentColor" /> {data}
         </div>
 
         {/* Divisor com gradiente */}
@@ -724,9 +733,9 @@ function Stat({ label, valor, cor }: { label: string; valor: string; cor: string
   );
 }
 
-function MiniKpi({ corFundo, corBorda, corLabel, label, valor, sub, valorPequeno }: {
+function MiniKpi({ corFundo, corBorda, corLabel, label, valor, sub, valorPequeno, icone }: {
   corFundo: string; corBorda: string; corLabel: string;
-  label: string; valor: string; sub?: string; valorPequeno?: boolean;
+  label: string; valor: string; sub?: string; valorPequeno?: boolean; icone?: React.ReactNode;
 }) {
   return (
     <div
@@ -745,7 +754,7 @@ function MiniKpi({ corFundo, corBorda, corLabel, label, valor, sub, valorPequeno
         className={`${valorPequeno ? "text-base" : "text-2xl md:text-3xl"} font-bold tabular-nums mt-1 truncate`}
         style={{ color: "var(--text-strong)" }}
       >
-        {valor}
+        {icone && <span className="mr-1.5">{icone}</span>}{valor}
       </div>
       {sub && (
         <div className="text-[11px] mt-0.5 truncate" style={{ color: "var(--text-2)" }}>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAvisos } from "../core/notificacoes";
 import { useToast } from "./ui/Toast";
+import { IconeSino } from "./ui/Icones";
 
 const chaveDispensado = (uid: string) => `mtg.avisos.dispensado.${uid}`;
 
@@ -37,7 +38,7 @@ export function CartaoAvisos({ uid }: { uid: string }) {
       style={{ background: "rgba(201,166,72,0.08)", borderColor: "rgba(201,166,72,0.35)" }}
     >
       <div className="flex-1 min-w-0">
-        <div className="font-semibold" style={{ color: "var(--text-strong)" }}>🔔 Receba sua mesa no celular</div>
+        <div className="font-semibold" style={{ color: "var(--text-strong)" }}><IconeSino /> Receba sua mesa no celular</div>
         <div className="text-xs mt-0.5" style={{ color: "var(--text-2)" }}>
           Quando a rodada começar, avisamos a sua mesa e com quem você joga.
         </div>

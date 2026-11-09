@@ -129,3 +129,9 @@ export const IconePato = criar(<>
   <path d="M18.5 7.2h3l-2.6 1.8M13 10.3C12 11.4 10 12 8 11.6L3 10.5c0 5 3.3 9 8.5 9h2c3.4 0 6-2.4 6-5.4 0-1.6-.8-3-2-3.9" />
 </>);
 export const IconeVoltar = criar(<path d="M15 5 8 12l7 7" />);
+export const IconeAlerta = criar(<path d="M12 4 2.5 20h19zM12 10v4.5M12 17.5v.01" />);
+export const IconeBusca = criar(<>
+  <circle cx="11" cy="11" r="6.5" />
+  <path d="m16 16 4.5 4.5" />
+</>);
+export const IconeCirculo = criar(<circle cx="12" cy="12" r="6" />);

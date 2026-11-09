@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { Torneio } from "../../core/types";
 import { torneioParado } from "../../core/visibilidade";
+import { IconeAlerta, IconeCirculo, IconeCoroa } from "./Icones";
 
 type TipoStatus = "aberto" | "rodada" | "parado" | "finalizado";
 
@@ -19,7 +20,9 @@ const ESTILO_DO_STATUS: Record<TipoStatus, CSSProperties> = {
   finalizado: { background: "rgba(123,196,127,0.10)", color: "rgba(123,196,127,0.85)", borderColor: "rgba(123,196,127,0.22)" },
 };
 
-const SINAL_DO_STATUS: Record<Exclude<TipoStatus, "rodada">, string> = { aberto: "○", parado: "⚠", finalizado: "♛" };
+const SINAL_DO_STATUS: Record<Exclude<TipoStatus, "rodada">, typeof IconeCoroa> = {
+  aberto: IconeCirculo, parado: IconeAlerta, finalizado: IconeCoroa,
+};
 
 // Selo do torneio: no card da lista e no topo da tela do torneio
 export function SeloStatus({ torneio, compacto = false }: { torneio: Torneio; compacto?: boolean }) {
@@ -31,7 +34,7 @@ export function SeloStatus({ torneio, compacto = false }: { torneio: Torneio; co
     >
       {status.tipo === "rodada"
         ? <span className="ponto-ao-vivo" aria-hidden="true" />
-        : <span aria-hidden="true">{SINAL_DO_STATUS[status.tipo]}</span>}
+        : (() => { const Sinal = SINAL_DO_STATUS[status.tipo]; return <Sinal tamanho={compacto ? 10 : 11} cor="currentColor" />; })()}
       {status.texto}
     </span>
   );

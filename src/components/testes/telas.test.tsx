@@ -315,7 +315,8 @@ describe("rodadas e desempate", () => {
     expect(selo("Jogando").style.background).toBe("var(--brand-1)");
     expect(selo("Esquecido").textContent).toContain("PARADO");
     expect(selo("Esquecido").style.color).toBe("var(--warn)");
-    expect(selo("Acabou").textContent).toContain("♛");
+    expect(selo("Acabou").textContent).toContain("FINALIZADO");
+    expect(selo("Acabou").querySelector("svg")).toBeTruthy(); // a coroa agora é ícone, não emoji
   });
 
   it("a regra de desempate aparece em vermelho acima da tabela, para todos", () => {
@@ -1276,16 +1277,16 @@ describe("avisos da mesa", () => {
     avisos.atual = { estado: "desligado", ocupado: false, alternar: vi.fn(async () => {}) };
     preparar("jogador", { verMesas: true, nomesJogador: ["Pessoa"] });
     abrir(<TelaTorneios />);
-    expect(screen.getByText("🔔 Receba sua mesa no celular")).toBeTruthy();
+    expect(screen.getByText(/Receba sua mesa no celular/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Agora não" }));
-    expect(screen.queryByText("🔔 Receba sua mesa no celular")).toBeNull();
+    expect(screen.queryByText(/Receba sua mesa no celular/)).toBeNull();
   });
 
   it("não convida quem não tem as mesas liberadas", () => {
     avisos.atual = { estado: "desligado", ocupado: false, alternar: vi.fn(async () => {}) };
     preparar("jogador", { verMesas: false, nomesJogador: ["Pessoa"] });
     abrir(<TelaTorneios />);
-    expect(screen.queryByText("🔔 Receba sua mesa no celular")).toBeNull();
+    expect(screen.queryByText(/Receba sua mesa no celular/)).toBeNull();
   });
 
   it("a rodada em andamento pode ser avisada de novo pelo botão", async () => {
