@@ -16,6 +16,7 @@ import { BANNER_IMAGE } from "../banner-image";
 import { EscritaUmbra, IconeDecks } from "./ui/LogoUmbra";
 import { SegredoUmbra } from "./ui/SegredoUmbra";
 import { CartaoAvisos } from "./CartaoAvisos";
+import { filtrarTorneios } from "../core/buscaTorneios";
 import { IconeAnalytics, IconeBaixar, IconeCaixa, IconeDado, IconeDocumento, IconeLapis, IconeLixeira, IconePasta, IconeUsuarios } from "./ui/Icones";
 import { SimboloMana, type CorMana } from "./ui/SimboloMana";
 import { ItemMenu, MenuBarra, TituloMenu } from "./ui/MenuBarra";
@@ -64,10 +65,13 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
   const torneiosParados = podeEditar ? torneios.filter((t) => torneioParado(t)) : [];
   const verCriador = auth.isAdmin && modoView === "admin";
   const [nomesDasContas, setNomesDasContas] = useState<Map<string, string>>(new Map());
+  const [emailsDasContas, setEmailsDasContas] = useState<Map<string, string>>(new Map());
+  const [busca, setBusca] = useState("");
   // Só o admin consulta a lista de contas. Conta sem nome vinculado fica sem a linha "Criado por"
   useEffect(() => {
     if (!verCriador) {
       setNomesDasContas(new Map());
+      setEmailsDasContas(new Map());
       return;
     }
     let ativo = true;
@@ -77,12 +81,19 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
         setNomesDasContas(new Map(
           contas.filter((c) => c.nomes_jogador.length > 0).map((c) => [c.user_id, c.nomes_jogador[0]])
         ));
+        setEmailsDasContas(new Map(contas.map((c) => [c.user_id, c.email])));
       },
       () => { /* sem a lista, os cards seguem sem essa informação */ }
     );
     return () => { ativo = false; };
   }, [verCriador]);
   const metricas = calcularMetricas(torneios);
+  // Busca só para quem gerencia: o admin acha também por quem organizou (nome ou e-mail)
+  const mostrarBusca = podeEditar && torneios.length > 0;
+  const torneiosDaLista = mostrarBusca
+    ? filtrarTorneios(torneios, busca, (t) =>
+        verCriador && t.criadoPor ? `${nomesDasContas.get(t.criadoPor) ?? ""} ${emailsDasContas.get(t.criadoPor) ?? ""}` : "")
+    : torneios;
   const ult30 = metricasRecentes(torneios, 30);
   const ultimoCampeao = (() => {
     const finalizados = torneios
@@ -455,18 +466,43 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             )}
           </div>
         ) : (
+          <>
+          {mostrarBusca && (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
+              <input
+                type="search"
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                placeholder={verCriador ? "🔎 Buscar por torneio, organizador ou data" : "🔎 Buscar por torneio ou data"}
+                aria-label="Buscar torneios"
+                className="input flex-1 sm:max-w-md"
+              />
+              {busca.trim() && (
+                <span className="text-xs" style={{ color: "var(--text-2)" }}>
+                  {torneiosDaLista.length} de {contar(torneios.length, "torneio")}
+                </span>
+              )}
+            </div>
+          )}
+          {torneiosDaLista.length === 0 ? (
+            <div className="text-center py-12 text-sm" style={{ color: "var(--text-2)" }}>
+              Nenhum torneio encontrado para "{busca.trim()}". Tente o nome, {verCriador ? "quem organizou, " : ""}o mês ou uma data como 08/11.
+            </div>
+          ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-            {torneios.map((t, i) => (
+            {torneiosDaLista.map((t) => (
               <CardTorneio
                 key={t.id}
                 torneio={t}
-                cor={CORES_MTG[i % CORES_MTG.length]}
+                cor={CORES_MTG[torneios.indexOf(t) % CORES_MTG.length]}
                 criadoPor={t.criadoPor ? nomesDasContas.get(t.criadoPor) : undefined}
                 onAbrir={() => abrirTorneio(t.id)}
                 acoes={podeEditar ? { editar: () => editar(t), exportar: () => exportar(t), excluir: () => excluir(t) } : undefined}
               />
             ))}
           </div>
+          )}
+          </>
         )}
       </main>
 

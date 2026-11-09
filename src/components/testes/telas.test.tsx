@@ -1299,3 +1299,39 @@ describe("avisos da mesa", () => {
     await waitFor(() => expect(avisos.avisarMesas).toHaveBeenCalledWith(t.id, 1));
   });
 });
+
+describe("busca na lista de torneios", () => {
+  afterEach(() => { delete (globalThis as any).__rede; });
+  const criar = (nome: string, criadoPor?: string) => ({ ...torneioCom("Pessoa"), id: nome, nome, criadoPor });
+
+  it("o admin acha por torneio ou por quem organizou", async () => {
+    (globalThis as any).__rede = async () => new Response(JSON.stringify([
+      { user_id: "u-bia", email: "bia@teste.local", nomes_jogador: ["Bia"] },
+    ]), { status: 200, headers: { "content-type": "application/json" } });
+    preparar("admin", { isAdmin: true }, [criar("Liga Norte", "u-bia"), criar("Copa Sul")]);
+    abrir(<TelaTorneios />);
+
+    const busca = screen.getByLabelText("Buscar torneios") as HTMLInputElement;
+    expect(busca.placeholder).toMatch(/organizador/);
+    fireEvent.change(busca, { target: { value: "copa" } });
+    expect(screen.queryByRole("heading", { level: 3, name: "Liga Norte" })).toBeNull();
+    expect(screen.getAllByRole("heading", { level: 3, name: "Copa Sul" }).length).toBeGreaterThan(0);
+
+    fireEvent.change(busca, { target: { value: "bia" } });
+    await waitFor(() => expect(screen.getAllByRole("heading", { level: 3, name: "Liga Norte" }).length).toBeGreaterThan(0));
+    expect(screen.queryByRole("heading", { level: 3, name: "Copa Sul" })).toBeNull();
+  });
+
+  it("organizador busca por torneio ou data; jogador não tem a barra", () => {
+    preparar("organizador", { isOrganizador: true, session: { user: { id: "u1" } } as any }, [criar("Liga Norte", "u1")]);
+    abrir(<TelaTorneios />);
+    expect((screen.getByLabelText("Buscar torneios") as HTMLInputElement).placeholder).not.toMatch(/organizador/);
+    fireEvent.change(screen.getByLabelText("Buscar torneios"), { target: { value: "xyz" } });
+    expect(screen.getByText(/Nenhum torneio encontrado/)).toBeTruthy();
+    cleanup();
+
+    preparar("jogador", { nomesJogador: ["Pessoa"] }, [criar("Liga Norte")]);
+    abrir(<TelaTorneios />);
+    expect(screen.queryByLabelText("Buscar torneios")).toBeNull();
+  });
+});
