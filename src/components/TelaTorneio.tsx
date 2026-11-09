@@ -9,10 +9,12 @@ import { partesDoTorneioVisiveis, podeEditarTorneios } from "../core/visibilidad
 import { confirmar } from "./ui/Confirm";
 import { useToast } from "./ui/Toast";
 import { AuthChip } from "./AuthChip";
+import { SeloStatus } from "./ui/SeloStatus";
+import { EscritaUmbra, SimboloUmbra } from "./ui/LogoUmbra";
 import { FUNDO_DE_TELA } from "../banner-image";
 import { contar } from "../core/formato";
 import { MTGDivider } from "./ui/Divider";
-import { IconeCifrao, IconeDado, IconeHistorico, IconeMedalha, IconeMesa, IconeTrofeu, IconeUsuarios } from "./ui/Icones";
+import { IconeCifrao, IconeDado, IconeHistorico, IconeMedalha, IconeMesa, IconeTrofeu, IconeUsuarios, IconeVoltar } from "./ui/Icones";
 import { AbaJogadores } from "./abas/AbaJogadores";
 import { AbaMesas } from "./abas/AbaMesas";
 import { AbaRanking } from "./abas/AbaRanking";
@@ -112,24 +114,44 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
       className="min-h-screen text-fg flex flex-col"
       style={FUNDO_DE_TELA}
     >
-      <header className="px-4 md:px-8 pt-4 pb-3 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
+      {/* Topo no mesmo vidro da lista de torneios: voltar, marca, nome com o selo e a conta */}
+      <header className="px-3 md:px-8 pt-3 md:pt-4 pb-3">
+        <div
+          className="flex items-center gap-2 md:gap-3 rounded-full pl-1.5 pr-2 md:pr-3 py-1.5 border"
+          style={{
+            background: "rgba(15,15,15,0.72)",
+            borderColor: "rgba(201,166,72,0.18)",
+            backdropFilter: "blur(20px) saturate(160%)",
+            WebkitBackdropFilter: "blur(20px) saturate(160%)",
+            boxShadow: "0 20px 60px -20px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.08)",
+          }}
+        >
           <button
+            type="button"
             onClick={voltar}
-            className="btn-ghost !px-3"
+            aria-label="Voltar para a lista"
             title="Voltar para a lista"
-          >← Voltar</button>
-          <div className="min-w-0">
-            <h1 className="text-xl md:text-2xl font-black truncate">{torneio.nome}</h1>
-            <div className="text-xs text-fg-dim">
-              {contar(torneio.jogadores.length, "jogador", "jogadores")} ·
-              {torneio.finalizado
-                ? " FINALIZADO"
-                : ` Rodada ${Math.max(torneio.rodadaAtual, 1)} de ${torneio.qtdRodadas}`}
+            className="w-9 h-9 md:w-10 md:h-10 flex-shrink-0 rounded-full border flex items-center justify-center transition hover:bg-white/5 active:scale-95"
+            style={{ borderColor: "rgba(201,166,72,0.3)" }}
+          >
+            <IconeVoltar tamanho={18} />
+          </button>
+          <span className="flex items-center gap-2 flex-shrink-0">
+            <SimboloUmbra tamanho={24} />
+            <span className="hidden lg:inline"><EscritaUmbra tamanho={13} /></span>
+          </span>
+          <span className="w-px h-7 flex-shrink-0" style={{ background: "rgba(255,255,255,0.1)" }} aria-hidden="true" />
+          <div className="min-w-0 flex-1">
+            <h1 className="text-base md:text-xl font-black truncate leading-tight" style={{ color: "var(--text-strong)" }}>
+              {torneio.nome}
+            </h1>
+            <div className="flex items-center gap-2 mt-0.5 min-w-0">
+              <SeloStatus torneio={torneio} compacto />
+              <span className="text-[11px] text-fg-dim truncate">{contar(torneio.jogadores.length, "jogador", "jogadores")}</span>
             </div>
           </div>
+          <AuthChip auth={auth} onLoginClick={onPedirLogin} onVincularNome={onVincularNome} onSair={voltar} />
         </div>
-        <AuthChip auth={auth} onLoginClick={onPedirLogin} onVincularNome={onVincularNome} onSair={voltar} />
       </header>
 
       {/* Banner de torneio finalizado — fixo e visível em TODAS as abas */}

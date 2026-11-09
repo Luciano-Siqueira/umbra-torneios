@@ -128,3 +128,4 @@ export const IconePato = criar(<>
   <circle cx="15.5" cy="7.5" r="3" />
   <path d="M18.5 7.2h3l-2.6 1.8M13 10.3C12 11.4 10 12 8 11.6L3 10.5c0 5 3.3 9 8.5 9h2c3.4 0 6-2.4 6-5.4 0-1.6-.8-3-2-3.9" />
 </>);
+export const IconeVoltar = criar(<path d="M15 5 8 12l7 7" />);
