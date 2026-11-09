@@ -1,0 +1,40 @@
+import { describe, expect, it } from "vitest";
+import { filtrarTorneios, textoDaData } from "../buscaTorneios";
+import { novoTorneio, type Torneio } from "../types";
+
+const criar = (nome: string, data: string, criadoPor?: string): Torneio => ({
+  ...novoTorneio(nome, 10), nome, dataCriacao: data, criadoPor,
+});
+const liga = criar("Liga Novembro", "2026-11-08T15:00:00");
+const halloween = criar("Torneio de Halloween", "2026-10-31T20:00:00", "u-ana");
+const todos = [liga, halloween];
+
+describe("busca de torneios", () => {
+  it("acha pelo nome, sem ligar para acento ou maiúscula", () => {
+    expect(filtrarTorneios(todos, "halloween")).toEqual([halloween]);
+    expect(filtrarTorneios(todos, "LIGA nov")).toEqual([liga]);
+  });
+
+  it("acha pela data, pelo mês ou pelo ano", () => {
+    expect(filtrarTorneios(todos, "08/11")).toEqual([liga]);
+    expect(filtrarTorneios(todos, "31/10/2026")).toEqual([halloween]);
+    expect(filtrarTorneios(todos, "outubro")).toEqual([halloween]);
+    expect(filtrarTorneios(todos, "2026")).toEqual(todos);
+  });
+
+  it("acha por quem organizou, quando a tela informa", () => {
+    const organizador = (t: Torneio) => (t.criadoPor === "u-ana" ? "Ana ana@umbraarena.com.br" : "");
+    expect(filtrarTorneios(todos, "ana", organizador)).toEqual([halloween]);
+    expect(filtrarTorneios(todos, "ana")).toEqual([]);
+  });
+
+  it("todas as palavras precisam aparecer; busca vazia mostra tudo", () => {
+    expect(filtrarTorneios(todos, "liga outubro")).toEqual([]);
+    expect(filtrarTorneios(todos, "   ")).toEqual(todos);
+  });
+
+  it("data inválida não quebra a busca", () => {
+    expect(textoDaData("")).toBe("");
+    expect(textoDaData("2026-03-05T12:00:00")).toContain("março");
+  });
+});

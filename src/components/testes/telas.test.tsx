@@ -38,7 +38,7 @@ vi.mock("../../core/auth", () => ({
 }));
 const avisos = vi.hoisted(() => ({
   atual: { estado: "sem-suporte" as string, ocupado: false, alternar: vi.fn(async () => {}) },
-  avisarMesas: vi.fn(async (_id: string, _rodada: number) => ({ enviados: 3 })),
+  avisarMesas: vi.fn(async (_id: string, _rodada: number) => ({ enviados: 3, contas: 3 })),
 }));
 vi.mock("../../core/notificacoes", () => ({
   useAvisos: () => avisos.atual,
@@ -1286,6 +1286,21 @@ describe("avisos da mesa", () => {
     preparar("jogador", { verMesas: false, nomesJogador: ["Pessoa"] });
     abrir(<TelaTorneios />);
     expect(screen.queryByText("🔔 Receba sua mesa no celular")).toBeNull();
+  });
+
+  it("a rodada em andamento pode ser avisada de novo pelo botão", async () => {
+    const t = torneioCom("Pessoa");
+    t.jogadores.push(novoJogador(3, "Terceira Pessoa", "", true));
+    t.rodadaAtual = 2;
+    t.mesas = [{
+      numero: 1, rodada: 2, jogadoresIds: [1, 2, 3], finalizada: false, vencedorId: null, eliminacoes: [], empateTopoIds: [],
+    } as unknown as Torneio["mesas"][number]];
+    preparar("admin", { isAdmin: true }, [t]);
+    avisos.avisarMesas.mockClear();
+    abrir(<AbaMesas torneio={t} podeEditar />);
+    fireEvent.click(screen.getByRole("button", { name: /Avisar mesas/ }));
+    await waitFor(() => expect(avisos.avisarMesas).toHaveBeenCalledWith(t.id, 2));
+    expect(await screen.findByText(/Mesa avisada a 3 aparelhos/)).toBeTruthy();
   });
 
   it("ao iniciar a rodada, quem organiza avisa as mesas", async () => {

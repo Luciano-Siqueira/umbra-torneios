@@ -125,6 +125,23 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
     }
   };
 
+  // Reenvia o aviso da rodada atual: serve para rodadas iniciadas antes dos avisos existirem,
+  // ou para quem ligou os avisos depois do início
+  const [avisando, setAvisando] = useState(false);
+  const avisarDeNovo = async () => {
+    setAvisando(true);
+    try {
+      const { enviados, contas } = await avisarMesas(torneio.id, torneio.rodadaAtual);
+      if (enviados > 0) toast(`🔔 Mesa avisada a ${contar(enviados, "aparelho")}`, "sucesso");
+      else if (contas === 0) toast("Ninguém desta rodada pode receber: o jogador precisa de conta com o nome aprovado e Mesas liberado.", "aviso");
+      else toast("Nenhum aparelho para avisar: os jogadores ainda não ligaram os avisos no celular.", "aviso");
+    } catch (e: any) {
+      toast(e?.message ?? "Não foi possível avisar as mesas.", "erro");
+    } finally {
+      setAvisando(false);
+    }
+  };
+
   const copiarWhatsApp = async () => {
     const linhas: string[] = [`*${torneio.nome}*`, `_Rodada ${torneio.rodadaAtual}_`, ""];
     for (const m of torneio.mesas) {
@@ -383,6 +400,11 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
         {podeEditar && torneio.rodadaAtual === 1 && !torneio.finalizado && (
           <button className="btn-ghost" onClick={voltarInicio} title="Só na rodada 1: apaga as mesas e os resultados dela">
             ⟲ Voltar ao início
+          </button>
+        )}
+        {podeEditar && !torneio.finalizado && (
+          <button className="btn-ghost" onClick={avisarDeNovo} disabled={avisando} title="Manda de novo a mesa de cada jogador para o celular">
+            {avisando ? "Avisando..." : "🔔 Avisar mesas"}
           </button>
         )}
         {podeEditar && (

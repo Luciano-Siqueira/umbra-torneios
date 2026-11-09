@@ -66,11 +66,19 @@ export async function desligarAvisos(): Promise<EstadoAvisos> {
   return suportaAvisos() ? "desligado" : "sem-suporte";
 }
 
-// Chamado por quem organiza, logo depois de iniciar a rodada
-export async function avisarMesas(torneioId: string, rodada: number): Promise<{ enviados: number }> {
+// Chamado por quem organiza ao iniciar a rodada, ou pelo botão "Avisar mesas".
+// contas: quantos jogadores da rodada podem receber (nome aprovado e Mesas liberado)
+export async function avisarMesas(torneioId: string, rodada: number): Promise<{ enviados: number; contas: number }> {
   const { data, error } = await supabase.functions.invoke("avisar-mesas", { body: { torneio_id: torneioId, rodada } });
-  if (error) throw error;
-  return { enviados: Number((data as any)?.enviados ?? 0) };
+  if (error) {
+    let motivo = "";
+    try { motivo = (await (error as any).context?.json())?.erro ?? ""; } catch { /* sem corpo */ }
+    if (!motivo && /failed to send|not found|404/i.test(error.message)) {
+      motivo = "Os avisos ainda não estão disponíveis: falta publicar a função avisar-mesas no Supabase.";
+    }
+    throw new Error(motivo || error.message);
+  }
+  return { enviados: Number((data as any)?.enviados ?? 0), contas: Number((data as any)?.contas ?? 0) };
 }
 
 export function useAvisos() {
