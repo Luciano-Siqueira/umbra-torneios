@@ -139,3 +139,18 @@ export async function listarAceitesPrivacidade(): Promise<{ porUsuario: Map<stri
     faltaFuncao: false,
   };
 }
+
+// Convite por e-mail (supabase/functions/convidar-usuario). O nome, se vier, já entra aprovado.
+export async function convidarUsuario(email: string, nome = ""): Promise<{ aviso?: string }> {
+  const { data, error } = await supabase.functions.invoke("convidar-usuario", { body: { email, nome } });
+  if (error) {
+    // A função devolve o motivo em português no corpo da resposta
+    let motivo = "";
+    try { motivo = (await (error as any).context?.json())?.erro ?? ""; } catch { /* sem corpo */ }
+    if (!motivo && /failed to send|not found|404/i.test(error.message)) {
+      motivo = "O convite ainda não está disponível: falta publicar a função convidar-usuario no Supabase.";
+    }
+    throw new Error(motivo || error.message);
+  }
+  return { aviso: (data as any)?.aviso };
+}

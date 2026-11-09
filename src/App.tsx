@@ -16,6 +16,7 @@ import { definirAvisoEnvio, puxarDoServidor, resolverConflito, retomarEnvios } f
 import { confirmar } from "./components/ui/Confirm";
 import { AvisoEnderecoNovo } from "./components/AvisoEnderecoNovo";
 import { AvisoPrivacidade } from "./components/AvisoPrivacidade";
+import { DialogoCriarSenha } from "./components/DialogoCriarSenha";
 import { precisaAceitarPrivacidade } from "./core/privacidade";
 
 // Telas carregadas só quando abertas
@@ -136,10 +137,11 @@ function AppInner() {
     if (!auth.loading && auth.session && tela === "splash") irPara("torneios");
   }, [auth.loading, auth.session, tela, irPara]);
 
-  // A política vem primeiro; os outros avisos esperam o aceite
-  const precisaPrivacidade = !auth.loading && precisaAceitarPrivacidade(auth.session?.user);
+  // Primeiro a senha (convite ou nova senha), depois a política; os outros avisos esperam
+  const precisaSenha = !auth.loading && !!auth.session && auth.criarSenha;
+  const precisaPrivacidade = !auth.loading && !precisaSenha && precisaAceitarPrivacidade(auth.session?.user);
   const precisaVincularNome = !auth.loading && auth.perfilCarregado && !!auth.session && !auth.isAdmin
-    && auth.nomesJogador.length === 0 && auth.nomesPendentes.length === 0 && !precisaPrivacidade;
+    && auth.nomesJogador.length === 0 && auth.nomesPendentes.length === 0 && !precisaPrivacidade && !precisaSenha;
 
   // Enquanto confere a sessão salva, ou logo antes de ir para os torneios, a tela de entrada não aparece
   const conferindoSessao = auth.loading || !!auth.session;
@@ -177,6 +179,13 @@ function AppInner() {
         }}
       />
 
+      {precisaSenha && (
+        <DialogoCriarSenha
+          email={auth.session?.user?.email ?? ""}
+          onPronto={() => toast("Senha salva. Use-a para entrar da próxima vez.", "sucesso")}
+        />
+      )}
+
       {precisaPrivacidade && auth.session && (
         <AvisoPrivacidade
           uid={auth.session.user.id}
@@ -186,7 +195,7 @@ function AppInner() {
       )}
 
       {/* Só depois de entrar, e não junto com a vinculação de nome */}
-      {tela !== "splash" && auth.perfilCarregado && !precisaVincularNome && !precisaPrivacidade && (
+      {tela !== "splash" && auth.perfilCarregado && !precisaVincularNome && !precisaPrivacidade && !precisaSenha && (
         <AvisoEnderecoNovo usuario={auth.session?.user} />
       )}
 

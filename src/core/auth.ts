@@ -1,6 +1,6 @@
 // Autenticação Supabase + flags de admin/jogador (estado único para todas as telas)
 import { create } from "zustand";
-import { supabase } from "./supabaseClient";
+import { LINK_PEDE_SENHA, supabase } from "./supabaseClient";
 import { guardarAceiteLocal, VERSAO_PRIVACIDADE } from "./privacidade";
 import type { Session } from "@supabase/supabase-js";
 
@@ -12,6 +12,7 @@ export interface AuthState {
   nomesPendentes: string[]; // aguardando o admin aprovar
   verMesas: boolean; // liberado pelo admin na tela Usuários
   verTempo: boolean;
+  criarSenha: boolean; // chegou por link de convite ou de nova senha
   loading: boolean;
   perfilCarregado: boolean; // true depois de ter o perfil (do cache ou do servidor)
   perfilErro: string | null; // falha na busca do perfil (diferente de "sem papel")
@@ -37,6 +38,7 @@ const useAuthStore = create<AuthState>(() => ({
   nomesPendentes: [],
   verMesas: false,
   verTempo: false,
+  criarSenha: LINK_PEDE_SENHA,
   loading: true,
   perfilCarregado: false,
   perfilErro: null,
@@ -150,7 +152,17 @@ supabase.auth.getSession().then(({ data }) => {
   useAuthStore.setState({ loading: false });
 });
 
-supabase.auth.onAuthStateChange((_e, s) => aplicarSessao(s));
+supabase.auth.onAuthStateChange((evento, s) => {
+  aplicarSessao(s);
+  if (evento === "PASSWORD_RECOVERY") useAuthStore.setState({ criarSenha: true });
+});
+
+// Senha nova de quem chegou por convite ou pelo e-mail de redefinir senha
+export async function definirSenha(senha: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password: senha });
+  if (error) throw error;
+  useAuthStore.setState({ criarSenha: false });
+}
 
 export async function entrar(email: string, senha: string) {
   const { error } = await supabase.auth.signInWithPassword({ email, password: senha });

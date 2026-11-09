@@ -6,7 +6,7 @@ import type { AuthState } from "../../core/auth";
 import { useStore } from "../../core/store";
 import App from "../../App";
 
-const contas = vi.hoisted(() => ({ atual: {} as AuthState, aceitarPrivacidade: vi.fn(async (_uid: string) => {}) }));
+const contas = vi.hoisted(() => ({ atual: {} as AuthState, aceitarPrivacidade: vi.fn(async (_uid: string) => {}), definirSenha: vi.fn(async (_senha: string) => {}) }));
 
 vi.mock("../../core/auth", () => ({
   useAuth: () => contas.atual,
@@ -15,6 +15,7 @@ vi.mock("../../core/auth", () => ({
   desvincularNome: vi.fn(async () => {}),
   sair: vi.fn(async () => {}),
   aceitarPrivacidade: contas.aceitarPrivacidade,
+  definirSenha: contas.definirSenha,
 }));
 vi.mock("../../core/useAoVivo", () => ({ useAoVivo: () => null, useListaAtualizada: () => {} }));
 vi.mock("../../core/atualizarDecks", () => ({ sincronizarDecks: () => {}, useVersaoDecks: () => 0 }));
@@ -34,6 +35,7 @@ function conta(parcial: Partial<AuthState>): AuthState {
     nomesPendentes: [],
     verMesas: false,
     verTempo: false,
+    criarSenha: false,
     loading: false,
     perfilCarregado: true,
     perfilErro: null,
@@ -94,5 +96,26 @@ describe("política de privacidade", () => {
     contas.atual = conta({ session: antiga });
     render(<App />);
     expect(screen.getByText("🔒 Sua privacidade")).toBeTruthy();
+  });
+});
+
+describe("link de convite ou de nova senha", () => {
+  afterEach(() => { cleanup(); useStore.setState({ tela: "splash" }); });
+
+  it("pede a senha nova antes de qualquer outro aviso e confere as duas senhas", async () => {
+    contas.atual = conta({ session: sessao, criarSenha: true });
+    render(<App />);
+    expect(screen.getByText("🔑 Crie sua senha")).toBeTruthy();
+    expect(screen.queryByText("🔒 Sua privacidade")).toBeNull();
+
+    fireEvent.change(screen.getByLabelText("Nova senha"), { target: { value: "segredo1" } });
+    fireEvent.change(screen.getByLabelText("Confirmar senha"), { target: { value: "segredo2" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar senha" }));
+    expect(screen.getByRole("alert").textContent).toMatch(/não são iguais/);
+    expect(contas.definirSenha).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText("Confirmar senha"), { target: { value: "segredo1" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar senha" }));
+    await waitFor(() => expect(contas.definirSenha).toHaveBeenCalledWith("segredo1"));
   });
 });

@@ -50,6 +50,7 @@ function conta(parcial: Partial<AuthState> = {}): AuthState {
     nomesPendentes: [],
     verMesas: false,
     verTempo: false,
+    criarSenha: false,
     loading: false,
     perfilCarregado: true,
     perfilErro: null,
@@ -622,6 +623,33 @@ describe("mesas e tempo liberados na tela Usuários", () => {
     };
     return gravados;
   };
+
+  it("o admin convida por e-mail, com o nome de jogador opcional", async () => {
+    const convites: any[] = [];
+    (globalThis as any).__rede = async (url: string, init?: RequestInit) => {
+      const json = (corpo: unknown, status = 200) =>
+        new Response(JSON.stringify(corpo), { status, headers: { "content-type": "application/json" } });
+      if (url.includes("functions/v1/convidar-usuario")) {
+        const corpo = JSON.parse(String(init?.body));
+        convites.push(corpo);
+        return corpo.email === "ja@teste.local" ? json({ erro: "Esse e-mail já tem conta" }, 400) : json({ ok: true });
+      }
+      return json([]);
+    };
+    preparar("admin", { isAdmin: true });
+    abrir(<TelaUsuarios />);
+
+    const email = await screen.findByLabelText("E-mail para convidar");
+    fireEvent.change(email, { target: { value: "novo@teste.local" } });
+    fireEvent.change(screen.getByLabelText("Nome de jogador do convidado"), { target: { value: "Novato" } });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar convite" }));
+    await waitFor(() => expect(convites[0]).toEqual({ email: "novo@teste.local", nome: "Novato" }));
+    await waitFor(() => expect((email as HTMLInputElement).value).toBe(""));
+
+    fireEvent.change(email, { target: { value: "ja@teste.local" } });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar convite" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("Esse e-mail já tem conta");
+  });
 
   it("mostra quem aceitou a política de privacidade", async () => {
     (globalThis as any).__rede = async (url: string) => {

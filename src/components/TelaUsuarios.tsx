@@ -5,7 +5,7 @@ import {
   listarUsuarios, definirPapel, deletarUsuario, enviarResetSenha,
   renomearJogador, adicionarNome, removerNomeDoUsuario,
   listarNomesPendentes, aprovarNome, listarPermissoesJogador, definirPermissaoJogador,
-  listarAceitesPrivacidade, type AceitePrivacidade,
+  listarAceitesPrivacidade, convidarUsuario, type AceitePrivacidade,
   type NomePendente, type PermissaoJogador, type UsuarioInfo,
 } from "../core/admin";
 import { useToast } from "./ui/Toast";
@@ -228,6 +228,13 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
           <KpiMini label={<><IconeAlvo tamanho={12} cor="currentColor" /> ORGANIZADORES</>} valor={String(totOrg)} cor="#f5f5f5" />
           <KpiMini label={<><IconePessoa tamanho={12} cor="currentColor" /> JOGADORES</>} valor={String(totJog)} cor="#c4c4c4" />
         </div>
+
+        <CartaoConvite
+          onConvidado={(email, aviso) => {
+            toast(aviso ?? `Convite enviado para ${email}`, aviso ? "aviso" : "sucesso");
+            carregar();
+          }}
+        />
 
         <div className="flex gap-2 items-center">
           <input
@@ -668,6 +675,67 @@ function KpiMini({ label, valor, cor }: { label: React.ReactNode; valor: string;
       <div className="text-[10px] font-bold tracking-widest uppercase" style={{ color: cor }}>{label}</div>
       <div className="text-2xl font-bold tabular-nums mt-1" style={{ color: "var(--text-strong)" }}>{valor}</div>
     </div>
+  );
+}
+
+// Convida por e-mail; a pessoa recebe o link, cria a senha e já entra com o nome aprovado
+function CartaoConvite({ onConvidado }: { onConvidado: (email: string, aviso?: string) => void }) {
+  const [email, setEmail] = useState("");
+  const [nome, setNome] = useState("");
+  const [erro, setErro] = useState("");
+  const [enviando, setEnviando] = useState(false);
+
+  const convidar = async () => {
+    const e = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return setErro("Digite um e-mail válido.");
+    setEnviando(true);
+    setErro("");
+    try {
+      const { aviso } = await convidarUsuario(e, nome.trim());
+      setEmail("");
+      setNome("");
+      onConvidado(e, aviso);
+    } catch (err: any) {
+      setErro(err?.message ?? "Não foi possível enviar o convite.");
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  return (
+    <form
+      className="card space-y-2"
+      aria-label="Convidar pessoa"
+      onSubmit={(ev) => { ev.preventDefault(); convidar(); }}
+    >
+      <div className="text-sm font-bold" style={{ color: "var(--brand-1)" }}>✉ Convidar pessoa</div>
+      <div className="text-xs text-fg-dim">
+        A pessoa recebe um e-mail, cria a senha e já entra. Se informar o nome de jogador, ele entra aprovado.
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
+        <input
+          type="email"
+          className="input w-full"
+          placeholder="email@exemplo.com"
+          aria-label="E-mail para convidar"
+          value={email}
+          onChange={(ev) => setEmail(ev.target.value)}
+          disabled={enviando}
+        />
+        <input
+          className="input w-full"
+          placeholder="Nome de jogador (opcional)"
+          aria-label="Nome de jogador do convidado"
+          value={nome}
+          onChange={(ev) => setNome(ev.target.value)}
+          disabled={enviando}
+        />
+        <button type="submit" className="btn-primary" disabled={enviando}>
+          {enviando ? "Enviando..." : "Enviar convite"}
+        </button>
+      </div>
+      {erro && <div role="alert" className="text-xs" style={{ color: "var(--critical)" }}>{erro}</div>}
+    </form>
   );
 }
 
