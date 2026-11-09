@@ -1291,6 +1291,32 @@ describe("métricas de decks no Analytics", () => {
   });
 });
 
+describe("mesa do jogador sem Pro", () => {
+  const rodadaComDuasMesas = () => {
+    const t = torneioCom("Pessoa");
+    for (let id = 3; id <= 6; id++) t.jogadores.push(novoJogador(id, `Jogador ${id}`, "", true));
+    t.rodadaAtual = 1;
+    t.mesas = [
+      { numero: 1, rodada: 1, jogadoresIds: [1, 2, 3], finalizada: false, vencedorId: null, eliminacoes: [], empateTopoIds: [] },
+      { numero: 2, rodada: 1, jogadoresIds: [4, 5, 6], finalizada: false, vencedorId: null, eliminacoes: [], empateTopoIds: [] },
+    ] as unknown as Torneio["mesas"];
+    return t;
+  };
+
+  it("sem o Pro vê só a própria mesa; com o Pro, todas", () => {
+    const t = rodadaComDuasMesas();
+    preparar("jogador", { nomesJogador: ["Pessoa"], verMesas: true }, [t]);
+    const { unmount } = abrir(<AbaMesas torneio={t} podeEditar={false} verTempo={false} soMinhaMesa />);
+    expect(screen.getByText(/Sua mesa/)).toBeTruthy();
+    expect(screen.queryByText(/Mesas em andamento/)).toBeNull();
+    unmount();
+
+    abrir(<AbaMesas torneio={t} podeEditar={false} verTempo />);
+    expect(screen.getByText(/Sua mesa/)).toBeTruthy();
+    expect(screen.getByText(/Mesas em andamento/)).toBeTruthy();
+  });
+});
+
 describe("desempenho do jogador", () => {
   it("sem o Jogador Pro, o Analytics mostra o convite", () => {
     preparar("jogador", { nomesJogador: ["Pessoa"] }, []);
@@ -1333,9 +1359,9 @@ describe("easter egg", () => {
 describe("avisos da mesa", () => {
   afterEach(() => { avisos.atual = { estado: "sem-suporte", ocupado: false, alternar: vi.fn(async () => {}) }; localStorage.clear(); });
 
-  it("convida a ligar os avisos quem pode ver as mesas, e some no Agora não", () => {
+  it("convida a ligar os avisos quem tem Mesas e o Jogador Pro, e some no Agora não", () => {
     avisos.atual = { estado: "desligado", ocupado: false, alternar: vi.fn(async () => {}) };
-    preparar("jogador", { verMesas: true, nomesJogador: ["Pessoa"] });
+    preparar("jogador", { verMesas: true, nomesJogador: ["Pessoa"], proAte: PRO_JOGADOR });
     abrir(<TelaTorneios />);
     expect(screen.getByText(/Receba sua mesa no celular/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Agora não" }));

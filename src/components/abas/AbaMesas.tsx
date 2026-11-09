@@ -23,10 +23,11 @@ import {
   IconeEngrenagem, IconePlay, IconeReiniciar, IconeSino, IconeTrofeu,
 } from "../ui/Icones";
 
-export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: {
+export function AbaMesas({ torneio, podeEditar, verTempo = true, soMinhaMesa = false, onIrParaAba }: {
   torneio: Torneio;
   podeEditar: boolean;
   verTempo?: boolean; // falso para o jogador quando o torneio não libera o tempo
+  soMinhaMesa?: boolean; // jogador sem o Jogador Pro: vê só a própria mesa
   onIrParaAba?: (aba: "ranking" | "premiacao" | "historico") => void;
 }) {
   const iniciarRodada = useStore((s) => s.iniciarRodada);
@@ -372,6 +373,11 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
   return (
     <div className="space-y-4 w-full">
       {minha?.mesa && <CartaoMinhaMesa minha={minha} mostrarTempo={verTempo} />}
+      {soMinhaMesa && !minha?.mesa && (
+        <div className="card text-center text-sm" style={{ color: "var(--text-2)" }}>
+          Você não está em nenhuma mesa nesta rodada.
+        </div>
+      )}
 
       {/* Quem só acompanha e está jogando já vê o tempo no cartão acima */}
       {verTempo && (podeEditar || !minha?.mesa) && (
@@ -441,7 +447,7 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
         {botaoEncerrarAntes}
       </div>
 
-      {pendentes.length > 0 && (
+      {!soMinhaMesa && pendentes.length > 0 && (
         <section>
           <h2 className="label mb-2">Mesas em andamento ({pendentes.length})</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -458,7 +464,7 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
         </section>
       )}
 
-      {finalizadas.length > 0 && (
+      {!soMinhaMesa && finalizadas.length > 0 && (
         <section>
           <h2 className="label mb-2">Mesas finalizadas ({finalizadas.length})</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

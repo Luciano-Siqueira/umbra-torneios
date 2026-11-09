@@ -250,7 +250,7 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
             )}
 
             <div style={{ borderTop: "1px solid var(--line)" }}>
-              {avisos.estado !== "sem-suporte" && (auth.verMesas || auth.isAdmin) && (
+              {avisos.estado !== "sem-suporte" && ((auth.verMesas && pro.jogador) || auth.isAdmin) && (
                 <button
                   onClick={async () => {
                     if (avisos.estado === "bloqueado") {

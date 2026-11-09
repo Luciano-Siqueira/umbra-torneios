@@ -306,7 +306,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
         )}
 
         <div className="text-xs" style={{ color: "var(--text-2)" }}>
-          Mesas, Tempo e notificações só valem para quem tem o Jogador Pro ou o Organizador Pro em dia.
+          Com Mesas liberado, todo jogador vê a própria mesa. Tempo, as outras mesas e as notificações só valem com o Jogador Pro ou o Organizador Pro em dia.
         </div>
 
         {faltaTabelaPermissoes && (

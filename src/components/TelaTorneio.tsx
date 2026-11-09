@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { statusPro } from "../core/pro";
 import { IconeCoroa, IconeReiniciar } from "./ui/Icones";
 import { useStore } from "../core/store";
 import { useAuth } from "../core/auth";
@@ -264,7 +265,15 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
           </div>
         )}
         {aba === "jogadores" && <AbaJogadores torneio={torneio} podeEditar={podeEditar} />}
-        {aba === "mesas" && <AbaMesas torneio={torneio} podeEditar={podeEditar} verTempo={verRodada.tempo} onIrParaAba={setAba} />}
+        {aba === "mesas" && (
+          <AbaMesas
+            torneio={torneio}
+            podeEditar={podeEditar}
+            verTempo={verRodada.tempo}
+            soMinhaMesa={!podeEditar && !statusPro(auth).jogador}
+            onIrParaAba={setAba}
+          />
+        )}
         {aba === "ranking" && <AbaRanking torneio={torneio} />}
         {aba === "financeiro" && <AbaFinanceiro torneio={torneio} />}
         {aba === "premiacao" && <AbaPremiacao torneio={torneio} />}

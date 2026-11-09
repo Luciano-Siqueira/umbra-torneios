@@ -397,7 +397,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
         )}
 
         {/* Avisos da mesa: só para quem pode ver as mesas */}
-        {auth.session && (auth.verMesas || auth.isAdmin) && <CartaoAvisos uid={auth.session.user.id} />}
+        {auth.session && ((auth.verMesas && statusPro(auth).jogador) || auth.isAdmin) && <CartaoAvisos uid={auth.session.user.id} />}
         {torneioEmAndamento && (
           <div
             className="flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition hover:brightness-110"

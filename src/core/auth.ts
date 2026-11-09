@@ -23,8 +23,8 @@ export interface AuthState {
   isOrganizador: boolean;
   nomesJogador: string[];  // nomes vinculados ao usuário e aprovados
   nomesPendentes: string[]; // aguardando o admin aprovar
-  verMesas: boolean; // liberado pelo admin na tela Usuários e com o Jogador Pro em dia
-  verTempo: boolean;
+  verMesas: boolean; // liberado pelo admin na tela Usuários (sem Pro, só a própria mesa)
+  verTempo: boolean; // liberado pelo admin e com o Jogador Pro em dia
   proAte?: ProAte; // validade dos planos Pro
   criarSenha: boolean; // chegou por link de convite ou de nova senha
   loading: boolean;
@@ -92,7 +92,7 @@ async function carregarPerfil(userId: string) {
         isOrganizador: salvo.isOrganizador,
         nomesJogador: salvo.nomesJogador,
         nomesPendentes: salvo.nomesPendentes ?? [],
-        verMesas: !!salvo.verMesas && temJogadorPro(salvo.proAte),
+        verMesas: !!salvo.verMesas,
         verTempo: !!salvo.verTempo && temJogadorPro(salvo.proAte),
         proAte: salvo.proAte ?? SEM_PRO,
         perfilCarregado: true,
@@ -141,7 +141,7 @@ async function carregarPerfil(userId: string) {
     isOrganizador: perfil.isOrganizador,
     nomesJogador: perfil.nomesJogador,
     nomesPendentes: perfil.nomesPendentes,
-    verMesas: !!perfil.verMesas && temJogadorPro(perfil.proAte),
+    verMesas: !!perfil.verMesas,
     verTempo: !!perfil.verTempo && temJogadorPro(perfil.proAte),
     proAte: perfil.proAte,
     perfilCarregado: true,
