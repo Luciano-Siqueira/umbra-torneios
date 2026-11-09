@@ -48,7 +48,7 @@ export function DialogoAvisos({ aberto, onFechar }: { aberto: boolean; onFechar:
   };
 
   return (
-    <Modal open={aberto} onClose={onFechar} title={<span className="inline-flex items-center gap-2"><IconeSino tamanho={20} /> Avisos no celular</span>} fecharAoClicarFora>
+    <Modal open={aberto} onClose={onFechar} title={<span className="inline-flex items-center gap-2"><IconeSino tamanho={20} /> Configurar notificações</span>} fecharAoClicarFora>
       <div className="space-y-3 text-sm">
         <p style={{ color: "var(--text-2)" }}>
           Escolha quais avisos o app manda. Vale para todos os torneios. Só recebe quem ligou os avisos no aparelho.

@@ -252,11 +252,11 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
             className="input w-full !pl-9"
           />
           </span>
-          <button className="btn-ghost text-sm" onClick={() => setAvisosAberto(true)}>
-            <IconeSino cor="currentColor" /> Avisos
-          </button>
           <button className="btn-ghost text-sm" onClick={carregar}>
             <IconeReiniciar cor="currentColor" /> Atualizar
+          </button>
+          <button className="btn-ghost text-sm whitespace-nowrap" onClick={() => setAvisosAberto(true)}>
+            <IconeSino cor="currentColor" /> Configurar notificações
           </button>
         </div>
 

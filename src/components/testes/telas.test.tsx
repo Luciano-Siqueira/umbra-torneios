@@ -1381,7 +1381,7 @@ describe("escolha dos avisos na tela Usuários", () => {
     };
     preparar("admin", { isAdmin: true });
     abrir(<TelaUsuarios />);
-    fireEvent.click(await screen.findByRole("button", { name: /Avisos/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Configurar notificações/ }));
 
     const esgotado = await screen.findByRole("switch", { name: "Último turno" });
     await waitFor(() => expect(esgotado.getAttribute("aria-checked")).toBe("false"));
