@@ -42,6 +42,7 @@
   --shadow: 0 24px 60px -20px rgba(0,0,0,.70);
   --lift: 0 16px 48px -16px rgba(201,166,72,.25);
   --font-ds: "Sora", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-marca: "Orbitron", "Sora", "Segoe UI", sans-serif; /* só na escrita do logo */
   --card-fundo: rgba(20,20,20,0.9);
   --r: 16px;
   --r-m: 12px;

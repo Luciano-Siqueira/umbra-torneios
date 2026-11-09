@@ -43,3 +43,19 @@ export function SimboloUmbra({ tamanho = 24 }: { tamanho?: number }) {
     </svg>
   );
 }
+
+// Escrita do logo: UMBRA forte em branco + o produto leve em dourado, numa linha, na fonte Orbitron.
+// Cada produto da família troca só a segunda palavra (TORNEIOS, BREW, INSIGHTS...).
+export function EscritaUmbra({ produto = "TORNEIOS", tamanho = 16 }: { produto?: string; tamanho?: number }) {
+  return (
+    <span
+      className="inline-flex items-baseline whitespace-nowrap leading-none"
+      style={{ fontFamily: "var(--font-marca)", fontSize: tamanho, letterSpacing: "0.04em" }}
+      aria-label={`Umbra ${produto.toLowerCase()}`}
+      role="img"
+    >
+      <span style={{ color: "var(--text-strong)", fontWeight: 800 }}>UMBRA</span>
+      <span style={{ color: "var(--brand-1)", fontWeight: 400 }}>{produto}</span>
+    </span>
+  );
+}

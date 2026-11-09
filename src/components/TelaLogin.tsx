@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { entrar, registrar } from "../core/auth";
+import { EscritaUmbra, SimboloUmbra } from "./ui/LogoUmbra";
 
 interface Props {
   aberta: boolean;
@@ -58,6 +59,11 @@ export function TelaLogin({ aberta, onFechar, onSucesso }: Props) {
           boxShadow: "0 30px 80px -20px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.05)",
         }}
       >
+        <div className="flex items-center justify-center gap-2 mb-5">
+          <SimboloUmbra tamanho={30} />
+          <EscritaUmbra tamanho={17} />
+        </div>
+
         {/* Abas */}
         <div className="flex gap-2 mb-6 p-1 rounded-lg" style={{ background: "var(--page-1)" }}>
           <button
