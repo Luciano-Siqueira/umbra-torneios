@@ -156,3 +156,5 @@ export const IconeEnvelope = criar(<>
   <path d="m3.5 7 8.5 6 8.5-6" />
 </>);
 export const IconeSetaBaixo = criar(<path d="m6 9 6 6 6-6" />);
+export const IconeInfo = criar(<><circle cx="12" cy="12" r="9" /><path d="M12 11v5.5M12 7.6v.1" /></>);
+export const IconeCoracao = criar(<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20Z" />);

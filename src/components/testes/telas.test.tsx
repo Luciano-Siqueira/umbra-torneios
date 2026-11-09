@@ -593,6 +593,18 @@ describe("trocar nome", () => {
   });
 });
 
+describe("sobre o app", () => {
+  it("o menu da conta abre o Sobre com a descrição e a versão", () => {
+    preparar("jogador", {});
+    abrir(<AuthChip auth={conta({ nomesJogador: ["Alguém"] })} />);
+    fireEvent.click(screen.getAllByRole("button")[0]);
+    fireEvent.click(screen.getByRole("button", { name: /Sobre o app/ }));
+    expect(screen.getByText(/organiza torneios de Magic/)).toBeTruthy();
+    expect(screen.getByText(/^Versão \d+\.\d+\.\d+$/)).toBeTruthy();
+    expect(screen.getByText(/Ajude o projeto/)).toBeTruthy();
+  });
+});
+
 describe("excluir a própria conta", () => {
   it("o menu da conta abre a exclusão, que pede a senha antes de excluir", async () => {
     preparar("jogador", {});

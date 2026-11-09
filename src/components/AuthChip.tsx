@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { IconeAmpulheta, IconeCheck, IconeLapis, IconeMais, IconeSair, IconeSino } from "./ui/Icones";
+import { IconeAmpulheta, IconeCheck, IconeInfo, IconeLapis, IconeMais, IconeSair, IconeSino } from "./ui/Icones";
 import { sair, desvincularNome, type AuthState } from "../core/auth";
 import { temEnviosPendentes } from "../core/sync";
 import { useStore, type ModoView } from "../core/store";
@@ -7,6 +7,7 @@ import { useToast } from "./ui/Toast";
 import { confirmar } from "./ui/Confirm";
 import { IconeAlvo, IconeCadeado, IconeCoroa, IconePessoa } from "./ui/Icones";
 import { DialogoExcluirConta } from "./DialogoExcluirConta";
+import { DialogoSobre } from "./DialogoSobre";
 import { useAvisos } from "../core/notificacoes";
 
 interface Props {
@@ -46,6 +47,7 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
   const { toast } = useToast();
   const [abrindoMenu, setAbrindoMenu] = useState(false);
   const [excluindoConta, setExcluindoConta] = useState(false);
+  const [sobreAberto, setSobreAberto] = useState(false);
   const avisos = useAvisos();
   const raiz = useRef<HTMLDivElement>(null);
   const [abrirParaDireita, setAbrirParaDireita] = useState(false);
@@ -237,6 +239,13 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
                   <IconeSino cor="currentColor" /> Avisos da mesa: {avisos.estado === "ligado" ? "ligados" : avisos.estado === "bloqueado" ? "bloqueados" : "desligados"}
                 </button>
               )}
+              <button
+                onClick={() => { setAbrindoMenu(false); setSobreAberto(true); }}
+                className="block w-full text-left px-3 py-2 text-[11px] hover:bg-white/5 transition"
+                style={{ color: "var(--text-2)" }}
+              >
+                <IconeInfo cor="currentColor" /> Sobre o app
+              </button>
               <a
                 href="privacidade.html"
                 target="_blank"
@@ -283,6 +292,7 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
           </div>
         </>
       )}
+      <DialogoSobre aberto={sobreAberto} onFechar={() => setSobreAberto(false)} />
       <DialogoExcluirConta
         aberto={excluindoConta}
         email={auth.session?.user?.email ?? ""}
