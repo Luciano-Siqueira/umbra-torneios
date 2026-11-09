@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filtrarPorPeriodo, filtrarTorneios, textoDaData } from "../buscaTorneios";
+import { filtrarPorPeriodo, filtrarTorneios, situacaoDoTorneio, textoDaData } from "../buscaTorneios";
 import { novoTorneio, type Torneio } from "../types";
 
 const criar = (nome: string, data: string, criadoPor?: string): Torneio => ({
@@ -46,5 +46,13 @@ describe("período pelo calendário", () => {
     expect(filtrarPorPeriodo(todos, "", "2026-10-31")).toEqual([halloween]);
     expect(filtrarPorPeriodo(todos, "", "")).toEqual(todos);
     expect(filtrarPorPeriodo(todos, "2026-12-01", "2026-12-31")).toEqual([]);
+  });
+});
+
+describe("situação do torneio", () => {
+  it("aberto antes da rodada 1, em andamento depois (mesmo parado), finalizado no fim", () => {
+    expect(situacaoDoTorneio({ finalizado: false, rodadaAtual: 0 })).toBe("aberto");
+    expect(situacaoDoTorneio({ finalizado: false, rodadaAtual: 2 })).toBe("andamento");
+    expect(situacaoDoTorneio({ finalizado: true, rodadaAtual: 3 })).toBe("finalizado");
   });
 });

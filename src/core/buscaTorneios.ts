@@ -47,3 +47,15 @@ export function filtrarPorPeriodo(torneios: Torneio[], de: string, ate: string):
     return (!de || dia >= de) && (!ate || dia <= ate);
   });
 }
+
+// Situação do torneio para o filtro da lista. "Em andamento" inclui o torneio parado no meio.
+export type Situacao = "todos" | "aberto" | "andamento" | "finalizado";
+
+export function situacaoDoTorneio(t: Pick<Torneio, "finalizado" | "rodadaAtual">): Exclude<Situacao, "todos"> {
+  if (t.finalizado) return "finalizado";
+  return t.rodadaAtual === 0 ? "aberto" : "andamento";
+}
+
+export function filtrarPorSituacao(torneios: Torneio[], situacao: Situacao): Torneio[] {
+  return situacao === "todos" ? torneios : torneios.filter((t) => situacaoDoTorneio(t) === situacao);
+}

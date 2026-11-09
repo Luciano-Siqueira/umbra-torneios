@@ -1465,6 +1465,33 @@ describe("busca na lista de torneios", () => {
     abrir(<TelaTorneios />);
     expect(screen.queryByLabelText("Buscar torneios")).toBeNull();
   });
+
+  it("filtra por situação: em aberto, em andamento e finalizados", () => {
+    const aberto = { ...criar("Copa Aberta", "u1"), rodadaAtual: 0 };
+    const andamento = { ...criar("Copa Rolando", "u1"), rodadaAtual: 2 };
+    const finalizado = { ...criar("Copa Encerrada", "u1"), rodadaAtual: 3, finalizado: true };
+    preparar("organizador", { isOrganizador: true, session: { user: { id: "u1" } } as any }, [aberto, andamento, finalizado]);
+    abrir(<TelaTorneios />);
+    const titulo = (nome: string) => screen.queryAllByRole("heading", { level: 3, name: nome }).length > 0;
+
+    fireEvent.click(screen.getByRole("radio", { name: /Em andamento/ }));
+    expect([titulo("Copa Aberta"), titulo("Copa Rolando"), titulo("Copa Encerrada")]).toEqual([false, true, false]);
+    fireEvent.click(screen.getByRole("radio", { name: /Finalizados/ }));
+    expect([titulo("Copa Aberta"), titulo("Copa Rolando"), titulo("Copa Encerrada")]).toEqual([false, false, true]);
+    fireEvent.click(screen.getByRole("radio", { name: /Em aberto/ }));
+    expect([titulo("Copa Aberta"), titulo("Copa Rolando"), titulo("Copa Encerrada")]).toEqual([true, false, false]);
+    expect(screen.getByRole("radio", { name: /Todos/ }).textContent).toMatch(/3/);
+    fireEvent.click(screen.getByRole("button", { name: "Limpar" }));
+    expect([titulo("Copa Aberta"), titulo("Copa Rolando"), titulo("Copa Encerrada")]).toEqual([true, true, true]);
+  });
+
+  it("o jogador também filtra por situação", () => {
+    preparar("jogador", { nomesJogador: ["Pessoa"] }, [criar("Liga Norte"), { ...criar("Copa Sul"), rodadaAtual: 3, finalizado: true }]);
+    abrir(<TelaTorneios />);
+    fireEvent.click(screen.getByRole("radio", { name: /Finalizados/ }));
+    expect(screen.queryAllByRole("heading", { level: 3, name: "Liga Norte" })).toHaveLength(0);
+    expect(screen.getAllByRole("heading", { level: 3, name: "Copa Sul" }).length).toBeGreaterThan(0);
+  });
 });
 
 describe("escolha dos avisos na tela Usuários", () => {

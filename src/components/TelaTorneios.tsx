@@ -18,7 +18,7 @@ import { EscritaUmbra, IconeDecks } from "./ui/LogoUmbra";
 import { SegredoUmbra } from "./ui/SegredoUmbra";
 import { CartaoAvisos } from "./CartaoAvisos";
 import { SeloStatus } from "./ui/SeloStatus";
-import { filtrarPorPeriodo, filtrarTorneios } from "../core/buscaTorneios";
+import { filtrarPorPeriodo, filtrarPorSituacao, filtrarTorneios, situacaoDoTorneio, type Situacao } from "../core/buscaTorneios";
 import {
   IconeAlerta, IconeAnalytics, IconeBaixar, IconeBusca, IconeCaixa, IconeDado, IconeDocumento, IconeHistorico,
   IconeLapis, IconeLixeira, IconePasta, IconePlay, IconeRaio, IconeReiniciar, IconeTrofeu, IconeUsuarios,
@@ -74,6 +74,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
   const [busca, setBusca] = useState("");
   const [periodoDe, setPeriodoDe] = useState(""); // AAAA-MM-DD, do calendário
   const [periodoAte, setPeriodoAte] = useState("");
+  const [situacao, setSituacao] = useState<Situacao>("todos");
   // Só o admin consulta a lista de contas. Conta sem nome vinculado fica sem a linha "Criado por"
   useEffect(() => {
     if (!verCriador) {
@@ -97,7 +98,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
   const metricas = calcularMetricas(torneios);
   // Busca só para quem gerencia: o admin acha também por quem organizou (nome ou e-mail)
   const mostrarBusca = podeEditar && torneios.length > 0;
-  const torneiosDaLista = mostrarBusca
+  const buscados = mostrarBusca
     ? filtrarPorPeriodo(
         filtrarTorneios(torneios, busca, (t) =>
           verCriador && t.criadoPor ? `${nomesDasContas.get(t.criadoPor) ?? ""} ${emailsDasContas.get(t.criadoPor) ?? ""}` : ""),
@@ -105,7 +106,15 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
         periodoAte,
       )
     : torneios;
-  const filtrando = Boolean(busca.trim() || periodoDe || periodoAte);
+  // Situação por último: os botões mostram quantos há em cada uma dentro da busca
+  const torneiosDaLista = filtrarPorSituacao(buscados, situacao);
+  const contagemPorSituacao = {
+    todos: buscados.length,
+    aberto: buscados.filter((t) => situacaoDoTorneio(t) === "aberto").length,
+    andamento: buscados.filter((t) => situacaoDoTorneio(t) === "andamento").length,
+    finalizado: buscados.filter((t) => situacaoDoTorneio(t) === "finalizado").length,
+  };
+  const filtrando = Boolean(busca.trim() || periodoDe || periodoAte || situacao !== "todos");
   const ult30 = metricasRecentes(torneios, 30);
   const ultimoCampeao = (() => {
     const finalizados = torneios
@@ -334,12 +343,13 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
 
       {/* Faixa "Em andamento" + KPIs rápidos — colados abaixo do menu */}
       <div className="px-4 md:px-8 space-y-4 mb-4 mt-2">
-        {/* Busca e período no topo, logo abaixo do menu */}
-        {mostrarBusca && (
+        {/* Busca, período e situação no topo, logo abaixo do menu. A busca é de quem gerencia */}
+        {torneios.length > 0 && (
           <div
             className="flex flex-wrap items-center gap-2 p-2.5 rounded-2xl border"
             style={{ background: "rgba(15,15,15,0.78)", borderColor: "rgba(201,166,72,0.18)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
           >
+            {mostrarBusca && (<>
             <span className="relative flex-1 min-w-[200px] sm:max-w-md">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"><IconeBusca /></span>
             <input
@@ -378,13 +388,36 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
               />
             </label>
             </div>
+            </>)}
+            <div className="flex flex-wrap gap-1.5 w-full" role="radiogroup" aria-label="Situação do torneio">
+              {([
+                ["todos", "Todos"],
+                ["aberto", "Em aberto"],
+                ["andamento", "Em andamento"],
+                ["finalizado", "Finalizados"],
+              ] as [Situacao, string][]).map(([valor, rotulo]) => (
+                <button
+                  key={valor}
+                  type="button"
+                  role="radio"
+                  aria-checked={situacao === valor}
+                  onClick={() => setSituacao(valor)}
+                  className="rounded-full px-3 py-1 text-xs font-semibold border transition active:scale-95"
+                  style={situacao === valor
+                    ? { background: "rgba(201,166,72,0.16)", borderColor: "var(--brand-1)", color: "var(--brand-1)" }
+                    : { borderColor: "var(--line)", color: "var(--text-2)" }}
+                >
+                  {rotulo} <span className="opacity-70">{contagemPorSituacao[valor]}</span>
+                </button>
+              ))}
+            </div>
             {filtrando && (
               <>
                 <button
                   type="button"
                   className="text-xs underline"
                   style={{ color: "var(--brand-1)" }}
-                  onClick={() => { setBusca(""); setPeriodoDe(""); setPeriodoAte(""); }}
+                  onClick={() => { setBusca(""); setPeriodoDe(""); setPeriodoAte(""); setSituacao("todos"); }}
                 >
                   Limpar
                 </button>
@@ -545,7 +578,9 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
           <>
           {torneiosDaLista.length === 0 ? (
             <div className="text-center py-12 text-sm" style={{ color: "var(--text-2)" }}>
-              Nenhum torneio encontrado com esses filtros. Tente outro nome{verCriador ? ", outra pessoa" : ""} ou um período maior.
+              {mostrarBusca
+                ? <>Nenhum torneio encontrado com esses filtros. Tente outro nome{verCriador ? ", outra pessoa" : ""}, um período maior ou outra situação.</>
+                : "Nenhum torneio nessa situação."}
             </div>
           ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
