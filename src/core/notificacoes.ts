@@ -71,7 +71,7 @@ export type TipoAviso = "mesa" | "extra" | "ultimo_turno" | "finalizado" | "apro
 // Pede à função avisar-mesas um aviso de qualquer tipo. contas: quantos podem receber
 export async function enviarAviso(
   pedido: { tipo: TipoAviso; torneio_id?: string; rodada?: number; nome?: string },
-): Promise<{ enviados: number; contas: number }> {
+): Promise<{ enviados: number; contas: number; desligado?: "geral" | "torneio" }> {
   const { data, error } = await supabase.functions.invoke("avisar-mesas", { body: pedido });
   if (error) {
     let motivo = "";
@@ -81,7 +81,12 @@ export async function enviarAviso(
     }
     throw new Error(motivo || error.message);
   }
-  return { enviados: Number((data as any)?.enviados ?? 0), contas: Number((data as any)?.contas ?? 0) };
+  const desligado = (data as any)?.desligado;
+  return {
+    enviados: Number((data as any)?.enviados ?? 0),
+    contas: Number((data as any)?.contas ?? 0),
+    desligado: desligado === "torneio" ? "torneio" : desligado ? "geral" : undefined,
+  };
 }
 
 // Chamado por quem organiza ao iniciar a rodada, ou pelo botão "Avisar mesas"

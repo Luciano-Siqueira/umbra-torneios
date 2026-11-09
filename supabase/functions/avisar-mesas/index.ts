@@ -5,7 +5,8 @@
 //   ultimo_turno — o tempo extra acabou: falta 1 turno para cada jogador
 //   finalizado — o torneio terminou: ver o ranking
 //   aprovacao  — aos admins: um nome de jogador aguarda aprovação
-// Quais tipos saem é escolhido pelo admin na tela Usuários (tabela config_avisos).
+// Quais tipos saem é escolhido pelo admin na tela Usuários (tabela config_avisos). Dentro disso,
+// quem organiza com o Organizador Pro (ou é admin) escolhe por torneio (dados.avisos).
 // Mesas e tempo só vão para quem tem "Mesas" (e "Tempo") liberado, ou é admin.
 //
 // Segredos (Supabase → Edge Functions → Secrets): VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT.
@@ -33,7 +34,8 @@ type Tipo = "mesa" | "extra" | "ultimo_turno" | "finalizado" | "aprovacao";
 const TIPOS: Tipo[] = ["mesa", "extra", "ultimo_turno", "finalizado", "aprovacao"];
 type Jogador = { id: number; nome: string };
 type Mesa = { numero: number; jogadoresIds: number[]; finalizada?: boolean };
-type Dados = { nome: string; rodadaAtual: number; tempoExtraMin?: number; jogadores: Jogador[]; mesas: Mesa[]; finalizado?: boolean };
+type AvisosDoTorneio = { mesa?: boolean; tempo?: boolean; finalizado?: boolean };
+type Dados = { nome: string; rodadaAtual: number; tempoExtraMin?: number; avisos?: AvisosDoTorneio; jogadores: Jogador[]; mesas: Mesa[]; finalizado?: boolean };
 type Mensagem = { title: string; body: string; url: string; tag: string };
 
 Deno.serve(async (req) => {
@@ -65,7 +67,7 @@ Deno.serve(async (req) => {
 
   // O admin pode desligar cada tipo na tela Usuários. Sem a tabela, tudo fica ligado.
   const { data: config } = await servidor.from("config_avisos").select("*").eq("id", 1).maybeSingle();
-  if (config && config[tipo] === false) return resposta(200, { ok: true, enviados: 0, contas: 0, desligado: true });
+  if (config && config[tipo] === false) return resposta(200, { ok: true, enviados: 0, contas: 0, desligado: "geral" });
 
   const { data: admins } = await servidor.from("admins").select("user_id");
   const idsAdmins = (admins ?? []).map((a) => a.user_id as string);
@@ -113,6 +115,20 @@ Deno.serve(async (req) => {
     }
     if (!dados || !pronto(dados) || (tipo !== "finalizado" && dados.rodadaAtual !== rodada)) {
       return resposta(409, { erro: "O torneio ainda não foi salvo com essa mudança. Tente de novo em instantes." });
+    }
+
+    // Dono do torneio com o Pro em dia (admin conta como Pro)
+    const donoTemPro = async (dono: string | null): Promise<boolean> => {
+      if (!dono) return false;
+      if (idsAdmins.includes(dono)) return true;
+      const { data } = await servidor.from("assinaturas_pro").select("pro_ate").eq("user_id", dono).maybeSingle();
+      return !!data && Date.parse(data.pro_ate as string) > Date.now();
+    };
+
+    // Escolha do torneio: só vale se quem criou tem o Organizador Pro ou é admin
+    const campo: keyof AvisosDoTorneio = tipo === "mesa" ? "mesa" : tipo === "finalizado" ? "finalizado" : "tempo";
+    if (dados.avisos?.[campo] === false && await donoTemPro(privado?.criado_por ?? null)) {
+      return resposta(200, { ok: true, enviados: 0, contas: 0, desligado: "torneio" });
     }
 
     // Tempo e fim do torneio saem uma vez só, mesmo que vários aparelhos peçam

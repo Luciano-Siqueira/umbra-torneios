@@ -67,6 +67,18 @@ export interface Torneio {
   timer?: TimerRodada | null; // null até iniciar o tempo da rodada
   versao?: number; // sobe a cada gravação no servidor; revela conflito entre aparelhos
   premios?: Record<number, number>; // prêmio por jogador, único dado de pagamento que o participante recebe
+  avisos?: AvisosDoTorneio; // escolha do Organizador Pro; sem ela, todas as notificações saem
+}
+
+// Notificações que este torneio manda. Ausente ou true = liga. Só vale se quem criou tem o Pro (ou é admin).
+export interface AvisosDoTorneio {
+  mesa?: boolean;
+  tempo?: boolean; // tempo extra e último turno
+  finalizado?: boolean;
+}
+
+export function avisoLigadoNoTorneio(t: Pick<Torneio, "avisos">, chave: keyof AvisosDoTorneio): boolean {
+  return t.avisos?.[chave] !== false;
 }
 
 // Inscrições ficam abertas até a rodada 1; da 2 em diante, o pareamento já depende dos resultados

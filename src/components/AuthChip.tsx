@@ -8,6 +8,9 @@ import { confirmar } from "./ui/Confirm";
 import { IconeAlvo, IconeCadeado, IconeCoroa, IconePessoa } from "./ui/Icones";
 import { DialogoExcluirConta } from "./DialogoExcluirConta";
 import { DialogoSobre } from "./DialogoSobre";
+import { DialogoPro } from "./DialogoPro";
+import { formatarData, useMeuPro } from "../core/pro";
+import { podeVenderNoApp } from "../core/plataforma";
 import { useAvisos } from "../core/notificacoes";
 
 interface Props {
@@ -48,6 +51,10 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
   const [abrindoMenu, setAbrindoMenu] = useState(false);
   const [excluindoConta, setExcluindoConta] = useState(false);
   const [sobreAberto, setSobreAberto] = useState(false);
+  const [proAberto, setProAberto] = useState(false);
+  const pro = useMeuPro(auth.session?.user?.id, auth.isAdmin);
+  // No app da Play Store o item só aparece para quem já tem o Pro (a compra é pelo site)
+  const mostrarPro = (auth.isOrganizador || auth.isAdmin) && (podeVenderNoApp() || pro.ativo);
   const avisos = useAvisos();
   const raiz = useRef<HTMLDivElement>(null);
   const [abrirParaDireita, setAbrirParaDireita] = useState(false);
@@ -218,6 +225,21 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
               </button>
             ))}
 
+            {mostrarPro && (
+              <div style={{ borderTop: "1px solid var(--line)" }}>
+                <button
+                  onClick={() => { setAbrindoMenu(false); setProAberto(true); }}
+                  className="block w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition"
+                  style={{ color: "var(--brand-1)" }}
+                >
+                  <IconeCoroa cor="currentColor" /> Organizador Pro
+                  <span className="block text-[10px] pl-5" style={{ color: "var(--text-2)" }}>
+                    {pro.ehAdmin ? "incluído para administradores" : pro.ativo && pro.proAte ? `ativo até ${formatarData(pro.proAte)}` : "conheça e assine"}
+                  </span>
+                </button>
+              </div>
+            )}
+
             <div style={{ borderTop: "1px solid var(--line)" }}>
               {avisos.estado !== "sem-suporte" && (auth.verMesas || auth.isAdmin) && (
                 <button
@@ -293,6 +315,7 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
         </>
       )}
       <DialogoSobre aberto={sobreAberto} onFechar={() => setSobreAberto(false)} />
+      <DialogoPro aberto={proAberto} onFechar={() => setProAberto(false)} pro={pro} ehOrganizador={auth.isOrganizador} />
       <DialogoExcluirConta
         aberto={excluindoConta}
         email={auth.session?.user?.email ?? ""}

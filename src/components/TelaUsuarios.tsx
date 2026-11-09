@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { IconeAlerta, IconeBusca, IconeCadeado as IconeCadeadoUsuarios, IconeCheck, IconeChave, IconeEnvelope, IconeLapis, IconeLixeira, IconeVoltar } from "./ui/Icones";
 import { useStore } from "../core/store";
+import { formatarData, listarAssinaturasPro, proAtivo } from "../core/pro";
 import { useAuth } from "../core/auth";
 import {
   listarUsuarios, definirPapel, deletarUsuario, enviarResetSenha,
@@ -39,14 +40,16 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
   const [faltaTabelaPermissoes, setFaltaTabelaPermissoes] = useState(false);
   const [avisosAberto, setAvisosAberto] = useState(false);
   const [aceites, setAceites] = useState<Map<string, AceitePrivacidade>>(new Map());
+  const [assinaturasPro, setAssinaturasPro] = useState<Map<string, string>>(new Map());
   const [faltaFuncaoAceites, setFaltaFuncaoAceites] = useState(false);
 
   const carregar = async () => {
     setCarregando(true);
     try {
-      const [u, p, perm, ac] = await Promise.all([
-        listarUsuarios(), listarNomesPendentes(), listarPermissoesJogador(), listarAceitesPrivacidade(),
+      const [u, p, perm, ac, pro] = await Promise.all([
+        listarUsuarios(), listarNomesPendentes(), listarPermissoesJogador(), listarAceitesPrivacidade(), listarAssinaturasPro(),
       ]);
+      setAssinaturasPro(pro);
       setAceites(ac.porUsuario);
       setFaltaFuncaoAceites(ac.faltaFuncao);
       setUsuarios(u);
@@ -338,6 +341,11 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                         </div>
                         <div className="text-[10px] text-fg-dim">
                           {new Date(u.criado_em).toLocaleDateString("pt-BR")}
+                          {proAtivo(assinaturasPro.get(u.user_id)) && (
+                            <span className="ml-2 font-bold" style={{ color: "var(--brand-1)" }} title="Organizador Pro">
+                              PRO até {formatarData(assinaturasPro.get(u.user_id)!)}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="py-2 px-4">

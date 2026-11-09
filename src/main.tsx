@@ -2,6 +2,10 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
+import { registrarOrigemDoApp } from "./core/plataforma";
+
+// Antes de qualquer navegação interna: só a primeira página sabe se veio do app da Play Store
+registrarOrigemDoApp();
 
 function boot() {
   const el = document.getElementById("root");

@@ -17,9 +17,10 @@ import { comandanteDoDeck, coresDoDeck } from "../../core/decks";
 import { CoresMana } from "../ui/SimboloMana";
 import { contar } from "../../core/formato";
 import { avisarMesas, enviarAviso } from "../../core/notificacoes";
+import { DialogoAvisosTorneio } from "../DialogoAvisosTorneio";
 import {
   IconeCopiar, IconeCoroa, IconeEmbaralhar, IconeHistorico, IconeMedalha, IconePausa, IconeParar,
-  IconePlay, IconeReiniciar, IconeSino, IconeTrofeu,
+  IconeEngrenagem, IconePlay, IconeReiniciar, IconeSino, IconeTrofeu,
 } from "../ui/Icones";
 
 export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: {
@@ -35,6 +36,7 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
   const { toast } = useToast();
 
   const [mesaSel, setMesaSel] = useState<{ mesa: Mesa; idx: number } | null>(null);
+  const [avisosTorneioAberto, setAvisosTorneioAberto] = useState(false);
   const timer = useTimer(torneio.tempoRodadaMin, torneio.tempoExtraMin, torneio.timer, podeEditar);
   const { nomesJogador } = useAuth();
   // O cartão da própria mesa é só do modo jogador
@@ -45,7 +47,7 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
 
   useEffect(() => {
     timer.setOnFimNormal(verTempo ? () => toast("Tempo normal acabou! Iniciando tempo extra.", "aviso") : () => {});
-    timer.setOnFimTotal(verTempo ? () => toast("TEMPO ESGOTADO — encerrem as partidas!", "erro") : () => {});
+    timer.setOnFimTotal(verTempo ? () => toast("Tempo extra acabou: último turno para cada jogador!", "erro") : () => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [verTempo]);
 
@@ -137,8 +139,10 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
   const avisarDeNovo = async () => {
     setAvisando(true);
     try {
-      const { enviados, contas } = await avisarMesas(torneio.id, torneio.rodadaAtual);
-      if (enviados > 0) toast(`Mesa avisada a ${contar(enviados, "aparelho")}`, "sucesso");
+      const { enviados, contas, desligado } = await avisarMesas(torneio.id, torneio.rodadaAtual);
+      if (desligado === "torneio") toast("A notificação de mesa está desligada neste torneio (botão Notificações).", "aviso");
+      else if (desligado) toast("A notificação de mesa está desligada para todos em Usuários → Configurar notificações.", "aviso");
+      else if (enviados > 0) toast(`Mesa avisada a ${contar(enviados, "aparelho")}`, "sucesso");
       else if (contas === 0) toast("Ninguém desta rodada pode receber: o jogador precisa de conta com o nome aprovado e Mesas liberado.", "aviso");
       else toast("Nenhum aparelho para avisar: os jogadores ainda não ligaram os avisos no celular.", "aviso");
     } catch (e: any) {
@@ -415,6 +419,11 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
           </button>
         )}
         {podeEditar && (
+          <button className="btn-ghost" onClick={() => setAvisosTorneioAberto(true)} title="Escolher quais notificações este torneio manda">
+            <IconeEngrenagem cor="currentColor" /> Notificações
+          </button>
+        )}
+        {podeEditar && (
           <button className="btn-info" onClick={copiarWhatsApp}>
             <IconeCopiar cor="currentColor" /> Copiar (WhatsApp)
           </button>
@@ -482,6 +491,9 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
           />
         )}
       </Modal>
+      {podeEditar && (
+        <DialogoAvisosTorneio torneio={torneio} aberto={avisosTorneioAberto} onFechar={() => setAvisosTorneioAberto(false)} />
+      )}
     </div>
   );
 }

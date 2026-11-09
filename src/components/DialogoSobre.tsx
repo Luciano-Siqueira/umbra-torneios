@@ -3,8 +3,10 @@ import { IconeCopiar, IconeCoracao, IconeEnvelope, IconeInfo } from "./ui/Icones
 import { EscritaUmbra, SimboloUmbra } from "./ui/LogoUmbra";
 import { Modal } from "./ui/Modal";
 import { useToast } from "./ui/Toast";
+import { podeVenderNoApp } from "../core/plataforma";
 
 // Chave Pix aleatória para quem quiser ajudar com os custos do app. Vazia, o bloco avisa que vem em breve.
+// No app da Play Store o bloco some: a loja não aceita pagamentos por fora dela.
 export const CHAVE_PIX = "";
 const EMAIL_CONTATO = "contato@umbraarena.com.br";
 
@@ -40,33 +42,35 @@ export function DialogoSobre({ aberto, onFechar }: { aberto: boolean; onFechar: 
           desempate oficial, premiação e histórico.
         </p>
         <p style={{ color: "var(--text-2)" }}>
-          Cada jogador acompanha a própria mesa, os decks e o seu desempenho. O app é gratuito e não tem anúncios.
+          Cada jogador acompanha a própria mesa, os decks e o seu desempenho. O app é gratuito para jogadores e não tem anúncios.
         </p>
 
-        <div className="rounded-xl p-3 space-y-2" style={{ background: "var(--ds-surface-2)", border: "1px solid rgba(201,166,72,0.3)" }}>
-          <div className="font-semibold flex items-center gap-2" style={{ color: "var(--brand-1)" }}>
-            <IconeCoracao cor="currentColor" /> Ajude o projeto
-          </div>
-          <p className="text-xs" style={{ color: "var(--text-2)" }}>
-            Servidor, domínio e e-mail têm custo. Se quiser ajudar, qualquer valor via Pix é bem-vindo.
-          </p>
-          {CHAVE_PIX ? (
-            <div className="flex items-center gap-2">
-              <code
-                className="flex-1 min-w-0 break-all select-all rounded-lg px-2 py-1.5 text-xs"
-                style={{ background: "var(--page-1)", color: "var(--text-strong)" }}
-                aria-label="Chave Pix aleatória"
-              >
-                {CHAVE_PIX}
-              </code>
-              <button type="button" className="btn-primary text-xs whitespace-nowrap" onClick={copiarPix}>
-                <IconeCopiar cor="currentColor" /> Copiar
-              </button>
+        {podeVenderNoApp() && (
+          <div className="rounded-xl p-3 space-y-2" style={{ background: "var(--ds-surface-2)", border: "1px solid rgba(201,166,72,0.3)" }}>
+            <div className="font-semibold flex items-center gap-2" style={{ color: "var(--brand-1)" }}>
+              <IconeCoracao cor="currentColor" /> Ajude o projeto
             </div>
-          ) : (
-            <p className="text-xs italic" style={{ color: "var(--text-2)" }}>A chave Pix chega em breve.</p>
-          )}
-        </div>
+            <p className="text-xs" style={{ color: "var(--text-2)" }}>
+              Servidor, domínio e e-mail têm custo. Se quiser ajudar, qualquer valor via Pix é bem-vindo.
+            </p>
+            {CHAVE_PIX ? (
+              <div className="flex items-center gap-2">
+                <code
+                  className="flex-1 min-w-0 break-all select-all rounded-lg px-2 py-1.5 text-xs"
+                  style={{ background: "var(--page-1)", color: "var(--text-strong)" }}
+                  aria-label="Chave Pix aleatória"
+                >
+                  {CHAVE_PIX}
+                </code>
+                <button type="button" className="btn-primary text-xs whitespace-nowrap" onClick={copiarPix}>
+                  <IconeCopiar cor="currentColor" /> Copiar
+                </button>
+              </div>
+            ) : (
+              <p className="text-xs italic" style={{ color: "var(--text-2)" }}>A chave Pix chega em breve.</p>
+            )}
+          </div>
+        )}
 
         <div className="flex flex-col gap-1 text-xs">
           <a href={`mailto:${EMAIL_CONTATO}`} className="inline-flex items-center gap-2" style={{ color: "var(--brand-1)" }}>
