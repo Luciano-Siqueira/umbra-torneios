@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+import { IconeAmpulheta } from "./components/ui/Icones";
 import { useStore } from "./core/store";
 import { ToastProvider, useToast } from "./components/ui/Toast";
 import { Splash } from "./components/Splash";
@@ -6,7 +7,7 @@ import { TelaTorneios } from "./components/TelaTorneios";
 import { TelaTorneio } from "./components/TelaTorneio";
 import { TelaLogin } from "./components/TelaLogin";
 import { TelaVincularNome } from "./components/TelaVincularNome";
-import { useAuth } from "./core/auth";
+import { atualizarPerfil, useAuth } from "./core/auth";
 import { sincronizarDecks } from "./core/atualizarDecks";
 import { BarraInferior } from "./components/ui/BarraInferior";
 import { useListaAtualizada } from "./core/useAoVivo";
@@ -70,7 +71,7 @@ function AppInner() {
       } else if (aviso.tipo === "conflito") {
         (async () => {
           const manter = await confirmar({
-            titulo: "⚠ Conflito entre aparelhos",
+            titulo: "Conflito entre aparelhos",
             mensagem: `Outro aparelho alterou "${aviso.nome}" enquanto você também alterava.\n\nSó uma versão pode ficar. A outra será perdida.`,
             textoOk: "Manter a deste aparelho",
             textoCancelar: "Usar a do outro aparelho",
@@ -138,6 +139,15 @@ function AppInner() {
     if (!auth.loading && auth.session && tela === "splash") irPara("torneios");
   }, [auth.loading, auth.session, tela, irPara]);
 
+  // Permissões novas (Mesas e Tempo) chegam ao voltar para o app e a cada 3 minutos com ele aberto
+  useEffect(() => {
+    if (!auth.session) return;
+    const aoVoltar = () => { if (document.visibilityState === "visible") atualizarPerfil(); };
+    document.addEventListener("visibilitychange", aoVoltar);
+    const id = window.setInterval(() => { if (document.visibilityState === "visible") atualizarPerfil(); }, 3 * 60_000);
+    return () => { document.removeEventListener("visibilitychange", aoVoltar); window.clearInterval(id); };
+  }, [auth.session?.user?.id]);
+
   // 5) Atalho do ícone do app (/?tela=decks): abre direto naquela tela, uma vez.
   // Sem login, a pessoa entra pela tela inicial como sempre.
   useEffect(() => {
@@ -164,7 +174,7 @@ function AppInner() {
           className="fixed bottom-20 md:bottom-3 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap"
           style={{ background: "var(--warn)", color: "#0a0a0a" }}
         >
-          ⏳ Alterações aguardando internet
+          <span className="inline-flex items-center gap-1.5"><IconeAmpulheta cor="currentColor" /> Alterações aguardando internet</span>
         </div>
       )}
 

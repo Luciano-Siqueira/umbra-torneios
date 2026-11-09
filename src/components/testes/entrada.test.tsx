@@ -14,6 +14,7 @@ vi.mock("../../core/auth", () => ({
   trocarNome: vi.fn(async () => {}),
   desvincularNome: vi.fn(async () => {}),
   sair: vi.fn(async () => {}),
+  atualizarPerfil: vi.fn(),
   aceitarPrivacidade: contas.aceitarPrivacidade,
   definirSenha: contas.definirSenha,
 }));
@@ -78,9 +79,9 @@ describe("política de privacidade", () => {
   it("aparece para quem ainda não aceitou e some ao concordar", async () => {
     contas.atual = conta({ session: sessao });
     render(<App />);
-    expect(screen.getByText("🔒 Sua privacidade")).toBeTruthy();
+    expect(screen.getByText("Sua privacidade")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Li e concordo" }));
-    await waitFor(() => expect(screen.queryByText("🔒 Sua privacidade")).toBeNull());
+    await waitFor(() => expect(screen.queryByText("Sua privacidade")).toBeNull());
     expect(contas.aceitarPrivacidade).toHaveBeenCalledWith("u1");
   });
 
@@ -88,14 +89,14 @@ describe("política de privacidade", () => {
     const aceitou = { user: { id: "u2", email: "x@teste.local", user_metadata: { privacidade_versao: VERSAO_PRIVACIDADE } } } as unknown as AuthState["session"];
     contas.atual = conta({ session: aceitou });
     render(<App />);
-    expect(screen.queryByText("🔒 Sua privacidade")).toBeNull();
+    expect(screen.queryByText("Sua privacidade")).toBeNull();
   });
 
   it("volta a aparecer quando a política muda de versão", () => {
     const antiga = { user: { id: "u3", email: "y@teste.local", user_metadata: { privacidade_versao: "2020-01-01" } } } as unknown as AuthState["session"];
     contas.atual = conta({ session: antiga });
     render(<App />);
-    expect(screen.getByText("🔒 Sua privacidade")).toBeTruthy();
+    expect(screen.getByText("Sua privacidade")).toBeTruthy();
   });
 });
 
@@ -105,8 +106,8 @@ describe("link de convite ou de nova senha", () => {
   it("pede a senha nova antes de qualquer outro aviso e confere as duas senhas", async () => {
     contas.atual = conta({ session: sessao, criarSenha: true });
     render(<App />);
-    expect(screen.getByText("🔑 Crie sua senha")).toBeTruthy();
-    expect(screen.queryByText("🔒 Sua privacidade")).toBeNull();
+    expect(screen.getByText("Crie sua senha")).toBeTruthy();
+    expect(screen.queryByText("Sua privacidade")).toBeNull();
 
     fireEvent.change(screen.getByLabelText("Nova senha"), { target: { value: "segredo1" } });
     fireEvent.change(screen.getByLabelText("Confirmar senha"), { target: { value: "segredo2" } });

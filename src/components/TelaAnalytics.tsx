@@ -9,6 +9,7 @@ import { IconeDecks } from "./ui/LogoUmbra";
 import {
   IconeAnalytics, IconeCombinacoes, IconeCoroa, IconeDado, IconeEspadas, IconeGota,
   IconeGrafico, IconeHistorico, IconePessoa, IconeRaio, IconeTrofeu,
+  IconeAlvo, IconeEstrela, IconeFogo, IconeMedalha, IconeVoltar,
 } from "./ui/Icones";
 import {
   calcularDesempenho, listarNomesJogadores, mesmoJogador,
@@ -20,6 +21,12 @@ import { FUNDO_DE_TELA } from "../banner-image";
 import { formatarNumero, formatarReais } from "../core/formato";
 
 type AbaAnalytics = "geral" | "jogador";
+
+// Conquistas do jogador: o núcleo diz qual é, a tela escolhe o ícone
+const ICONE_DA_CONQUISTA: Record<Conquista["icone"], (p: { tamanho?: number }) => JSX.Element> = {
+  trofeu: IconeTrofeu, coroa: IconeCoroa, medalha: IconeMedalha, espadas: IconeEspadas,
+  fogo: IconeFogo, alvo: IconeAlvo, estrela: IconeEstrela, relogio: IconeHistorico,
+};
 
 export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?: () => void; onVincularNome?: () => void } = {}) {
   const torneiosTodos = useStore((s) => s.torneios);
@@ -50,7 +57,7 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
       style={FUNDO_DE_TELA}
     >
       <div className="px-4 md:px-8 py-4 flex items-center gap-3">
-        <button className="btn-ghost hidden md:block" onClick={voltar}>← Voltar</button>
+        <button className="btn-ghost hidden md:block" onClick={voltar}><IconeVoltar cor="currentColor" /> Voltar</button>
         <h1 className="text-xl md:text-3xl font-bold flex items-center gap-2 min-w-0" style={{ color: "var(--text-strong)" }}>
           <IconeAnalytics tamanho={28} /> {podeEditar ? "Analytics" : "Meu desempenho"}
         </h1>
@@ -493,8 +500,8 @@ function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
 }) {
   const obtidas = conquistas.filter((c) => c.obtida).length;
   const distribuicao = [
-    { label: "🥇 Vitórias", valor: d.vitorias },
-    { label: "🤝 Empates por tempo", valor: d.empates },
+    { label: "Vitórias", valor: d.vitorias },
+    { label: "Empates por tempo", valor: d.empates },
     ...d.colocacoes.map((c) => ({ label: `${c.posicao}º lugar na mesa`, valor: c.qtd })),
   ];
 
@@ -509,7 +516,7 @@ function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
               className="ds-card"
               style={{ opacity: c.obtida ? 1 : 0.4, filter: c.obtida ? undefined : "grayscale(1)" }}
             >
-              <div className="text-2xl">{c.icone}</div>
+              <div>{(() => { const Icone = ICONE_DA_CONQUISTA[c.icone]; return <Icone tamanho={28} />; })()}</div>
               <div className="text-sm font-bold mt-1" style={{ color: "var(--text-strong)" }}>{c.titulo}</div>
               <div className="text-xs mt-0.5" style={{ color: "var(--text-muted-ds)" }}>{c.descricao}</div>
             </div>
@@ -664,7 +671,7 @@ function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
                     <td className="py-1.5" style={{ color: "var(--text-strong)" }}>{t.nome}</td>
                     <td className="py-1.5">{t.deck || "—"}</td>
                     <td className="py-1.5 text-right tabular-nums whitespace-nowrap">
-                      {t.posicao === 1 && "🏆 "}
+                      {t.posicao === 1 && <><IconeTrofeu /> </>}
                       {t.posicao !== null ? `${t.posicao}º de ${t.total}` : "em andamento"}
                     </td>
                     <td className="py-1.5 text-right tabular-nums">{t.pontos}</td>
@@ -703,12 +710,12 @@ function DesempenhoView({ d, conquistas, torneio, posicaoGeral, totalGeral }: {
             <>
               <div className="grid grid-cols-2 gap-2 mb-3">
                 <DestaqueRival
-                  titulo="😈 Carrasco"
+                  titulo={<><IconeEspadas cor="currentColor" /> Carrasco</>}
                   nome={d.carrasco?.nome}
                   detalhe={d.carrasco ? `venceu ${d.carrasco.vitoriasDele} mesas contra ${d.nome}` : undefined}
                 />
                 <DestaqueRival
-                  titulo="🎯 Freguês"
+                  titulo={<><IconeAlvo cor="currentColor" /> Freguês</>}
                   nome={d.fregues?.nome}
                   detalhe={d.fregues ? `perdeu ${d.fregues.minhasVitorias} mesas para ${d.nome}` : undefined}
                 />
@@ -769,7 +776,7 @@ function ChipResultado({ resultado }: { resultado: ResultadoMesa }) {
   );
 }
 
-function DestaqueRival({ titulo, nome, detalhe }: { titulo: string; nome?: string; detalhe?: string }) {
+function DestaqueRival({ titulo, nome, detalhe }: { titulo: React.ReactNode; nome?: string; detalhe?: string }) {
   return (
     <div className="p-2.5 rounded-lg min-w-0" style={{ background: "var(--surface-subtle)" }}>
       <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-muted-ds)" }}>{titulo}</div>

@@ -44,7 +44,7 @@ export interface DeckDoJogador {
 }
 
 export interface Conquista {
-  icone: string;
+  icone: "trofeu" | "coroa" | "medalha" | "espadas" | "fogo" | "alvo" | "estrela" | "relogio";
   titulo: string;
   descricao: string;
   obtida: boolean;
@@ -272,14 +272,14 @@ export function calcularDesempenho(torneios: Torneio[], nome: string): Desempenh
     .sort((a, b) => b.torneios - a.torneios || b.winrate - a.winrate);
 
   const conquistas: Conquista[] = [
-    { icone: "🏆", titulo: "Campeão", descricao: "Vença um torneio", obtida: campeonatos >= 1 },
-    { icone: "👑", titulo: "Dinastia", descricao: "Vença 3 torneios", obtida: campeonatos >= 3 },
-    { icone: "🥉", titulo: "No pódio", descricao: "Termine um torneio no top 3", obtida: podios >= 1 },
-    { icone: "⚔️", titulo: "Invicto", descricao: "Vença todas as suas mesas em um torneio", obtida: invicto },
-    { icone: "🔥", titulo: "Em chamas", descricao: "Vença 3 mesas seguidas", obtida: melhorSequencia >= 3 },
-    { icone: "🎯", titulo: "Freguesia", descricao: "Vença 3 mesas contra o mesmo jogador", obtida: (fregues?.minhasVitorias ?? 0) >= 3 },
-    { icone: "🎖️", titulo: "Veterano", descricao: "Jogue 10 torneios", obtida: historico.length >= 10 },
-    { icone: "🧙", titulo: "Maratonista", descricao: "Jogue 50 mesas", obtida: resultados.length >= 50 },
+    { icone: "trofeu", titulo: "Campeão", descricao: "Vença um torneio", obtida: campeonatos >= 1 },
+    { icone: "coroa", titulo: "Dinastia", descricao: "Vença 3 torneios", obtida: campeonatos >= 3 },
+    { icone: "medalha", titulo: "No pódio", descricao: "Termine um torneio no top 3", obtida: podios >= 1 },
+    { icone: "espadas", titulo: "Invicto", descricao: "Vença todas as suas mesas em um torneio", obtida: invicto },
+    { icone: "fogo", titulo: "Em chamas", descricao: "Vença 3 mesas seguidas", obtida: melhorSequencia >= 3 },
+    { icone: "alvo", titulo: "Freguesia", descricao: "Vença 3 mesas contra o mesmo jogador", obtida: (fregues?.minhasVitorias ?? 0) >= 3 },
+    { icone: "estrela", titulo: "Veterano", descricao: "Jogue 10 torneios", obtida: historico.length >= 10 },
+    { icone: "relogio", titulo: "Maratonista", descricao: "Jogue 50 mesas", obtida: resultados.length >= 50 },
   ];
 
   const { total: ganhos, premiacoes: torneiosPremiados } = calcularGanhos(ordenados, [nome]);

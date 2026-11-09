@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { IconeCoroa, IconeReiniciar } from "./ui/Icones";
 import { useStore } from "../core/store";
 import { useAuth } from "../core/auth";
 import { useAoVivo } from "../core/useAoVivo";
@@ -9,6 +10,7 @@ import { partesDoTorneioVisiveis, podeEditarTorneios } from "../core/visibilidad
 import { confirmar } from "./ui/Confirm";
 import { useToast } from "./ui/Toast";
 import { AuthChip } from "./AuthChip";
+import { AvisosDoTempo } from "./AvisosDoTempo";
 import { SeloStatus } from "./ui/SeloStatus";
 import { EscritaUmbra, SimboloUmbra } from "./ui/LogoUmbra";
 import { FUNDO_DE_TELA } from "../banner-image";
@@ -168,7 +170,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
             className="absolute -top-10 -right-10 w-32 h-32 opacity-40 pointer-events-none"
             style={{ background: "radial-gradient(circle, var(--brand-1), transparent 65%)" }}
           />
-          <div className="text-3xl md:text-4xl flex-shrink-0 relative">♛</div>
+          <div className="flex-shrink-0 relative"><IconeCoroa tamanho={36} /></div>
           <div className="flex-1 min-w-0 relative">
             <div
               className="text-[10px] md:text-[11px] font-bold tracking-[0.3em] uppercase"
@@ -192,7 +194,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
                 });
                 if (ok) { reabrir(); toast("Torneio reaberto", "sucesso"); }
               }}
-            >↺ <span className="hidden sm:inline">Reabrir</span></button>
+            ><IconeReiniciar cor="currentColor" /> <span className="hidden sm:inline">Reabrir</span></button>
           )}
         </div>
       )}
@@ -237,7 +239,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
               }}
               title="Reabre o torneio para editar"
             >
-              ↺ <span className="hidden sm:inline">Reabrir torneio</span>
+              <IconeReiniciar cor="currentColor" /> <span className="hidden sm:inline">Reabrir torneio</span>
             </button>
         )}
       </nav>
@@ -251,6 +253,8 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
         {!podeEditar && verRodada.tempo && encontrarMinhaMesa([torneio], auth.nomesJogador)?.mesa && (
           <VibracaoFimDaRodada torneio={torneio} />
         )}
+        {/* Avisos de "faltam 10 minutos" e "tempo esgotado" saem do aparelho de quem organiza */}
+        {podeEditar && <AvisosDoTempo torneio={torneio} />}
         {aba === null && (
           <div className="card max-w-lg mx-auto text-center py-10 space-y-2">
             <div className="text-lg font-semibold" style={{ color: "var(--text-strong)" }}>Torneio em andamento</div>

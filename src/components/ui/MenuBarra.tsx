@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { IconeSetaBaixo } from "./Icones";
 
 // Menu suspenso da barra superior. Fecha ao escolher um item, ao clicar fora ou com Esc.
 export function MenuBarra({ icone, rotulo, children }: { icone?: ReactNode; rotulo: string; children: ReactNode }) {
@@ -37,7 +38,7 @@ export function MenuBarra({ icone, rotulo, children }: { icone?: ReactNode; rotu
         {/* No celular fica só o ícone */}
         {/* Texto só em tela bem larga: nas médias o ícone basta e sobra espaço na barra */}
         <span className="hidden 2xl:inline">{rotulo}</span>
-        <span className="hidden 2xl:inline text-xs opacity-60">▾</span>
+        <span className="hidden 2xl:inline opacity-60"><IconeSetaBaixo tamanho={14} cor="currentColor" /></span>
       </button>
       {aberto && (
         <div

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { IconeChave } from "./ui/Icones";
 import { definirSenha } from "../core/auth";
 import { Modal } from "./ui/Modal";
 
@@ -28,7 +29,7 @@ export function DialogoCriarSenha({ email, onPronto }: { email: string; onPronto
   };
 
   return (
-    <Modal open onClose={() => {}} title="🔑 Crie sua senha">
+    <Modal open onClose={() => {}} title={<span className="inline-flex items-center gap-2"><IconeChave tamanho={20} /> Crie sua senha</span>}>
       <form
         className="space-y-4 text-sm"
         onSubmit={(e) => { e.preventDefault(); salvar(); }}

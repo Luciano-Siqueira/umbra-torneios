@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { IconeCheck } from "../ui/Icones";
 import type { Torneio, Rodada, Mesa } from "../../core/types";
 
 export function AbaHistorico({ torneio }: { torneio: Torneio }) {
@@ -59,7 +60,7 @@ function MesaCard({ mesa, jogadoresPorId }: { mesa: Mesa; jogadoresPorId: Map<nu
         <div className="font-bold">Mesa {mesa.numero}</div>
         {mesa.finalizada ? (
           <span className="text-xs text-sucesso">
-            ✓{mesa.empateTopoIds.length > 1 ? ` empate K=${mesa.empateTopoIds.length}` : ""}
+            <IconeCheck cor="currentColor" />{mesa.empateTopoIds.length > 1 ? ` empate K=${mesa.empateTopoIds.length}` : ""}
           </span>
         ) : (
           <span className="text-xs text-info">pendente</span>

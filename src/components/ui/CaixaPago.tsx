@@ -1,3 +1,4 @@
+import { IconeCheck } from "./Icones";
 // travado: torneio finalizado, onde o pagamento já registrado não pode ser desfeito sem reabrir
 export function CaixaPago({ pago, onClick, nome, travado = false }: {
   pago: boolean; onClick: () => void; nome: string; travado?: boolean;
@@ -15,6 +16,6 @@ export function CaixaPago({ pago, onClick, nome, travado = false }: {
                   ${pago
                     ? `bg-sucesso border-sucesso text-bg ${bloqueado ? "opacity-60 cursor-not-allowed" : ""}`
                     : "border-fg-muted text-transparent hover:border-fg-dim"}`}
-    >{pago ? "✓" : ""}</button>
+    >{pago ? <IconeCheck tamanho={15} cor="currentColor" /> : ""}</button>
   );
 }

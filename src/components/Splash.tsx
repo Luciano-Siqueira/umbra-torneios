@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { IconeAnalytics, IconeCadeado, IconeCoroa, IconeDado, IconeEspadas, IconeHistorico, IconeTrofeu } from "./ui/Icones";
 import { useStore } from "../core/store";
 import { BANNER_IMAGE } from "../banner-image";
 import manaPathsData from "../mana-paths.json";
@@ -156,11 +157,11 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
             <div className="text-xs" style={{ color: "var(--text-2)" }}>...</div>
           ) : auth.session ? (
             <div className="text-xs" style={{ color: "var(--brand-1)" }}>
-              {auth.isAdmin ? "👑 ADMINISTRADOR · " : ""}{auth.nomesJogador[0] ?? auth.session.user.email}
+              {auth.isAdmin ? <><IconeCoroa cor="currentColor" /> ADMINISTRADOR · </> : ""}{auth.nomesJogador[0] ?? auth.session.user.email}
             </div>
           ) : (
             <div className="text-xs" style={{ color: "var(--text-2)" }}>
-              🔐 Login necessário
+              <IconeCadeado cor="currentColor" /> Login necessário
             </div>
           )}
           <div className="text-[11px]" style={{ color: "var(--text-muted-ds)" }}>
@@ -173,11 +174,11 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
         {/* Features em pills */}
         <div className="my-auto py-7 md:py-0 md:mb-0 md:mt-14 flex flex-wrap items-center justify-center gap-2 max-w-3xl">
           {[
-            { icon: "⚔", txt: "Pareamento automático" },
-            { icon: "🏆", txt: "Ranking OMW/GW/OGW" },
-            { icon: "⏱", txt: "Timer com fases" },
-            { icon: "🎲", txt: "Sorteios integrados" },
-            { icon: "📊", txt: "Analytics semanais" },
+            { icon: <IconeEspadas />, txt: "Pareamento automático" },
+            { icon: <IconeTrofeu />, txt: "Ranking OMW/GW/OGW" },
+            { icon: <IconeHistorico />, txt: "Timer com fases" },
+            { icon: <IconeDado />, txt: "Sorteios integrados" },
+            { icon: <IconeAnalytics />, txt: "Analytics semanais" },
           ].map((f, i) => (
             <div
               key={f.txt}

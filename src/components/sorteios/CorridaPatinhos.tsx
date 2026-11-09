@@ -1,4 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { IconeAlvo, IconeBandeira, IconeCheck, IconeCoroa, IconeRaio, IconeTrofeu } from "../ui/Icones";
+import { MedalhaPosicao } from "../ui/MedalhaPosicao";
 
 const CORES_PATOS = [
   "#fbbf24", "#f472b6", "#38bdf8", "#4ade80", "#a78bfa",
@@ -269,7 +271,22 @@ export const CorridaPatinhos = forwardRef<PatinhosHandle, Props>(function Corrid
         ctx.textAlign = "center";
         ctx.shadowColor = "rgba(252,211,77,0.8)";
         ctx.shadowBlur = 10;
-        ctx.fillText("👑 LÍDER", lider.x, lider.y - 30);
+        ctx.fillText("LÍDER", lider.x + 7, lider.y - 30);
+        // Coroa em traço, como os ícones do app
+        const cx = lider.x - 16, cy = lider.y - 34;
+        ctx.strokeStyle = "#fcd34d";
+        ctx.lineWidth = 1.4;
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        ctx.moveTo(cx - 6, cy + 4);
+        ctx.lineTo(cx - 7, cy - 4);
+        ctx.lineTo(cx - 3, cy - 1);
+        ctx.lineTo(cx, cy - 6);
+        ctx.lineTo(cx + 3, cy - 1);
+        ctx.lineTo(cx + 7, cy - 4);
+        ctx.lineTo(cx + 6, cy + 4);
+        ctx.closePath();
+        ctx.stroke();
         ctx.restore();
       }
     }
@@ -429,7 +446,6 @@ export const CorridaPatinhos = forwardRef<PatinhosHandle, Props>(function Corrid
 
   // Medalhas e descrições do pódio
   const topTres = ranking.slice(0, 3);
-  const medalhas = ["🥇", "🥈", "🥉"];
   const bordas = ["#fbbf24", "#d1d5db", "#f97316"];
   const restantes = participantes.filter((n) => !ranking.includes(n));
 
@@ -454,7 +470,7 @@ export const CorridaPatinhos = forwardRef<PatinhosHandle, Props>(function Corrid
                 background: "linear-gradient(135deg, #c9a648, #8b0000)",
                 boxShadow: "0 4px 12px -4px rgba(201,166,72,0.5)",
               }}
-            >🏁</div>
+            ><IconeBandeira tamanho={20} cor="#fff" /></div>
             <div>
               <div className="text-sm font-bold tracking-wider" style={{ color: "var(--text-strong)" }}>
                 PISTA DE CORRIDA
@@ -472,7 +488,9 @@ export const CorridaPatinhos = forwardRef<PatinhosHandle, Props>(function Corrid
               color: rodando ? "#fcd34d" : "var(--brand-link)",
             }}
           >
-            {rodando ? "⚡ CORRENDO" : ultimoVencedor ? "✅ FINALIZADA" : "🎯 PRONTA"}
+            <span className="inline-flex items-center gap-1.5">
+              {rodando ? <><IconeRaio cor="currentColor" /> CORRENDO</> : ultimoVencedor ? <><IconeCheck cor="currentColor" /> FINALIZADA</> : <><IconeAlvo cor="currentColor" /> PRONTA</>}
+            </span>
           </div>
         </div>
 
@@ -521,7 +539,7 @@ export const CorridaPatinhos = forwardRef<PatinhosHandle, Props>(function Corrid
               style={{ background: "radial-gradient(circle, #fcd34d, transparent 65%)" }}
             />
             <div className="relative flex items-center gap-3">
-              <div className="text-4xl">🏆</div>
+              <IconeTrofeu tamanho={40} cor="#fcd34d" />
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] font-bold tracking-widest" style={{ color: "#fcd34d" }}>
                   VENCEDOR ATUAL
@@ -554,7 +572,7 @@ export const CorridaPatinhos = forwardRef<PatinhosHandle, Props>(function Corrid
                     borderLeft: isAtual ? `3px solid ${bordas[i]}` : "3px solid transparent",
                   }}
                 >
-                  <div className="text-2xl">{medalhas[i]}</div>
+                  <MedalhaPosicao posicao={i + 1} tamanho={30} />
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-sm truncate" style={{ color: isAtual ? "#fff" : "var(--text-strong)" }}>
                       {n}
@@ -563,7 +581,7 @@ export const CorridaPatinhos = forwardRef<PatinhosHandle, Props>(function Corrid
                       pato · {participantes.indexOf(n) >= 0 ? `${participantes.indexOf(n) + 1}ª raia` : "finalizado"}
                     </div>
                   </div>
-                  {isAtual && <span className="text-sm">👑</span>}
+                  {isAtual && <IconeCoroa cor="#fcd34d" />}
                 </div>
               );
             })}

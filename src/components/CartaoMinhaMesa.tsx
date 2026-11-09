@@ -1,4 +1,5 @@
 import type { MinhaMesa } from "../core/minhaMesa";
+import { IconeEmpate, IconeEspadas, IconeTrofeu } from "./ui/Icones";
 import { formatarTempo, useContagem } from "../core/useTimer";
 import type { Torneio } from "../core/types";
 
@@ -33,9 +34,9 @@ export function CartaoMinhaMesa({ minha, mostrarTempo = true }: { minha: MinhaMe
   const status = !mesa
     ? "Aguardando o sorteio das mesas"
     : venceu
-      ? "🏆 Você venceu esta mesa!"
+      ? <><IconeTrofeu cor="currentColor" /> Você venceu esta mesa!</>
       : mesa.empateTopoIds.includes(jogador.id)
-        ? "🤝 Sua mesa terminou em empate por tempo"
+        ? <><IconeEmpate cor="currentColor" /> Sua mesa terminou em empate por tempo</>
         : colocacao !== null
           ? `Você terminou esta mesa em ${colocacao}º lugar`
           : mesa.finalizada
@@ -55,7 +56,7 @@ export function CartaoMinhaMesa({ minha, mostrarTempo = true }: { minha: MinhaMe
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="flex-1 min-w-0">
           <div className="text-[11px] font-bold tracking-widest uppercase" style={{ color: "var(--brand-1)" }}>
-            ⚔️ Sua mesa · Rodada {torneio.rodadaAtual} de {torneio.qtdRodadas}
+            <IconeEspadas cor="currentColor" /> Sua mesa · Rodada {torneio.rodadaAtual} de {torneio.qtdRodadas}
           </div>
           {mesa && (
             <>

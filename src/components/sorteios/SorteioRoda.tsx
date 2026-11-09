@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { IconeAlvo, IconeEstrela, IconeReiniciar, IconeRoleta, IconeTrofeu } from "../ui/Icones";
 
 // Paleta com gradientes (par de hex por fatia)
 const GRADIENTES: Array<[string, string]> = [
@@ -314,7 +315,9 @@ export const SorteioRoda = forwardRef<RodaHandle, Props>(function SorteioRoda(
               color: girando ? "var(--brand-link)" : "#fcd34d",
             }}
           >
-            {girando ? "🌀 Girando..." : "🎯 Pronto para girar"}
+            <span className="inline-flex items-center gap-1.5">
+              {girando ? <><IconeRoleta cor="currentColor" /> Girando...</> : <><IconeAlvo cor="currentColor" /> Pronto para girar</>}
+            </span>
           </div>
           <div className="w-1 h-1 rounded-full" style={{ background: "rgba(255,255,255,0.3)" }} />
           <span className="text-xs" style={{ color: "var(--text-muted-ds)" }}>
@@ -359,7 +362,7 @@ export const SorteioRoda = forwardRef<RodaHandle, Props>(function SorteioRoda(
               style={{ background: "radial-gradient(circle, #fcd34d, transparent 70%)" }}
             />
             <div className="relative text-[10px] font-bold tracking-widest" style={{ color: "#fcd34d" }}>
-              🏆 ÚLTIMO SORTEADO
+              <IconeTrofeu cor="currentColor" /> ÚLTIMO SORTEADO
             </div>
             <div className="relative text-xl font-bold mt-1 truncate" style={{ color: "#fff" }}>
               {ultimo}
@@ -404,7 +407,7 @@ export const SorteioRoda = forwardRef<RodaHandle, Props>(function SorteioRoda(
                   >
                     {n}
                   </span>
-                  {isUltimo && <span className="text-sm">✨</span>}
+                  {isUltimo && <IconeEstrela cor="#fcd34d" />}
                 </div>
               );
             })}
@@ -427,7 +430,7 @@ export const SorteioRoda = forwardRef<RodaHandle, Props>(function SorteioRoda(
               color: "var(--text-strong)",
               border: "1px solid rgba(255,255,255,0.1)",
             }}
-          >↺ Resetar</button>
+          ><IconeReiniciar cor="currentColor" /> Resetar</button>
         </div>
       </div>
     </div>

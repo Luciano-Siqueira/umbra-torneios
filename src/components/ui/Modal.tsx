@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 interface Props {
   open: boolean;
   onClose: () => void;
-  title?: string;
+  title?: React.ReactNode;
   maxW?: string; // ex: "max-w-md"
   fecharAoClicarFora?: boolean;
 }

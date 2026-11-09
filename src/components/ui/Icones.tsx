@@ -135,3 +135,24 @@ export const IconeBusca = criar(<>
   <path d="m16 16 4.5 4.5" />
 </>);
 export const IconeCirculo = criar(<circle cx="12" cy="12" r="6" />);
+export const IconeAmpulheta = criar(<path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9" />);
+export const IconeCheck = criar(<path d="m4.5 12.5 5 5 10-11" />);
+export const IconeMais = criar(<path d="M12 5v14M5 12h14" />);
+export const IconeSair = criar(<path d="M12 3v8M6.5 6.5a7.5 7.5 0 1 0 11 0" />);
+export const IconeMegafone = criar(<path d="M3.5 10v4h3l9 5V5l-9 5zM6.5 14l1.5 6h3l-1.2-5M19 9.5a3.5 3.5 0 0 1 0 5" />);
+export const IconeChave = criar(<>
+  <circle cx="7.5" cy="15.5" r="4" />
+  <path d="m10.5 12.5 9-9M16 7l2.5 2.5M13.5 9.5 15.5 11.5" />
+</>);
+export const IconeEmpate = criar(<path d="M5 9h14M5 15h14" />);
+export const IconeBandeira = criar(<>
+  <path d="M5 21V4M5 4h13v9H5" />
+  <path d="M9.3 4v9M13.7 4v9M5 8.5h13" />
+</>);
+export const IconeLampada = criar(<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z" />);
+export const IconeFogo = criar(<path d="M12 21a6.5 6.5 0 0 1-6.5-6.5c0-3.5 2.5-5.5 3.5-8 1 2 2.5 2.5 3 4.5C13 8 13.5 5 15.5 3c.5 3 3 5.5 3 9.5A6.5 6.5 0 0 1 12 21z" />);
+export const IconeEnvelope = criar(<>
+  <rect x="3" y="5.5" width="18" height="13" rx="2" />
+  <path d="m3.5 7 8.5 6 8.5-6" />
+</>);
+export const IconeSetaBaixo = criar(<path d="m6 9 6 6 6-6" />);

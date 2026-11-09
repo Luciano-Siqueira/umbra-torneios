@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { IconeLampada, IconePessoa } from "./ui/Icones";
 import { trocarNome, useAuth, vincularNome } from "../core/auth";
 import * as storage from "../core/storage";
 import { supabase } from "../core/supabaseClient";
@@ -92,7 +93,7 @@ export function TelaVincularNome({ aberta, onConcluido, onCancelar }: Props) {
         }}
       >
         <div className="text-center mb-6">
-          <div className="text-4xl mb-3">👤</div>
+          <div className="mb-3 flex justify-center"><IconePessoa tamanho={44} /></div>
           <div
             className="inline-block px-3 py-1 rounded-full text-[10px] font-bold tracking-[0.3em] mb-3"
             style={{ background: "rgba(201,166,72,0.1)", color: "var(--brand-1)", border: "1px solid rgba(201,166,72,0.3)" }}
@@ -179,7 +180,7 @@ export function TelaVincularNome({ aberta, onConcluido, onCancelar }: Props) {
           </div>
 
           <div className="text-[11px]" style={{ color: "var(--text-muted-ds)" }}>
-            💡 Digite devagar — se seu nome já aparece em algum torneio, vai ser sugerido.
+            <IconeLampada cor="currentColor" /> Digite devagar — se seu nome já aparece em algum torneio, vai ser sugerido.
           </div>
 
           {erro && (

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { IconeCadeado } from "./ui/Icones";
 import { aceitarPrivacidade, sair } from "../core/auth";
 import { Modal } from "./ui/Modal";
 
@@ -21,7 +22,7 @@ export function AvisoPrivacidade({ uid, onAceito, onSair }: { uid: string; onAce
   };
 
   return (
-    <Modal open onClose={() => {}} title="🔒 Sua privacidade">
+    <Modal open onClose={() => {}} title={<span className="inline-flex items-center gap-2"><IconeCadeado tamanho={20} /> Sua privacidade</span>}>
       <div className="space-y-4 text-sm" style={{ color: "var(--text-label)" }}>
         <p>Antes de continuar, veja como o Umbra Torneios usa seus dados:</p>
         <ul className="list-disc pl-5 space-y-1.5" style={{ color: "var(--text-2)" }}>

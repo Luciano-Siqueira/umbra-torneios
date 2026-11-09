@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { IconeCheck } from "../ui/Icones";
 import type { Jogador, Torneio } from "../../core/types";
 import { calcularPremiacao, descricaoFaixa } from "../../core/premiacao";
 import { rankingPremiavel } from "../../core/resultados";
@@ -15,7 +16,7 @@ function RegistroPremio({ jogador, sugerido }: { jogador: Jogador; sugerido: num
     return (
       <div className="flex items-center justify-end gap-2 text-xs mt-1">
         <span className="text-sucesso">
-          ✓ Pago {formatarReais(jogador.premioPago.valor)} em {new Date(jogador.premioPago.em).toLocaleDateString("pt-BR")}
+          <IconeCheck cor="currentColor" /> Pago {formatarReais(jogador.premioPago.valor)} em {new Date(jogador.premioPago.em).toLocaleDateString("pt-BR")}
         </span>
         <button className="text-fg-dim hover:text-fg underline" onClick={() => registrarPremio(jogador.id, null)}>
           Desfazer

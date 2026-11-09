@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { IconeCheck as IconeCheckMesa } from "../ui/Icones";
+import { MedalhaPosicao } from "../ui/MedalhaPosicao";
 import type { Torneio, Mesa } from "../../core/types";
 import { useStore } from "../../core/store";
 import { calcularColocacoes, ranking } from "../../core/resultados";
@@ -14,7 +16,7 @@ import { useTimer, formatarTempo } from "../../core/useTimer";
 import { comandanteDoDeck, coresDoDeck } from "../../core/decks";
 import { CoresMana } from "../ui/SimboloMana";
 import { contar } from "../../core/formato";
-import { avisarMesas } from "../../core/notificacoes";
+import { avisarMesas, enviarAviso } from "../../core/notificacoes";
 import {
   IconeCopiar, IconeCoroa, IconeEmbaralhar, IconeHistorico, IconeMedalha, IconePausa, IconeParar,
   IconePlay, IconeReiniciar, IconeSino, IconeTrofeu,
@@ -42,8 +44,8 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
   );
 
   useEffect(() => {
-    timer.setOnFimNormal(verTempo ? () => toast("⏰ Tempo normal acabou! Iniciando tempo extra.", "aviso") : () => {});
-    timer.setOnFimTotal(verTempo ? () => toast("🔔 TEMPO ESGOTADO — encerrem as partidas!", "erro") : () => {});
+    timer.setOnFimNormal(verTempo ? () => toast("Tempo normal acabou! Iniciando tempo extra.", "aviso") : () => {});
+    timer.setOnFimTotal(verTempo ? () => toast("TEMPO ESGOTADO — encerrem as partidas!", "erro") : () => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [verTempo]);
 
@@ -99,7 +101,7 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
       toast(`Rodada ${rodada} iniciada`, "sucesso");
       // Avisa cada jogador da sua mesa; se falhar (sem internet, função não publicada), a rodada segue normal
       avisarMesas(torneio.id, rodada)
-        .then(({ enviados }) => { if (enviados > 0) toast(`🔔 Mesa avisada a ${contar(enviados, "aparelho")}`, "info"); })
+        .then(({ enviados }) => { if (enviados > 0) toast(`Mesa avisada a ${contar(enviados, "aparelho")}`, "info"); })
         .catch(() => {});
     }
   };
@@ -136,7 +138,7 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
     setAvisando(true);
     try {
       const { enviados, contas } = await avisarMesas(torneio.id, torneio.rodadaAtual);
-      if (enviados > 0) toast(`🔔 Mesa avisada a ${contar(enviados, "aparelho")}`, "sucesso");
+      if (enviados > 0) toast(`Mesa avisada a ${contar(enviados, "aparelho")}`, "sucesso");
       else if (contas === 0) toast("Ninguém desta rodada pode receber: o jogador precisa de conta com o nome aprovado e Mesas liberado.", "aviso");
       else toast("Nenhum aparelho para avisar: os jogadores ainda não ligaram os avisos no celular.", "aviso");
     } catch (e: any) {
@@ -180,6 +182,7 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
     if (ok) {
       finalizarTorneio();
       toast("Torneio finalizado!", "sucesso");
+      enviarAviso({ tipo: "finalizado", torneio_id: torneio.id }).catch(() => {});
     }
   };
 
@@ -196,6 +199,7 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
     if (ok) {
       finalizarTorneio();
       toast("Torneio encerrado", "sucesso");
+      enviarAviso({ tipo: "finalizado", torneio_id: torneio.id }).catch(() => {});
     }
   };
 
@@ -213,7 +217,6 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
   if (semMesas) {
     const rank = torneio.finalizado ? ranking(torneio) : [];
     const podio = rank.slice(0, 3);
-    const medalhas = ["🥇", "🥈", "🥉"];
 
     return (
       <div className="max-w-3xl mx-auto py-6 md:py-10">
@@ -265,7 +268,7 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
                       className="flex flex-col items-center min-w-0"
                       style={{ order: [1, 0, 2][i] }}
                     >
-                      <div className="text-3xl md:text-4xl mb-1">{medalhas[i]}</div>
+                      <div className="mb-2 flex justify-center"><MedalhaPosicao posicao={i + 1} tamanho={36} /></div>
                       <div
                         className="rounded-xl px-3 md:px-5 py-3 border min-w-[110px] md:min-w-[140px]"
                         style={{
@@ -513,7 +516,7 @@ function CardMesa({
         <div className="font-black text-lg">Mesa {mesa.numero}</div>
         {finalizada ? (
           <span className="text-xs bg-sucesso text-bg font-bold px-2 py-0.5 rounded">
-            ✓{mesa.empateTopoIds.length > 1 ? ` empate K=${mesa.empateTopoIds.length}` : ""}
+            <IconeCheckMesa cor="currentColor" />{mesa.empateTopoIds.length > 1 ? ` empate K=${mesa.empateTopoIds.length}` : ""}
           </span>
         ) : parcial ? (
           <span className="text-xs bg-atencao text-bg font-bold px-2 py-0.5 rounded">PARCIAL</span>

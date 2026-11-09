@@ -154,3 +154,27 @@ export async function convidarUsuario(email: string, nome = ""): Promise<{ aviso
   }
   return { aviso: (data as any)?.aviso };
 }
+
+// Quais avisos (notificações) saem, escolhidos pelo admin (supabase/config_avisos.sql)
+export interface ConfigAvisos {
+  mesa: boolean;
+  faltam10: boolean;
+  esgotado: boolean;
+  finalizado: boolean;
+  aprovacao: boolean;
+}
+export const CONFIG_AVISOS_PADRAO: ConfigAvisos = { mesa: true, faltam10: true, esgotado: true, finalizado: true, aprovacao: true };
+
+export async function lerConfigAvisos(): Promise<{ config: ConfigAvisos; faltaTabela: boolean }> {
+  const { data, error } = await supabase.from("config_avisos").select("mesa, faltam10, esgotado, finalizado, aprovacao").eq("id", 1).maybeSingle();
+  if (error) return { config: CONFIG_AVISOS_PADRAO, faltaTabela: true };
+  return { config: { ...CONFIG_AVISOS_PADRAO, ...(data ?? {}) }, faltaTabela: false };
+}
+
+export async function salvarConfigAvisos(mudanca: Partial<ConfigAvisos>): Promise<void> {
+  const { error } = await supabase
+    .from("config_avisos")
+    .update({ ...mudanca, atualizado_em: new Date().toISOString() })
+    .eq("id", 1);
+  if (error) throw error;
+}

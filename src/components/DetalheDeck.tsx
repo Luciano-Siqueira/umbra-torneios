@@ -1,4 +1,5 @@
 import { useEffect, useState, type HTMLAttributes } from "react";
+import { IconeVoltar } from "./ui/Icones";
 import { buscarDeckCompleto, type CartaDoDeck, type DeckCompleto, type IdGrupo } from "../core/deckCompleto";
 import { IconeEngrenagem, IconeEspiral, IconeEstrela, IconeGarra, IconeMoeda, IconeMontanha, IconeRaio } from "./ui/Icones";
 import type { DeckCommander } from "../core/decks";
@@ -75,7 +76,7 @@ export function DetalheDeck({ deck, onVoltar }: { deck: DeckCommander; onVoltar:
 
   return (
     <div className="space-y-4">
-      <button className="btn-ghost text-sm" onClick={onVoltar}>← Todos os decks</button>
+      <button className="btn-ghost text-sm" onClick={onVoltar}><IconeVoltar cor="currentColor" /> Todos os decks</button>
 
       <div className="card">
         <h2 className="text-xl md:text-2xl font-bold" style={{ color: "var(--text-strong)" }}>{deck.nome}</h2>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { IconeAlerta as IconeAlertaDecks, IconeCadeado as IconeCadeadoDecks, IconeVoltar as IconeVoltarDecks } from "./ui/Icones";
 import { useStore } from "../core/store";
 import { useAuth } from "../core/auth";
 import { ANOS_DECKS, DECKS, filtrarDecks, imagensDoComandante, opcoesDeCores, type DeckCommander } from "../core/decks";
@@ -61,7 +62,9 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
     return (
       <div className="min-h-screen flex items-center justify-center text-fg p-6">
         <div className="text-center">
-          <div className="text-2xl mb-2">{auth.perfilErro ? "⚠️ Erro ao carregar seu perfil" : "🔒 Acesso restrito"}</div>
+          <div className="text-2xl mb-2">{auth.perfilErro
+            ? <><IconeAlertaDecks cor="currentColor" /> Erro ao carregar seu perfil</>
+            : <><IconeCadeadoDecks cor="currentColor" /> Acesso restrito</>}</div>
           <div className="text-sm text-fg-dim mb-4">{auth.perfilErro || "Essa página é só para administradores."}</div>
           <button className="btn-primary" onClick={voltar}>Voltar</button>
         </div>
@@ -75,7 +78,7 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
       style={FUNDO_DE_TELA}
     >
       <div className="px-4 md:px-8 py-4 flex items-center gap-3">
-        <button className="btn-ghost hidden md:block" onClick={voltar}>← Voltar</button>
+        <button className="btn-ghost hidden md:block" onClick={voltar}><IconeVoltarDecks cor="currentColor" /> Voltar</button>
         <h1 className="text-xl md:text-3xl font-bold flex items-center gap-2 min-w-0" style={{ color: "var(--text-strong)" }}>
           <IconeDecks tamanho={32} /> Decks
         </h1>

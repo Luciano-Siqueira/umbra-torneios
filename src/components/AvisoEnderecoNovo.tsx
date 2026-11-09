@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { IconeMegafone } from "./ui/Icones";
 import { Modal } from "./ui/Modal";
 
 // O site mudou para torneios.umbraarena.com.br em 08/11/2026. O aviso fica no ar por 90 dias
@@ -31,7 +32,7 @@ export function AvisoEnderecoNovo({ usuario }: { usuario: { id: string; created_
   };
 
   return (
-    <Modal open onClose={entendi} title="📢 Endereço novo">
+    <Modal open onClose={entendi} title={<span className="inline-flex items-center gap-2"><IconeMegafone tamanho={20} /> Endereço novo</span>}>
       <div className="space-y-4 text-sm" style={{ color: "var(--text-label)" }}>
         <p>
           O Umbra Torneios agora fica em{" "}

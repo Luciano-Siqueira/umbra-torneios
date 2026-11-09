@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { IconeAmpulheta, IconeCheck, IconeLapis, IconeMais, IconeSair, IconeSino } from "./ui/Icones";
 import { sair, desvincularNome, type AuthState } from "../core/auth";
 import { temEnviosPendentes } from "../core/sync";
 import { useStore, type ModoView } from "../core/store";
@@ -168,7 +169,7 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
                       }}
                     >
                       {labelModo(m)}
-                      {m === modoView && <span className="ml-auto">✓</span>}
+                      {m === modoView && <span className="ml-auto"><IconeCheck cor="currentColor" /></span>}
                     </button>
                   ))}
                 </div>
@@ -181,13 +182,15 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
               className="block w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition"
               style={{ color: "var(--brand-1)" }}
             >
-              {auth.nomesJogador.length + auth.nomesPendentes.length === 0 ? "➕ Vincular meu nome" : "✎ Trocar nome"}
+              {auth.nomesJogador.length + auth.nomesPendentes.length === 0
+                ? <><IconeMais cor="currentColor" /> Vincular meu nome</>
+                : <><IconeLapis cor="currentColor" /> Trocar nome</>}
             </button>
 
             {/* Remover nomes existentes */}
             {auth.nomesPendentes.length > 0 && (
               <div className="px-3 py-2 text-[11px]" style={{ color: "var(--brand-1)" }}>
-                ⏳ Aguardando aprovação: {auth.nomesPendentes.join(", ")}
+                <IconeAmpulheta cor="currentColor" /> Aguardando aprovação: {auth.nomesPendentes.join(", ")}
               </div>
             )}
             {[...auth.nomesJogador, ...auth.nomesPendentes].map((n) => (
@@ -231,7 +234,7 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
                   className="block w-full text-left px-3 py-2 text-[11px] hover:bg-white/5 transition"
                   style={{ color: "var(--text-2)" }}
                 >
-                  🔔 Avisos da mesa: {avisos.estado === "ligado" ? "ligados" : avisos.estado === "bloqueado" ? "bloqueados" : "desligados"}
+                  <IconeSino cor="currentColor" /> Avisos da mesa: {avisos.estado === "ligado" ? "ligados" : avisos.estado === "bloqueado" ? "bloqueados" : "desligados"}
                 </button>
               )}
               <a
@@ -274,7 +277,7 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
                 className="block w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition"
                 style={{ color: "var(--critical)" }}
               >
-                ⏻ Sair
+                <IconeSair cor="currentColor" /> Sair
               </button>
             </div>
           </div>

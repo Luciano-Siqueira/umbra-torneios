@@ -681,8 +681,8 @@ describe("mesas e tempo liberados na tela Usuários", () => {
     preparar("admin", { isAdmin: true });
     abrir(<TelaUsuarios />);
 
-    expect(await screen.findByText("✓ Aceitou")).toBeTruthy();
-    expect(screen.getByText("Pendente", { selector: "span" })).toBeTruthy();
+    expect(await screen.findByTitle(/^Aceitou em/)).toBeTruthy();
+    expect(screen.getByTitle(/^Ainda não aceitou/)).toBeTruthy();
     expect(screen.getByText(/1 de 2 aceitaram a política/)).toBeTruthy();
   });
 
@@ -834,7 +834,7 @@ describe("decks", () => {
       const temBotao = !!screen.queryByRole("button", { name: /Decks/ });
       cleanup();
       abrir(<TelaDecks />);
-      const restrito = !!screen.queryByText("🔒 Acesso restrito");
+      const restrito = !!screen.queryByText(/Acesso restrito/);
       const temLista = !!screen.queryByRole("searchbox");
       cleanup();
       return { temBotao, restrito, temLista };
@@ -1363,5 +1363,32 @@ describe("busca na lista de torneios", () => {
     preparar("jogador", { nomesJogador: ["Pessoa"] }, [criar("Liga Norte")]);
     abrir(<TelaTorneios />);
     expect(screen.queryByLabelText("Buscar torneios")).toBeNull();
+  });
+});
+
+describe("escolha dos avisos na tela Usuários", () => {
+  afterEach(() => { delete (globalThis as any).__rede; });
+
+  it("o admin liga e desliga cada tipo de aviso", async () => {
+    const mudancas: any[] = [];
+    (globalThis as any).__rede = async (url: string, init?: RequestInit) => {
+      const json = (corpo: unknown) => new Response(JSON.stringify(corpo), { status: 200, headers: { "content-type": "application/json" } });
+      if (url.includes("config_avisos")) {
+        if (init?.method === "PATCH") { mudancas.push(JSON.parse(String(init.body))); return json([]); }
+        return json({ mesa: true, faltam10: true, esgotado: false, finalizado: true, aprovacao: true });
+      }
+      return json([]);
+    };
+    preparar("admin", { isAdmin: true });
+    abrir(<TelaUsuarios />);
+    fireEvent.click(await screen.findByRole("button", { name: /Avisos/ }));
+
+    const esgotado = await screen.findByRole("switch", { name: "Tempo esgotado" });
+    await waitFor(() => expect(esgotado.getAttribute("aria-checked")).toBe("false"));
+    expect(screen.getByRole("switch", { name: "Faltam 10 minutos" }).getAttribute("aria-checked")).toBe("true");
+
+    fireEvent.click(esgotado);
+    await waitFor(() => expect(mudancas[0]).toMatchObject({ esgotado: true }));
+    expect(esgotado.getAttribute("aria-checked")).toBe("true");
   });
 });

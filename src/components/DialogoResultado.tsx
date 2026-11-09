@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { IconeCoroa } from "./ui/Icones";
 import type { Mesa } from "../core/types";
 import { useStore } from "../core/store";
 import { useToast } from "./ui/Toast";
@@ -140,7 +141,7 @@ export function DialogoResultado({ mesa, mesaIdx, jogadoresPorId, onFechar }: Pr
       {/* Campeão automático */}
       {campeaoAuto !== null && (
         <div className="bg-atencao/15 border-2 border-atencao rounded-lg p-3">
-          <div className="text-xs text-atencao font-bold tracking-wider">♛ CAMPEÃO</div>
+          <div className="text-xs text-atencao font-bold tracking-wider"><IconeCoroa cor="currentColor" /> CAMPEÃO</div>
           <div className="text-xl font-black">{jogadoresPorId.get(campeaoAuto)}</div>
         </div>
       )}

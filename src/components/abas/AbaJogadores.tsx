@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { IconeLixeira } from "../ui/Icones";
 import { podeAdicionarJogador, type Torneio } from "../../core/types";
 import { useStore } from "../../core/store";
 import { useToast } from "../ui/Toast";
@@ -195,7 +196,7 @@ export function AbaJogadores({ torneio, podeEditar }: { torneio: Torneio; podeEd
             toast("Todos os jogadores foram removidos", "sucesso");
           }}
           disabled={torneio.jogadores.length === 0 || torneio.rodadaAtual > 0}
-        >🗑 Remover todos</button>
+        ><IconeLixeira cor="currentColor" /> Remover todos</button>
       </div>
       )}
 
