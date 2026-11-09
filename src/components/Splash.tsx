@@ -156,7 +156,7 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
             <div className="text-xs" style={{ color: "var(--text-2)" }}>...</div>
           ) : auth.session ? (
             <div className="text-xs" style={{ color: "var(--brand-1)" }}>
-              {auth.isAdmin ? "👑 ADMIN · " : ""}{auth.session.user.email}
+              {auth.isAdmin ? "👑 ADMINISTRADOR · " : ""}{auth.nomesJogador[0] ?? auth.session.user.email}
             </div>
           ) : (
             <div className="text-xs" style={{ color: "var(--text-2)" }}>

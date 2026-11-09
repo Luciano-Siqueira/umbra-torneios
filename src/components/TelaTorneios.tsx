@@ -208,7 +208,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
           {podeEditar && (
             <>
               <button
-                className="rounded-full px-5 py-2 font-semibold text-sm transition active:scale-95 text-white hidden md:flex items-center gap-2"
+                className="rounded-full px-4 xl:px-5 py-2 font-semibold text-sm transition active:scale-95 text-white hidden md:flex items-center gap-2"
                 style={{
                   background: "var(--sig-d)",
                   boxShadow: "0 6px 24px -4px rgba(201,166,72,0.55), inset 0 1px 0 rgba(255,255,255,0.2)"
@@ -224,7 +224,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
 
           {/* Analytics — destaque sutil */}
           <button
-            className="rounded-full px-4 py-2 font-semibold text-sm transition active:scale-95 hidden md:flex items-center gap-1.5"
+            className="rounded-full px-3 xl:px-4 py-2 font-semibold text-sm transition active:scale-95 hidden md:flex items-center gap-1.5"
             style={{
               background: "rgba(201,166,72,0.12)",
               color: "var(--action)",
@@ -239,7 +239,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
           {/* Decks — só admin, no modo admin */}
           {auth.isAdmin && modoView === "admin" && (
             <button
-              className="rounded-full px-4 py-2 font-semibold text-sm transition active:scale-95 hidden md:flex items-center gap-1.5"
+              className="rounded-full px-3 xl:px-4 py-2 font-semibold text-sm transition active:scale-95 hidden md:flex items-center gap-1.5"
               style={{
                 background: "rgba(201,166,72,0.12)",
                 color: "var(--action)",
@@ -255,7 +255,7 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
           {/* Botão Gerenciar Usuários — só admin, no modo admin */}
           {auth.isAdmin && modoView === "admin" && (
             <button
-              className="rounded-full px-4 py-2 font-semibold text-sm transition active:scale-95 hidden md:flex items-center gap-1.5"
+              className="rounded-full px-3 xl:px-4 py-2 font-semibold text-sm transition active:scale-95 hidden md:flex items-center gap-1.5"
               style={{
                 background: "rgba(201,166,72,0.12)",
                 color: "var(--brand-1)",

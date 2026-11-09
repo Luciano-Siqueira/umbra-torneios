@@ -35,11 +35,12 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
   }
 
   const labelModo = (m: ModoView) => (
-    <><IconeDoModo modo={m} cor="currentColor" /> {m === "admin" ? "Admin" : m === "organizador" ? "Organizador" : "Jogador"}</>
+    <><IconeDoModo modo={m} cor="currentColor" /> {m === "admin" ? "Administrador" : m === "organizador" ? "Organizador" : "Jogador"}</>
   );
-  const corModo = (m: ModoView) => (
-    m === "admin" ? "var(--brand-1)" : m === "organizador" ? "var(--text-strong)" : "var(--text-label)"
-  );
+  // Todos os modos em dourado, como o resto da marca
+  const corModo = (_m: ModoView) => "var(--brand-1)";
+  const DOURADO_FUNDO = "rgba(201,166,72,0.10)";
+  const DOURADO_BORDA = "rgba(201,166,72,0.35)";
 
   const { toast } = useToast();
   const [abrindoMenu, setAbrindoMenu] = useState(false);
@@ -95,22 +96,23 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
         }}
         className="flex items-center gap-1.5 md:gap-2 rounded-full px-2 md:px-3 py-1.5 transition hover:bg-white/5"
         style={{
-          background: `${corModo(modoView)}15`,
-          border: `1px solid ${corModo(modoView)}40`,
+          background: DOURADO_FUNDO,
+          border: `1px solid ${DOURADO_BORDA}`,
         }}
       >
         <span className="text-xs">
           <IconeDoModo modo={modoView} cor={corModo(modoView)} />
         </span>
         <span
-          className="text-[10px] font-bold tracking-widest uppercase hidden sm:inline"
+          className="text-[10px] font-bold tracking-widest uppercase hidden xl:inline"
           style={{ color: corModo(modoView) }}
         >
-          {modoView === "admin" ? "ADMIN" : modoView === "organizador" ? "ORGANIZADOR" : "JOGADOR"}
+          {modoView === "admin" ? "ADMINISTRADOR" : modoView === "organizador" ? "ORGANIZADOR" : "JOGADOR"}
         </span>
         {/* Em celular bem estreito só o ícone aparece, para o logo caber; o menu mostra a conta inteira */}
-        <span className="text-xs truncate hidden min-[420px]:inline max-w-[72px] sm:max-w-[90px] md:max-w-[140px]" style={{ color: "var(--text-label)" }}>
-          {modoView === "jogador" && auth.nomesJogador[0] ? auth.nomesJogador[0] : emailCurto}
+        <span className="text-xs truncate hidden min-[420px]:inline max-w-[96px] sm:max-w-[110px] md:max-w-[140px]" style={{ color: "var(--text-label)" }}>
+          {/* Sempre o nick; o e-mail só aparece sem nome vinculado */}
+          {auth.nomesJogador[0] ?? emailCurto}
         </span>
       </button>
 
@@ -125,17 +127,22 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
           >
             <div className="px-3 py-2 border-b" style={{ borderColor: "var(--line)" }}>
               <div className="text-[10px] uppercase tracking-widest font-bold flex items-center gap-1.5"
-                   style={{ color: auth.isAdmin ? "var(--brand-1)" : "var(--text-label)" }}>
+                   style={{ color: "var(--brand-1)" }}>
                 {auth.isAdmin && <span><IconeCoroa cor="currentColor" /> Administrador</span>}
                 {!auth.isAdmin && <span><IconePessoa cor="currentColor" /> Jogador</span>}
                 {auth.isAdmin && auth.nomesJogador.length > 0 && (
-                  <span style={{ color: "var(--text-label)" }}>+ <IconePessoa cor="currentColor" /> Jogador</span>
+                  <span>+ <IconePessoa cor="currentColor" /> Jogador</span>
                 )}
               </div>
-              <div className="text-xs mt-0.5 truncate" style={{ color: "var(--text-label)" }}>
+              {auth.nomesJogador[0] && (
+                <div className="text-sm font-semibold mt-1 truncate" style={{ color: "var(--text-strong)" }}>
+                  {auth.nomesJogador[0]}
+                </div>
+              )}
+              <div className="text-[11px] mt-0.5 truncate" style={{ color: "var(--text-2)" }}>
                 {email}
               </div>
-              {auth.nomesJogador.length > 0 && (
+              {auth.nomesJogador.length > 1 && (
                 <div className="text-[11px] mt-1" style={{ color: "var(--text-2)" }}>
                   Nome(s): <span style={{ color: "var(--text-label)" }}>{auth.nomesJogador.join(", ")}</span>
                 </div>
@@ -155,8 +162,8 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
                       onClick={() => { setModoView(m); setAbrindoMenu(false); }}
                       className="flex items-center gap-2 px-2 py-1.5 rounded transition text-xs"
                       style={{
-                        background: m === modoView ? `${corModo(m)}20` : "transparent",
-                        border: `1px solid ${m === modoView ? `${corModo(m)}50` : "transparent"}`,
+                        background: m === modoView ? DOURADO_FUNDO : "transparent",
+                        border: `1px solid ${m === modoView ? DOURADO_BORDA : "transparent"}`,
                         color: m === modoView ? corModo(m) : "#c4c4c4",
                       }}
                     >

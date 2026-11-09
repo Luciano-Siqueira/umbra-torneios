@@ -28,14 +28,16 @@ export function MenuBarra({ icone, rotulo, children }: { icone?: ReactNode; rotu
         aria-haspopup="menu"
         aria-expanded={aberto}
         aria-label={rotulo}
-        className="rounded-full p-2 md:px-4 md:py-2 font-medium text-sm transition hover:bg-white/5 active:scale-95 flex items-center gap-1.5 whitespace-nowrap"
+        title={rotulo}
+        className="rounded-full p-2 2xl:px-4 2xl:py-2 font-medium text-sm transition hover:bg-white/5 active:scale-95 flex items-center gap-1.5 whitespace-nowrap"
         style={{ color: "var(--text-strong)" }}
         onClick={() => setAberto((v) => !v)}
       >
         {icone}
         {/* No celular fica só o ícone */}
-        <span className="hidden md:inline">{rotulo}</span>
-        <span className="hidden md:inline text-xs opacity-60">▾</span>
+        {/* Texto só em tela bem larga: nas médias o ícone basta e sobra espaço na barra */}
+        <span className="hidden 2xl:inline">{rotulo}</span>
+        <span className="hidden 2xl:inline text-xs opacity-60">▾</span>
       </button>
       {aberto && (
         <div
