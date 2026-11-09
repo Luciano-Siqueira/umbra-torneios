@@ -14,6 +14,7 @@ import { useTimer, formatarTempo } from "../../core/useTimer";
 import { comandanteDoDeck, coresDoDeck } from "../../core/decks";
 import { CoresMana } from "../ui/SimboloMana";
 import { contar } from "../../core/formato";
+import { avisarMesas } from "../../core/notificacoes";
 
 export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: {
   torneio: Torneio;
@@ -89,8 +90,13 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
       mensagem: `Iniciar rodada ${torneio.rodadaAtual + 1} de ${torneio.qtdRodadas}?`,
     });
     if (ok) {
+      const rodada = torneio.rodadaAtual + 1;
       iniciarRodada();
-      toast(`Rodada ${torneio.rodadaAtual + 1} iniciada`, "sucesso");
+      toast(`Rodada ${rodada} iniciada`, "sucesso");
+      // Avisa cada jogador da sua mesa; se falhar (sem internet, função não publicada), a rodada segue normal
+      avisarMesas(torneio.id, rodada)
+        .then(({ enviados }) => { if (enviados > 0) toast(`🔔 Mesa avisada a ${contar(enviados, "aparelho")}`, "info"); })
+        .catch(() => {});
     }
   };
 

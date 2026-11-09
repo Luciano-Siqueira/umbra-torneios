@@ -15,6 +15,7 @@ import { podeEditarTorneios, torneioParado, torneiosVisiveis } from "../core/vis
 import { BANNER_IMAGE } from "../banner-image";
 import { EscritaUmbra, IconeDecks } from "./ui/LogoUmbra";
 import { SegredoUmbra } from "./ui/SegredoUmbra";
+import { CartaoAvisos } from "./CartaoAvisos";
 import { IconeAnalytics, IconeBaixar, IconeCaixa, IconeDado, IconeDocumento, IconeLapis, IconeLixeira, IconePasta, IconeUsuarios } from "./ui/Icones";
 import { SimboloMana, type CorMana } from "./ui/SimboloMana";
 import { ItemMenu, MenuBarra, TituloMenu } from "./ui/MenuBarra";
@@ -309,6 +310,8 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
 
       {/* Faixa "Em andamento" + KPIs rápidos — colados abaixo do menu */}
       <div className="px-4 md:px-8 space-y-4 mb-4 mt-2">
+        {/* Avisos da mesa: só para quem pode ver as mesas */}
+        {auth.session && (auth.verMesas || auth.isAdmin) && <CartaoAvisos uid={auth.session.user.id} />}
         {torneioEmAndamento && (
           <div
             className="flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition hover:brightness-110"

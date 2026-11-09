@@ -128,9 +128,12 @@ Credenciais em variáveis de ambiente, lidas no build. Localmente ficam em `.env
 ```bash
 VITE_SUPABASE_URL=https://<projeto>.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+VITE_VAPID_PUBLIC_KEY=B...   # chave pública dos avisos da mesa (opcional)
 ```
 
 O prefixo `VITE_` é obrigatório e coloca o valor no JavaScript enviado ao navegador. Por isso, use só a chave publishable e nunca `sb_secret` ou `service_role`. Depois de mudar uma variável na Vercel, é preciso fazer um novo deploy.
+
+**Avisos da mesa (notificações)**: o jogador liga os avisos no menu da conta; o aparelho fica em `push_inscricoes` (`supabase/push_inscricoes.sql`). Ao iniciar a rodada, o app de quem organiza chama a função `avisar-mesas` (`supabase/functions/avisar-mesas`), que manda a mesa a quem tem "Mesas" liberado. As chaves saem de `npx web-push generate-vapid-keys`: a pública vai em `VITE_VAPID_PUBLIC_KEY`; a privada, só nos segredos das funções do Supabase (`VAPID_PRIVATE_KEY`, com `VAPID_PUBLIC_KEY` e `VAPID_SUBJECT`). O service worker mostra o aviso por `public/push-sw.js`.
 
 **Acesso aos torneios (RLS)**: admin vê e altera todos; organizador vê e altera os que criou; jogador só lê aqueles em que participa, e só depois que o admin aprova o nome (`usuarios_jogadores.aprovado`). Dono e pagamentos ficam em `torneio_privado`, que só admin e dono leem; ao participante vai `dados.premios`. Mudar quem é admin passa por `definir_papel_seguro`, que confere a senha no banco. Regras em `supabase/seguranca_v2.sql` e `supabase/corrigir_papel_email.sql`; para revisar, rode `supabase/auditoria_rls.sql`.
 

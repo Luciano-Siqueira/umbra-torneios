@@ -12,6 +12,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,webp,png}"], // inclui o banner no cache offline
         globIgnores: ["screenshots/**"], // só para a instalação e a loja; não precisam ficar no aparelho
+        importScripts: ["push-sw.js"], // recebe e mostra os avisos da mesa (public/push-sw.js)
       },
       manifest: {
         // id, start_url e scope fixos: o app Android (TWA) fica ligado a eles

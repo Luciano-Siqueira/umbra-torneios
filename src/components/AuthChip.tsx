@@ -6,6 +6,7 @@ import { useToast } from "./ui/Toast";
 import { confirmar } from "./ui/Confirm";
 import { IconeAlvo, IconeCadeado, IconeCoroa, IconePessoa } from "./ui/Icones";
 import { DialogoExcluirConta } from "./DialogoExcluirConta";
+import { useAvisos } from "../core/notificacoes";
 
 interface Props {
   auth: AuthState;
@@ -43,6 +44,7 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
   const { toast } = useToast();
   const [abrindoMenu, setAbrindoMenu] = useState(false);
   const [excluindoConta, setExcluindoConta] = useState(false);
+  const avisos = useAvisos();
   const raiz = useRef<HTMLDivElement>(null);
   const [abrirParaDireita, setAbrirParaDireita] = useState(false);
 
@@ -204,6 +206,26 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
             ))}
 
             <div style={{ borderTop: "1px solid var(--line)" }}>
+              {avisos.estado !== "sem-suporte" && (auth.verMesas || auth.isAdmin) && (
+                <button
+                  onClick={async () => {
+                    if (avisos.estado === "bloqueado") {
+                      toast("Os avisos estão bloqueados no navegador. Libere nas configurações do site.", "aviso");
+                      return;
+                    }
+                    try {
+                      await avisos.alternar();
+                    } catch (e: any) {
+                      toast("Não foi possível mudar os avisos: " + (e?.message ?? ""), "erro");
+                    }
+                  }}
+                  disabled={avisos.ocupado}
+                  className="block w-full text-left px-3 py-2 text-[11px] hover:bg-white/5 transition"
+                  style={{ color: "var(--text-2)" }}
+                >
+                  🔔 Avisos da mesa: {avisos.estado === "ligado" ? "ligados" : avisos.estado === "bloqueado" ? "bloqueados" : "desligados"}
+                </button>
+              )}
               <a
                 href="privacidade.html"
                 target="_blank"

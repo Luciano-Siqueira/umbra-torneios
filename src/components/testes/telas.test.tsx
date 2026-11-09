@@ -36,6 +36,15 @@ vi.mock("../../core/auth", () => ({
   desvincularNome: vi.fn(async () => {}),
   sair: vi.fn(async () => {}),
 }));
+const avisos = vi.hoisted(() => ({
+  atual: { estado: "sem-suporte" as string, ocupado: false, alternar: vi.fn(async () => {}) },
+  avisarMesas: vi.fn(async (_id: string, _rodada: number) => ({ enviados: 3 })),
+}));
+vi.mock("../../core/notificacoes", () => ({
+  useAvisos: () => avisos.atual,
+  avisarMesas: avisos.avisarMesas,
+  suportaAvisos: () => avisos.atual.estado !== "sem-suporte",
+}));
 vi.mock("../../core/useAoVivo", () => ({
   useAoVivo: () => null,
   useListaAtualizada: () => {},
@@ -1257,5 +1266,36 @@ describe("easter egg", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
     expect(screen.queryByRole("dialog", { name: /Avanti/ })).toBeNull();
+  });
+});
+
+describe("avisos da mesa", () => {
+  afterEach(() => { avisos.atual = { estado: "sem-suporte", ocupado: false, alternar: vi.fn(async () => {}) }; localStorage.clear(); });
+
+  it("convida a ligar os avisos quem pode ver as mesas, e some no Agora não", () => {
+    avisos.atual = { estado: "desligado", ocupado: false, alternar: vi.fn(async () => {}) };
+    preparar("jogador", { verMesas: true, nomesJogador: ["Pessoa"] });
+    abrir(<TelaTorneios />);
+    expect(screen.getByText("🔔 Receba sua mesa no celular")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Agora não" }));
+    expect(screen.queryByText("🔔 Receba sua mesa no celular")).toBeNull();
+  });
+
+  it("não convida quem não tem as mesas liberadas", () => {
+    avisos.atual = { estado: "desligado", ocupado: false, alternar: vi.fn(async () => {}) };
+    preparar("jogador", { verMesas: false, nomesJogador: ["Pessoa"] });
+    abrir(<TelaTorneios />);
+    expect(screen.queryByText("🔔 Receba sua mesa no celular")).toBeNull();
+  });
+
+  it("ao iniciar a rodada, quem organiza avisa as mesas", async () => {
+    const t = torneioCom("Pessoa");
+    t.jogadores.push(novoJogador(3, "Terceira Pessoa", "", true));
+    preparar("admin", { isAdmin: true }, [t]);
+    useStore.setState({ iniciarRodada: () => {} });
+    abrir(<AbaMesas torneio={t} podeEditar />);
+    fireEvent.click(screen.getByRole("button", { name: /Iniciar rodada 1/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "OK" }));
+    await waitFor(() => expect(avisos.avisarMesas).toHaveBeenCalledWith(t.id, 1));
   });
 });
