@@ -9,7 +9,7 @@ import { IconeAlvo, IconeCadeado, IconeCoroa, IconePessoa } from "./ui/Icones";
 import { DialogoExcluirConta } from "./DialogoExcluirConta";
 import { DialogoSobre } from "./DialogoSobre";
 import { DialogoPro } from "./DialogoPro";
-import { formatarData, useMeuPro } from "../core/pro";
+import { formatarData, statusPro, type Plano } from "../core/pro";
 import { podeVenderNoApp } from "../core/plataforma";
 import { useAvisos } from "../core/notificacoes";
 
@@ -51,10 +51,16 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
   const [abrindoMenu, setAbrindoMenu] = useState(false);
   const [excluindoConta, setExcluindoConta] = useState(false);
   const [sobreAberto, setSobreAberto] = useState(false);
-  const [proAberto, setProAberto] = useState(false);
-  const pro = useMeuPro(auth.session?.user?.id, auth.isAdmin);
-  // No app da Play Store o item só aparece para quem já tem o Pro (a compra é pelo site)
-  const mostrarPro = (auth.isOrganizador || auth.isAdmin) && (podeVenderNoApp() || pro.ativo);
+  const [planoAberto, setPlanoAberto] = useState<Plano | null>(null);
+  const pro = statusPro(auth);
+  // No app da Play Store cada plano só aparece para quem já tem (a compra é pelo site)
+  const venda = podeVenderNoApp();
+  const planosNoMenu: { plano: Plano; nome: string; ativo: boolean; ate: string | null }[] = [
+    { plano: "jogador" as Plano, nome: "Jogador Pro", ativo: pro.jogador, ate: pro.ate.jogador ?? pro.ate.organizador },
+    ...((auth.isOrganizador || auth.isAdmin)
+      ? [{ plano: "organizador" as Plano, nome: "Organizador Pro", ativo: pro.organizador, ate: pro.ate.organizador }]
+      : []),
+  ].filter((p) => venda || p.ativo);
   const avisos = useAvisos();
   const raiz = useRef<HTMLDivElement>(null);
   const [abrirParaDireita, setAbrirParaDireita] = useState(false);
@@ -225,18 +231,21 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
               </button>
             ))}
 
-            {mostrarPro && (
+            {planosNoMenu.length > 0 && (
               <div style={{ borderTop: "1px solid var(--line)" }}>
-                <button
-                  onClick={() => { setAbrindoMenu(false); setProAberto(true); }}
-                  className="block w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition"
-                  style={{ color: "var(--brand-1)" }}
-                >
-                  <IconeCoroa cor="currentColor" /> Organizador Pro
-                  <span className="block text-[10px] pl-5" style={{ color: "var(--text-2)" }}>
-                    {pro.ehAdmin ? "incluído para administradores" : pro.ativo && pro.proAte ? `ativo até ${formatarData(pro.proAte)}` : "conheça e assine"}
-                  </span>
-                </button>
+                {planosNoMenu.map((p) => (
+                  <button
+                    key={p.plano}
+                    onClick={() => { setAbrindoMenu(false); setPlanoAberto(p.plano); }}
+                    className="block w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition"
+                    style={{ color: "var(--brand-1)" }}
+                  >
+                    {p.plano === "organizador" ? <IconeCoroa cor="currentColor" /> : <IconePessoa cor="currentColor" />} {p.nome}
+                    <span className="block text-[10px] pl-5" style={{ color: "var(--text-2)" }}>
+                      {pro.ehAdmin ? "incluído para administradores" : p.ativo && p.ate ? `ativo até ${formatarData(p.ate)}` : "conheça e assine"}
+                    </span>
+                  </button>
+                ))}
               </div>
             )}
 
@@ -315,7 +324,7 @@ export function AuthChip({ auth, onLoginClick, onSair, onVincularNome }: Props) 
         </>
       )}
       <DialogoSobre aberto={sobreAberto} onFechar={() => setSobreAberto(false)} />
-      <DialogoPro aberto={proAberto} onFechar={() => setProAberto(false)} pro={pro} ehOrganizador={auth.isOrganizador} />
+      <DialogoPro aberto={planoAberto !== null} plano={planoAberto ?? "jogador"} onFechar={() => setPlanoAberto(null)} />
       <DialogoExcluirConta
         aberto={excluindoConta}
         email={auth.session?.user?.email ?? ""}

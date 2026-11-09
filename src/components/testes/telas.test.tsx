@@ -50,6 +50,9 @@ vi.mock("../../core/useAoVivo", () => ({
   useListaAtualizada: () => {},
 }));
 
+// Jogador Pro em dia: libera Decks e Analytics do jogador
+const PRO_JOGADOR = { jogador: new Date(Date.now() + 10 * 86_400_000).toISOString(), organizador: null };
+
 function conta(parcial: Partial<AuthState> = {}): AuthState {
   return {
     session: { user: { id: "u1", email: "pessoa@teste.local" } } as AuthState["session"],
@@ -776,7 +779,7 @@ describe("abas do torneio", () => {
   });
 
   it("o desempenho do jogador ignora torneios em andamento", () => {
-    preparar("jogador", { nomesJogador: ["Pessoa"] }, [torneioCom("Pessoa")]);
+    preparar("jogador", { nomesJogador: ["Pessoa"], proAte: PRO_JOGADOR }, [torneioCom("Pessoa")]);
     abrir(<TelaAnalytics />);
     expect(screen.queryByRole("heading", { name: /Partidas recentes/ })).toBeNull();
   });
@@ -839,7 +842,7 @@ describe("cores depois do comandante", () => {
 });
 
 describe("decks", () => {
-  it("só o admin no modo admin vê o botão e a página de decks", () => {
+  it("decks são do admin e do Jogador Pro; só o admin atualiza a lista", () => {
     const entra = (modo: ModoView, auth: Partial<AuthState>) => {
       preparar(modo, auth);
       abrir(<TelaTorneios />);
@@ -848,14 +851,19 @@ describe("decks", () => {
       abrir(<TelaDecks />);
       const restrito = !!screen.queryByText(/Acesso restrito/);
       const temLista = !!screen.queryByRole("searchbox");
+      const atualiza = !!screen.queryByRole("button", { name: /Atualizar decks/ });
       cleanup();
-      return { temBotao, restrito, temLista };
+      return { temBotao, restrito, temLista, atualiza };
     };
-    const bloqueado = { temBotao: false, restrito: true, temLista: false };
+    const bloqueado = { temBotao: false, restrito: true, temLista: false, atualiza: false };
+    const comPro = { temBotao: true, restrito: false, temLista: true, atualiza: false };
     expect(entra("jogador", {})).toEqual(bloqueado);
     expect(entra("organizador", { isOrganizador: true })).toEqual(bloqueado);
-    expect(entra("organizador", { isAdmin: true, isOrganizador: true })).toEqual(bloqueado);
-    expect(entra("admin", { isAdmin: true })).toEqual({ temBotao: true, restrito: false, temLista: true });
+    expect(entra("jogador", { proAte: PRO_JOGADOR })).toEqual(comPro);
+    expect(entra("organizador", { isOrganizador: true, proAte: { jogador: null, organizador: PRO_JOGADOR.jogador } })).toEqual(comPro);
+    // Admin tem o Pro em qualquer modo, mas só atualiza a lista no modo admin
+    expect(entra("organizador", { isAdmin: true, isOrganizador: true })).toEqual(comPro);
+    expect(entra("admin", { isAdmin: true })).toEqual({ temBotao: true, restrito: false, temLista: true, atualiza: true });
   });
 
   it("organizador continua buscando decks no cadastro de jogadores", () => {
@@ -1229,7 +1237,7 @@ describe("métricas de decks no Analytics", () => {
   });
 
   it("os decks do jogador vêm logo acima do histórico de torneios", () => {
-    preparar("jogador", { nomesJogador: ["Pessoa"] }, [{ ...comDeck(), finalizado: true }]);
+    preparar("jogador", { nomesJogador: ["Pessoa"], proAte: PRO_JOGADOR }, [{ ...comDeck(), finalizado: true }]);
     abrir(<TelaAnalytics />);
 
     const titulos = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent ?? "");
@@ -1238,7 +1246,7 @@ describe("métricas de decks no Analytics", () => {
   });
 
   it("jogador vê os próprios decks, com o atual marcado, sem as métricas gerais", () => {
-    preparar("jogador", { nomesJogador: ["Pessoa"] }, [{ ...comDeck(), finalizado: true }]);
+    preparar("jogador", { nomesJogador: ["Pessoa"], proAte: PRO_JOGADOR }, [{ ...comDeck(), finalizado: true }]);
     abrir(<TelaAnalytics />);
 
     const secao = within(screen.getByRole("heading", { name: /Decks mais usados/ }).closest(".ds-card") as HTMLElement);
@@ -1250,9 +1258,15 @@ describe("métricas de decks no Analytics", () => {
 });
 
 describe("desempenho do jogador", () => {
+  it("sem o Jogador Pro, o Analytics mostra o convite", () => {
+    preparar("jogador", { nomesJogador: ["Pessoa"] }, []);
+    abrir(<TelaAnalytics />);
+    expect(screen.getByText(/Analytics é do Jogador Pro/)).toBeTruthy();
+  });
+
   it("o histórico de torneios vem depois de Partidas recentes", () => {
     const t = { ...torneioCom("Pessoa"), finalizado: true };
-    preparar("jogador", { nomesJogador: ["Pessoa"] }, [t]);
+    preparar("jogador", { nomesJogador: ["Pessoa"], proAte: PRO_JOGADOR }, [t]);
     abrir(<TelaAnalytics />);
 
     const recentes = screen.getByRole("heading", { name: /Partidas recentes/ });

@@ -1,4 +1,5 @@
 import type { JSX } from "react";
+import { statusPro } from "../../core/pro";
 import { useAuth } from "../../core/auth";
 import { useStore, type Tela } from "../../core/store";
 import { podeEditarTorneios } from "../../core/visibilidade";
@@ -26,8 +27,10 @@ export function BarraInferior() {
       icone: (cor) => <IconeAnalytics tamanho={22} cor={cor} />,
       abrir: () => irPara("analytics"),
     },
-    ...(admin ? [
+    ...(admin || statusPro(auth).jogador ? [
       { id: "decks" as Tela, rotulo: "Decks", icone: (cor: string) => <IconeDecks tamanho={22} cor={cor} />, abrir: () => irPara("decks") },
+    ] : []),
+    ...(admin ? [
       { id: "usuarios" as Tela, rotulo: "Usuários", icone: (cor: string) => <IconeUsuarios tamanho={22} cor={cor} />, abrir: () => irPara("usuarios") },
     ] : []),
   ];

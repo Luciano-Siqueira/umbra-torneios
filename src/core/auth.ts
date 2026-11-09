@@ -4,14 +4,28 @@ import { LINK_PEDE_SENHA, supabase } from "./supabaseClient";
 import { guardarAceiteLocal, VERSAO_PRIVACIDADE } from "./privacidade";
 import type { Session } from "@supabase/supabase-js";
 
+// Validade de cada plano Pro da conta (null = nunca assinou)
+export interface ProAte {
+  jogador: string | null;
+  organizador: string | null;
+}
+const SEM_PRO: ProAte = { jogador: null, organizador: null };
+
+// Jogador Pro em dia (o Organizador Pro inclui o do jogador)
+function temJogadorPro(pro: ProAte | undefined, agora = Date.now()): boolean {
+  const ativo = (ate: string | null | undefined) => !!ate && Date.parse(ate) > agora;
+  return ativo(pro?.jogador) || ativo(pro?.organizador);
+}
+
 export interface AuthState {
   session: Session | null;
   isAdmin: boolean;
   isOrganizador: boolean;
   nomesJogador: string[];  // nomes vinculados ao usuário e aprovados
   nomesPendentes: string[]; // aguardando o admin aprovar
-  verMesas: boolean; // liberado pelo admin na tela Usuários
+  verMesas: boolean; // liberado pelo admin na tela Usuários e com o Jogador Pro em dia
   verTempo: boolean;
+  proAte?: ProAte; // validade dos planos Pro
   criarSenha: boolean; // chegou por link de convite ou de nova senha
   loading: boolean;
   perfilCarregado: boolean; // true depois de ter o perfil (do cache ou do servidor)
@@ -24,8 +38,9 @@ interface PerfilSalvo {
   isOrganizador: boolean;
   nomesJogador: string[];
   nomesPendentes?: string[];
-  verMesas?: boolean;
+  verMesas?: boolean; // liberação do admin, sem considerar o Pro
   verTempo?: boolean;
+  proAte?: ProAte;
 }
 
 const KEY_PERFIL = "mtg.perfil.v1";
@@ -38,6 +53,7 @@ const useAuthStore = create<AuthState>(() => ({
   nomesPendentes: [],
   verMesas: false,
   verTempo: false,
+  proAte: SEM_PRO,
   criarSenha: LINK_PEDE_SENHA,
   loading: true,
   perfilCarregado: false,
@@ -76,19 +92,21 @@ async function carregarPerfil(userId: string) {
         isOrganizador: salvo.isOrganizador,
         nomesJogador: salvo.nomesJogador,
         nomesPendentes: salvo.nomesPendentes ?? [],
-        verMesas: !!salvo.verMesas,
-        verTempo: !!salvo.verTempo,
+        verMesas: !!salvo.verMesas && temJogadorPro(salvo.proAte),
+        verTempo: !!salvo.verTempo && temJogadorPro(salvo.proAte),
+        proAte: salvo.proAte ?? SEM_PRO,
         perfilCarregado: true,
         perfilErro: null,
       }
     : { perfilCarregado: false, perfilErro: null });
 
-  const [adminRes, orgRes, jogadoresRes, permissaoRes] = await Promise.all([
+  const [adminRes, orgRes, jogadoresRes, permissaoRes, proRes] = await Promise.all([
     supabase.from("admins").select("user_id").eq("user_id", userId).maybeSingle(),
     supabase.from("organizadores").select("user_id").eq("user_id", userId).maybeSingle(),
     // "*" para não quebrar enquanto o banco não tiver a coluna aprovado
     supabase.from("usuarios_jogadores").select("*").eq("user_id", userId),
     supabase.from("permissoes_jogador").select("ver_mesas, ver_tempo").eq("user_id", userId).maybeSingle(),
+    supabase.from("assinaturas_pro").select("plano, pro_ate").eq("user_id", userId),
   ]);
   if (busca !== ultimaBusca) return;
   buscandoUid = null;
@@ -111,6 +129,11 @@ async function carregarPerfil(userId: string) {
     // Sem a tabela ou sem linha, fica escondido: não é erro de perfil
     verMesas: !!permissaoRes.data?.ver_mesas,
     verTempo: !!permissaoRes.data?.ver_tempo,
+    // Sem a tabela, ninguém tem Pro (admins têm tudo de qualquer jeito)
+    proAte: {
+      jogador: (proRes.data ?? []).find((a: any) => a.plano === "jogador")?.pro_ate ?? null,
+      organizador: (proRes.data ?? []).find((a: any) => a.plano === "organizador")?.pro_ate ?? null,
+    },
   };
   localStorage.setItem(KEY_PERFIL, JSON.stringify(perfil));
   useAuthStore.setState({
@@ -118,8 +141,9 @@ async function carregarPerfil(userId: string) {
     isOrganizador: perfil.isOrganizador,
     nomesJogador: perfil.nomesJogador,
     nomesPendentes: perfil.nomesPendentes,
-    verMesas: !!perfil.verMesas,
-    verTempo: !!perfil.verTempo,
+    verMesas: !!perfil.verMesas && temJogadorPro(perfil.proAte),
+    verTempo: !!perfil.verTempo && temJogadorPro(perfil.proAte),
+    proAte: perfil.proAte,
     perfilCarregado: true,
     perfilErro: null,
   });
@@ -136,12 +160,13 @@ function limparPerfil() {
     nomesPendentes: [],
     verMesas: false,
     verTempo: false,
+    proAte: SEM_PRO,
     perfilCarregado: true,
     perfilErro: null,
   });
 }
 
-// Relê papéis, nomes e permissões (Mesas e Tempo) do servidor, mesmo com o perfil já carregado.
+// Relê papéis, nomes, permissões (Mesas e Tempo) e planos Pro do servidor, mesmo com o perfil já carregado.
 // Assim, o que o admin muda na tela Usuários chega ao jogador sem ele fechar o app.
 export function atualizarPerfil(): void {
   const uid = useAuthStore.getState().session?.user?.id;

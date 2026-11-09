@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { statusPro } from "../core/pro";
+import { BloqueioPro } from "./BloqueioPro";
 import { useStore } from "../core/store";
 import { useAuth } from "../core/auth";
 import { AuthChip } from "./AuthChip";
@@ -66,7 +68,12 @@ export function TelaAnalytics({ onPedirLogin, onVincularNome }: { onPedirLogin?:
       </div>
 
       <main className="px-4 md:px-8 pb-24 md:pb-12 space-y-6">
-        {!podeEditar ? (
+        {!podeEditar && auth.perfilCarregado && !statusPro(auth).jogador ? (
+          <BloqueioPro
+            recurso="Analytics"
+            descricao="Veja seu desempenho em todos os torneios: vitórias, rivais, conquistas e evolução ao longo do tempo."
+          />
+        ) : !podeEditar ? (
           <PainelJogador
             torneios={torneios}
             metricas={metricas}

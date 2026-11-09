@@ -1,14 +1,19 @@
-// Organizador Pro: assinatura paga por Pix, vendida só pelo site (supabase/organizador_pro.sql e
-// a função pagamento-pro). Administradores têm todos os recursos do Pro sem pagar.
-import { useCallback, useEffect, useState } from "react";
+// Assinaturas Pro, pagas por Pix e vendidas só pelo site (supabase/organizador_pro.sql e a função
+// pagamento-pro). Jogador Pro: mesas, tempo e notificações (com a liberação do admin), Decks e
+// Analytics. Organizador Pro: tudo do jogador + escolher as notificações de cada torneio.
+// Administradores têm tudo sem pagar.
 import { supabase } from "./supabaseClient";
+import type { AuthState, ProAte } from "./auth";
+
+export type Plano = "jogador" | "organizador";
+export const NOME_DO_PLANO: Record<Plano, string> = { jogador: "Jogador Pro", organizador: "Organizador Pro" };
 
 export interface ConfigPro {
   precoCentavos: number;
   dias: number;
   vendasAbertas: boolean;
 }
-export const CONFIG_PRO_PADRAO: ConfigPro = { precoCentavos: 990, dias: 30, vendasAbertas: true };
+export const CONFIG_PRO_PADRAO: ConfigPro = { precoCentavos: 990, dias: 30, vendasAbertas: false };
 
 export interface CobrancaPix {
   id: string;
@@ -22,6 +27,21 @@ export interface CobrancaPix {
 
 export function proAtivo(proAte: string | null | undefined, agora = Date.now()): boolean {
   return !!proAte && Date.parse(proAte) > agora;
+}
+
+// O que a conta pode usar agora. "ate" é a validade comprada de cada plano (null sem assinatura).
+export function statusPro(auth: Pick<AuthState, "isAdmin" | "proAte">, agora = Date.now()) {
+  const org = proAtivo(auth.proAte?.organizador, agora);
+  const jog = proAtivo(auth.proAte?.jogador, agora);
+  return {
+    ehAdmin: auth.isAdmin,
+    organizador: auth.isAdmin || org,
+    jogador: auth.isAdmin || org || jog, // o Organizador Pro inclui o do jogador
+    ate: {
+      jogador: jog ? auth.proAte!.jogador : null,
+      organizador: org ? auth.proAte!.organizador : null,
+    } as ProAte,
+  };
 }
 
 export function formatarPreco(centavos: number): string {
@@ -38,18 +58,17 @@ export async function lerConfigPro(): Promise<ConfigPro> {
   return { precoCentavos: data.preco_centavos, dias: data.dias, vendasAbertas: data.vendas_abertas };
 }
 
-// Validade do Pro da própria conta; null quando nunca assinou ou a tabela ainda não existe
-export async function lerMeuPro(uid: string): Promise<string | null> {
-  const { data, error } = await supabase.from("assinaturas_pro").select("pro_ate").eq("user_id", uid).maybeSingle();
-  if (error) return null;
-  return (data?.pro_ate as string) ?? null;
-}
-
-// Para a tela Usuários: conta → validade do Pro
-export async function listarAssinaturasPro(): Promise<Map<string, string>> {
-  const { data, error } = await supabase.from("assinaturas_pro").select("user_id, pro_ate");
-  if (error) return new Map();
-  return new Map((data ?? []).map((a: any) => [a.user_id as string, a.pro_ate as string]));
+// Para a tela Usuários: conta → validade de cada plano
+export async function listarAssinaturasPro(): Promise<Map<string, ProAte>> {
+  const { data, error } = await supabase.from("assinaturas_pro").select("user_id, plano, pro_ate");
+  const mapa = new Map<string, ProAte>();
+  if (error) return mapa;
+  for (const a of (data ?? []) as { user_id: string; plano: Plano; pro_ate: string }[]) {
+    const atual = mapa.get(a.user_id) ?? { jogador: null, organizador: null };
+    atual[a.plano] = a.pro_ate;
+    mapa.set(a.user_id, atual);
+  }
+  return mapa;
 }
 
 async function chamar(corpo: Record<string, unknown>): Promise<any> {
@@ -58,15 +77,15 @@ async function chamar(corpo: Record<string, unknown>): Promise<any> {
     let motivo = "";
     try { motivo = (await (error as any).context?.json())?.erro ?? ""; } catch { /* sem corpo */ }
     if (!motivo && /failed to send|not found|404/i.test(error.message)) {
-      motivo = "As vendas ainda não estão disponíveis: falta publicar a função pagamento-pro no Supabase.";
+      motivo = "As assinaturas ainda não estão disponíveis: falta publicar a função pagamento-pro no Supabase.";
     }
     throw new Error(motivo || error.message);
   }
   return data;
 }
 
-export async function criarCobrancaPix(): Promise<CobrancaPix> {
-  const d = await chamar({ acao: "criar" });
+export async function criarCobrancaPix(plano: Plano): Promise<CobrancaPix> {
+  const d = await chamar({ acao: "criar", plano });
   return {
     id: String(d.id),
     status: String(d.status ?? "pending"),
@@ -81,25 +100,4 @@ export async function criarCobrancaPix(): Promise<CobrancaPix> {
 export async function consultarCobranca(id: string): Promise<{ status: string; proAte: string | null }> {
   const d = await chamar({ acao: "consultar", id });
   return { status: String(d.status ?? ""), proAte: d.pro_ate ?? null };
-}
-
-// Validade do Pro de quem está logado. Confere de novo quando o app volta para a frente.
-export function useMeuPro(uid: string | null | undefined, ehAdmin: boolean) {
-  const [proAte, setProAte] = useState<string | null>(null);
-  const [carregado, setCarregado] = useState(false);
-
-  const recarregar = useCallback(async () => {
-    if (!uid) { setProAte(null); setCarregado(true); return; }
-    setProAte(await lerMeuPro(uid));
-    setCarregado(true);
-  }, [uid]);
-
-  useEffect(() => {
-    recarregar();
-    const aoVoltar = () => { if (document.visibilityState === "visible") recarregar(); };
-    document.addEventListener("visibilitychange", aoVoltar);
-    return () => document.removeEventListener("visibilitychange", aoVoltar);
-  }, [recarregar]);
-
-  return { proAte, ativo: ehAdmin || proAtivo(proAte), ehAdmin, carregado, recarregar, definir: setProAte };
 }

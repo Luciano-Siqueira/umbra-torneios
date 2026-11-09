@@ -1,34 +1,43 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { IconeCheck, IconeCopiar, IconeCoroa, IconeSino } from "./ui/Icones";
+import { IconeAmpulheta, IconeAnalytics, IconeCheck, IconeCopiar, IconeCoroa, IconeEngrenagem, IconePessoa, IconeSino } from "./ui/Icones";
+import { IconeDecks } from "./ui/LogoUmbra";
 import { Modal } from "./ui/Modal";
 import { useToast } from "./ui/Toast";
+import { atualizarPerfil, useAuth } from "../core/auth";
 import {
-  CONFIG_PRO_PADRAO, consultarCobranca, criarCobrancaPix, formatarData, formatarPreco, lerConfigPro,
-  type CobrancaPix, type ConfigPro, type useMeuPro,
+  CONFIG_PRO_PADRAO, NOME_DO_PLANO, consultarCobranca, criarCobrancaPix, formatarData, formatarPreco, lerConfigPro,
+  statusPro, type CobrancaPix, type ConfigPro, type Plano,
 } from "../core/pro";
 import { podeVenderNoApp } from "../core/plataforma";
 
-type Pro = ReturnType<typeof useMeuPro>;
 const INTERVALO_CONSULTA_MS = 5000;
 
-export const BENEFICIOS_PRO = [
-  "Escolha quais notificações cada torneio manda: mesa da rodada, tempo extra e último turno, torneio finalizado.",
-  "Ajuda a manter o app no ar e sem anúncios.",
+const BENEFICIOS_JOGADOR: { icone: ReactNode; texto: string }[] = [
+  { icone: <IconeAmpulheta />, texto: "Sua mesa e o tempo da rodada no app." },
+  { icone: <IconeSino />, texto: "Notificações no celular: sua mesa, tempo extra, último turno e fim do torneio." },
+  { icone: <IconeDecks tamanho={16} />, texto: "Decks: todos os decks Commander, com as cartas e as cores." },
+  { icone: <IconeAnalytics />, texto: "Analytics: seu desempenho, rivais, conquistas e evolução." },
+];
+const BENEFICIOS_ORGANIZADOR: { icone: ReactNode; texto: string }[] = [
+  { icone: <IconeEngrenagem />, texto: "Escolha quais notificações cada torneio manda aos jogadores." },
+  { icone: <IconePessoa />, texto: "Inclui tudo do Jogador Pro para quando você também joga." },
 ];
 
-export function DialogoPro({ aberto, onFechar, pro, ehOrganizador }: {
-  aberto: boolean;
-  onFechar: () => void;
-  pro: Pro;
-  ehOrganizador: boolean;
-}) {
+export function DialogoPro({ aberto, onFechar, plano }: { aberto: boolean; onFechar: () => void; plano: Plano }) {
   const { toast } = useToast();
+  const auth = useAuth();
+  const status = statusPro(auth);
   const [config, setConfig] = useState<ConfigPro>(CONFIG_PRO_PADRAO);
   const [cobranca, setCobranca] = useState<CobrancaPix | null>(null);
   const [gerando, setGerando] = useState(false);
   const [erro, setErro] = useState("");
   const [agora, setAgora] = useState(Date.now());
   const venda = podeVenderNoApp();
+  const nome = NOME_DO_PLANO[plano];
+  const ativoAte = status.ate[plano];
+  // Quem tem o Organizador Pro já tem o do jogador: não precisa comprar os dois
+  const incluidoNoOrganizador = plano === "jogador" && !!status.ate.organizador;
+  const podeComprar = plano === "jogador" || auth.isOrganizador;
 
   useEffect(() => {
     if (!aberto) return;
@@ -47,9 +56,9 @@ export function DialogoPro({ aberto, onFechar, pro, ehOrganizador }: {
         const r = await consultarCobranca(cobranca.id);
         if (!ativo) return;
         if (r.status === "approved") {
-          pro.definir(r.proAte);
           setCobranca(null);
-          toast(`Pagamento confirmado! Organizador Pro ativo${r.proAte ? ` até ${formatarData(r.proAte)}` : ""}.`, "sucesso");
+          atualizarPerfil();
+          toast(`Pagamento confirmado! ${nome} ativo${r.proAte ? ` até ${formatarData(r.proAte)}` : ""}.`, "sucesso");
         } else if (r.status === "rejected" || r.status === "cancelled") {
           setCobranca(null);
           setErro("O Pix foi cancelado. Gere um novo para tentar de novo.");
@@ -57,13 +66,13 @@ export function DialogoPro({ aberto, onFechar, pro, ehOrganizador }: {
       } catch { /* tenta de novo no próximo intervalo */ }
     }, INTERVALO_CONSULTA_MS);
     return () => { ativo = false; window.clearInterval(id); };
-  }, [aberto, cobranca, pro.definir, toast]);
+  }, [aberto, cobranca, nome, toast]);
 
   const gerarPix = async () => {
     setGerando(true);
     setErro("");
     try {
-      setCobranca(await criarCobrancaPix());
+      setCobranca(await criarCobrancaPix(plano));
       setAgora(Date.now());
     } catch (e: any) {
       setErro(e?.message ?? "Não foi possível gerar o Pix.");
@@ -82,44 +91,54 @@ export function DialogoPro({ aberto, onFechar, pro, ehOrganizador }: {
   };
 
   const expirado = !!cobranca?.expiraEm && Date.parse(cobranca.expiraEm) < agora;
-  const ativoAte = pro.proAte && Date.parse(pro.proAte) > agora ? pro.proAte : null;
+  const beneficios = plano === "organizador" ? BENEFICIOS_ORGANIZADOR : BENEFICIOS_JOGADOR;
+  const mostrarCompra = !status.ehAdmin && venda && podeComprar && !incluidoNoOrganizador && !cobranca;
 
   return (
     <Modal
       open={aberto}
       onClose={onFechar}
-      title={<span className="inline-flex items-center gap-2"><IconeCoroa tamanho={20} /> Organizador Pro</span>}
+      title={<span className="inline-flex items-center gap-2">
+        {plano === "organizador" ? <IconeCoroa tamanho={20} /> : <IconePessoa tamanho={20} />} {nome}
+      </span>}
       fecharAoClicarFora={!cobranca}
     >
       <div className="space-y-4 text-sm" style={{ color: "var(--text-label)" }}>
-        {pro.ehAdmin ? (
-          <Selo>Administradores já têm todos os recursos do Pro.</Selo>
+        {status.ehAdmin ? (
+          <Selo>Administradores já têm todos os recursos Pro.</Selo>
+        ) : incluidoNoOrganizador ? (
+          <Selo>Incluído no seu Organizador Pro, ativo até <b>{formatarData(status.ate.organizador!)}</b>.</Selo>
         ) : ativoAte ? (
-          <Selo>Seu Organizador Pro está ativo até <b>{formatarData(ativoAte)}</b>.</Selo>
+          <Selo>Seu {nome} está ativo até <b>{formatarData(ativoAte)}</b>.</Selo>
         ) : null}
 
         <ul className="space-y-2">
-          {BENEFICIOS_PRO.map((b, i) => (
-            <li key={b} className="flex gap-2">
-              {i === 0 ? <IconeSino /> : <IconeCheck />}
-              <span>{b}</span>
+          {beneficios.map((b) => (
+            <li key={b.texto} className="flex gap-2 items-start">
+              <span className="mt-0.5">{b.icone}</span>
+              <span>{b.texto}</span>
             </li>
           ))}
         </ul>
+        {plano === "jogador" && (
+          <p className="text-xs" style={{ color: "var(--text-2)" }}>
+            Mesas, tempo e notificações aparecem quando o administrador libera para você.
+          </p>
+        )}
 
-        {!pro.ehAdmin && !venda && !ativoAte && (
+        {!status.ehAdmin && !venda && !ativoAte && !incluidoNoOrganizador && (
           <p className="text-xs" style={{ color: "var(--text-2)" }}>
             A assinatura não está disponível neste aplicativo.
           </p>
         )}
 
-        {!pro.ehAdmin && venda && !ehOrganizador && (
+        {!status.ehAdmin && venda && !podeComprar && (
           <p className="text-xs" style={{ color: "var(--warn)" }}>
             O Organizador Pro é para quem organiza torneios. Peça a liberação de organizador a um administrador.
           </p>
         )}
 
-        {!pro.ehAdmin && venda && ehOrganizador && !cobranca && (
+        {mostrarCompra && (
           <div className="rounded-xl p-3 space-y-2" style={{ background: "var(--ds-surface-2)", border: "1px solid rgba(201,166,72,0.3)" }}>
             <div className="flex items-baseline justify-between gap-2">
               <span className="text-2xl font-bold" style={{ color: "var(--brand-1)" }}>{formatarPreco(config.precoCentavos)}</span>
@@ -137,7 +156,7 @@ export function DialogoPro({ aberto, onFechar, pro, ehOrganizador }: {
               {gerando ? "Gerando o Pix..." : ativoAte ? `Renovar por mais ${config.dias} dias` : "Assinar com Pix"}
             </button>
             {!config.vendasAbertas && (
-              <p className="text-xs" style={{ color: "var(--warn)" }}>As vendas estão pausadas no momento.</p>
+              <p className="text-xs" style={{ color: "var(--warn)" }}>As assinaturas abrem em breve.</p>
             )}
           </div>
         )}
@@ -186,7 +205,7 @@ export function DialogoPro({ aberto, onFechar, pro, ehOrganizador }: {
 
         {erro && <div role="alert" className="text-xs" style={{ color: "var(--critical)" }}>{erro}</div>}
 
-        {venda && !pro.ehAdmin && (
+        {venda && !status.ehAdmin && (
           <p className="text-[10px] leading-snug" style={{ color: "var(--text-2)" }}>
             O pagamento é processado pelo Mercado Pago. O Pro vale para a sua conta no site e no app.
           </p>

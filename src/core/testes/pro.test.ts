@@ -40,3 +40,16 @@ describe("app da Play Store", () => {
     expect(abertoPeloAppDaLoja()).toBe(true);
   });
 });
+
+describe("planos", () => {
+  const futuro = new Date(Date.now() + 86_400_000).toISOString();
+  const passado = new Date(Date.now() - 86_400_000).toISOString();
+
+  it("o Organizador Pro inclui o Jogador Pro; admin tem os dois", async () => {
+    const { statusPro } = await import("../pro");
+    expect(statusPro({ isAdmin: false, proAte: { jogador: futuro, organizador: null } })).toMatchObject({ jogador: true, organizador: false });
+    expect(statusPro({ isAdmin: false, proAte: { jogador: null, organizador: futuro } })).toMatchObject({ jogador: true, organizador: true });
+    expect(statusPro({ isAdmin: false, proAte: { jogador: passado, organizador: null } })).toMatchObject({ jogador: false, organizador: false });
+    expect(statusPro({ isAdmin: true, proAte: undefined })).toMatchObject({ jogador: true, organizador: true });
+  });
+});

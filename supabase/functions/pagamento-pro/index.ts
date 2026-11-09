@@ -1,7 +1,7 @@
-// Função do Supabase (Edge Function) que vende o Organizador Pro por Pix, pelo Mercado Pago.
+// Função do Supabase (Edge Function) que vende o Jogador Pro e o Organizador Pro por Pix, pelo Mercado Pago.
 //
 // Pedidos do app (com a pessoa logada):
-//   { acao: "criar" }               — cria a cobrança Pix e devolve o QR Code e o "copia e cola"
+//   { acao: "criar", plano: "jogador" | "organizador" } — cria a cobrança Pix e devolve o QR Code e o "copia e cola"
 //   { acao: "consultar", id: "..." } — confere no Mercado Pago se o Pix caiu e, se caiu, libera o Pro
 // Aviso do Mercado Pago (webhook): POST em ...?origem=mercadopago, com a assinatura x-signature.
 //
@@ -28,9 +28,13 @@ const servidor = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPAB
 });
 const tokenMP = () => Deno.env.get("MP_ACCESS_TOKEN") ?? "";
 
+type Plano = "jogador" | "organizador";
+const NOME_DO_PLANO: Record<Plano, string> = { jogador: "Jogador Pro", organizador: "Organizador Pro" };
+
 type Pagamento = {
   id: string;
   user_id: string;
+  plano: Plano;
   valor_centavos: number;
   dias: number;
   status: string;
@@ -46,19 +50,19 @@ function dataMP(ms: number): string {
   return `${brasilia}-03:00`;
 }
 
-async function proAtual(uid: string): Promise<string | null> {
-  const { data } = await servidor.from("assinaturas_pro").select("pro_ate").eq("user_id", uid).maybeSingle();
+async function proAtual(uid: string, plano: Plano): Promise<string | null> {
+  const { data } = await servidor.from("assinaturas_pro").select("pro_ate").eq("user_id", uid).eq("plano", plano).maybeSingle();
   return (data?.pro_ate as string) ?? null;
 }
 
 // Confere o pagamento no Mercado Pago (a fonte da verdade) e libera o Pro se ele foi aprovado
 async function atualizar(p: Pagamento): Promise<{ status: string; pro_ate: string | null }> {
-  if (p.creditado) return { status: "approved", pro_ate: await proAtual(p.user_id) };
+  if (p.creditado) return { status: "approved", pro_ate: await proAtual(p.user_id, p.plano) };
 
   const r = await fetch(`${MP}/v1/payments/${encodeURIComponent(p.id)}`, {
     headers: { Authorization: `Bearer ${tokenMP()}` },
   });
-  if (!r.ok) return { status: p.status, pro_ate: await proAtual(p.user_id) };
+  if (!r.ok) return { status: p.status, pro_ate: await proAtual(p.user_id, p.plano) };
   const mp = await r.json();
 
   // Só vale o pagamento desta conta, no valor cobrado
@@ -72,7 +76,7 @@ async function atualizar(p: Pagamento): Promise<{ status: string; pro_ate: strin
     return { status: "approved", pro_ate: (ate as string) ?? null };
   }
   if (status !== p.status) await servidor.from("pagamentos_pro").update({ status }).eq("id", p.id);
-  return { status, pro_ate: await proAtual(p.user_id) };
+  return { status, pro_ate: await proAtual(p.user_id, p.plano) };
 }
 
 async function hmacHex(segredo: string, texto: string): Promise<string> {
@@ -123,10 +127,12 @@ Deno.serve(async (req) => {
 
   let acao = "";
   let id = "";
+  let plano: Plano = "jogador";
   try {
     const corpo = await req.json();
     acao = String(corpo?.acao ?? "");
     id = String(corpo?.id ?? "");
+    plano = corpo?.plano === "organizador" ? "organizador" : "jogador";
   } catch {
     return resposta(400, { erro: "Pedido inválido" });
   }
@@ -139,23 +145,26 @@ Deno.serve(async (req) => {
 
   if (acao !== "criar") return resposta(400, { erro: "Ação desconhecida" });
 
-  // Só quem organiza torneios compra (admin já tem tudo)
+  // Admin já tem tudo; o Organizador Pro é só para quem organiza torneios
   const [{ data: org }, { data: adm }] = await Promise.all([
     servidor.from("organizadores").select("user_id").eq("user_id", uid).maybeSingle(),
     servidor.from("admins").select("user_id").eq("user_id", uid).maybeSingle(),
   ]);
   if (adm) return resposta(400, { erro: "Administradores já têm todos os recursos do Pro." });
-  if (!org) return resposta(403, { erro: "O Organizador Pro é para quem organiza torneios. Peça a liberação a um administrador." });
+  if (plano === "organizador" && !org) {
+    return resposta(403, { erro: "O Organizador Pro é para quem organiza torneios. Peça a liberação a um administrador." });
+  }
 
   const { data: config } = await servidor.from("config_pro").select("*").eq("id", 1).maybeSingle();
   if (!config) return resposta(503, { erro: "As vendas ainda não foram configuradas (falta rodar organizador_pro.sql)." });
-  if (!config.vendas_abertas) return resposta(403, { erro: "As vendas do Organizador Pro estão pausadas no momento." });
+  if (!config.vendas_abertas) return resposta(403, { erro: "As assinaturas estão pausadas no momento." });
 
   // Reaproveita um Pix ainda válido, para não criar várias cobranças com toques repetidos
   const { data: aberto } = await servidor
     .from("pagamentos_pro")
     .select("*")
     .eq("user_id", uid)
+    .eq("plano", plano)
     .eq("status", "pending")
     .gt("expira_em", new Date(Date.now() + 5 * 60_000).toISOString())
     .order("criado_em", { ascending: false })
@@ -175,7 +184,7 @@ Deno.serve(async (req) => {
     },
     body: JSON.stringify({
       transaction_amount: config.preco_centavos / 100,
-      description: `Umbra Torneios · Organizador Pro (${config.dias} dias)`,
+      description: `Umbra Torneios · ${NOME_DO_PLANO[plano]} (${config.dias} dias)`,
       payment_method_id: "pix",
       payer: { email: quem.user.email },
       external_reference: uid,
@@ -193,6 +202,7 @@ Deno.serve(async (req) => {
   const novo: Pagamento = {
     id: String(mp.id),
     user_id: uid,
+    plano,
     valor_centavos: config.preco_centavos,
     dias: config.dias,
     status: String(mp.status ?? "pending"),
@@ -212,6 +222,7 @@ Deno.serve(async (req) => {
 function publico(p: Pagamento) {
   return {
     id: p.id,
+    plano: p.plano,
     status: p.status,
     qr_code: p.qr_code,
     qr_code_base64: p.qr_code_base64,

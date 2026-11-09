@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { IconeReiniciar as IconeReiniciarDecks } from "./ui/Icones";
+import { statusPro } from "../core/pro";
 import { IconeAlerta as IconeAlertaDecks, IconeCadeado as IconeCadeadoDecks, IconeVoltar as IconeVoltarDecks } from "./ui/Icones";
 import { useStore } from "../core/store";
 import { useAuth } from "../core/auth";
@@ -58,14 +60,15 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
     }
   };
 
-  if (auth.perfilErro || (auth.perfilCarregado && (!auth.isAdmin || modoView !== "admin"))) {
+  const adminNoModo = auth.isAdmin && modoView === "admin";
+  if (auth.perfilErro || (auth.perfilCarregado && !adminNoModo && !statusPro(auth).jogador)) {
     return (
       <div className="min-h-screen flex items-center justify-center text-fg p-6">
         <div className="text-center">
           <div className="text-2xl mb-2">{auth.perfilErro
             ? <><IconeAlertaDecks cor="currentColor" /> Erro ao carregar seu perfil</>
             : <><IconeCadeadoDecks cor="currentColor" /> Acesso restrito</>}</div>
-          <div className="text-sm text-fg-dim mb-4">{auth.perfilErro || "Essa página é só para administradores."}</div>
+          <div className="text-sm text-fg-dim mb-4">{auth.perfilErro || "Essa página é do Jogador Pro."}</div>
           <button className="btn-primary" onClick={voltar}>Voltar</button>
         </div>
       </div>
@@ -88,7 +91,7 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
 
       <main className="px-4 md:px-8 pb-24 md:pb-12 space-y-4">
         {aberto ? <DetalheDeck deck={aberto} onVoltar={() => setAberto(null)} /> : <>
-        <div className="card grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-2">
+        <div className={`card grid grid-cols-1 ${adminNoModo ? "sm:grid-cols-[1fr_auto_auto_auto]" : "sm:grid-cols-[1fr_auto_auto]"} gap-2`}>
           <input
             type="search"
             className="input w-full"
@@ -111,9 +114,11 @@ export function TelaDecks({ onPedirLogin, onVincularNome }: { onPedirLogin?: () 
               </optgroup>
             ))}
           </select>
-          <button className="btn-info whitespace-nowrap" onClick={atualizar} disabled={progresso !== null}>
-            {progresso ?? "⟳ Atualizar decks"}
-          </button>
+          {adminNoModo && (
+            <button className="btn-info whitespace-nowrap" onClick={atualizar} disabled={progresso !== null}>
+              {progresso ?? <><IconeReiniciarDecks cor="currentColor" /> Atualizar decks</>}
+            </button>
+          )}
         </div>
 
         <div className="card">

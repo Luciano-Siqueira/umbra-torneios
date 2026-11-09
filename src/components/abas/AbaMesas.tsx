@@ -143,7 +143,7 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
       if (desligado === "torneio") toast("A notificação de mesa está desligada neste torneio (botão Notificações).", "aviso");
       else if (desligado) toast("A notificação de mesa está desligada para todos em Usuários → Configurar notificações.", "aviso");
       else if (enviados > 0) toast(`Mesa avisada a ${contar(enviados, "aparelho")}`, "sucesso");
-      else if (contas === 0) toast("Ninguém desta rodada pode receber: o jogador precisa de conta com o nome aprovado e Mesas liberado.", "aviso");
+      else if (contas === 0) toast("Ninguém desta rodada pode receber: o jogador precisa de conta com o nome aprovado, Mesas liberado e o Jogador Pro.", "aviso");
       else toast("Nenhum aparelho para avisar: os jogadores ainda não ligaram os avisos no celular.", "aviso");
     } catch (e: any) {
       toast(e?.message ?? "Não foi possível avisar as mesas.", "erro");

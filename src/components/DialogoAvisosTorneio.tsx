@@ -4,7 +4,7 @@ import { Modal } from "./ui/Modal";
 import { DialogoPro } from "./DialogoPro";
 import { useStore } from "../core/store";
 import { useAuth } from "../core/auth";
-import { useMeuPro } from "../core/pro";
+import { statusPro } from "../core/pro";
 import { podeVenderNoApp } from "../core/plataforma";
 import { avisoLigadoNoTorneio, type AvisosDoTorneio, type Torneio } from "../core/types";
 
@@ -18,10 +18,10 @@ const OPCOES: { chave: keyof AvisosDoTorneio; titulo: string; descricao: string 
 // Vale dentro do que o administrador liberou em Usuários → Configurar notificações.
 export function DialogoAvisosTorneio({ torneio, aberto, onFechar }: { torneio: Torneio; aberto: boolean; onFechar: () => void }) {
   const auth = useAuth();
-  const pro = useMeuPro(auth.session?.user?.id, auth.isAdmin);
+  const pro = statusPro(auth);
   const atualizarTorneio = useStore((s) => s.atualizarTorneio);
   const [proAberto, setProAberto] = useState(false);
-  const liberado = pro.ativo;
+  const liberado = pro.organizador;
 
   const alternar = (chave: keyof AvisosDoTorneio) => {
     const novo = !avisoLigadoNoTorneio(torneio, chave);
@@ -41,7 +41,7 @@ export function DialogoAvisosTorneio({ torneio, aberto, onFechar }: { torneio: T
             Escolha o que os jogadores deste torneio recebem no celular.
           </p>
 
-          {!liberado && pro.carregado && (
+          {!liberado && auth.perfilCarregado && (
             <div className="rounded-xl p-3 space-y-2" style={{ background: "var(--ds-surface-2)", border: "1px solid rgba(201,166,72,0.3)" }}>
               <div className="font-semibold flex items-center gap-2" style={{ color: "var(--brand-1)" }}>
                 <IconeCadeado cor="currentColor" /> Recurso do Organizador Pro
@@ -90,7 +90,7 @@ export function DialogoAvisosTorneio({ torneio, aberto, onFechar }: { torneio: T
           </div>
         </div>
       </Modal>
-      <DialogoPro aberto={proAberto} onFechar={() => setProAberto(false)} pro={pro} ehOrganizador={auth.isOrganizador} />
+      <DialogoPro aberto={proAberto} plano="organizador" onFechar={() => setProAberto(false)} />
     </>
   );
 }

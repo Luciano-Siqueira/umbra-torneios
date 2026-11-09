@@ -7,7 +7,8 @@
 //   aprovacao  — aos admins: um nome de jogador aguarda aprovação
 // Quais tipos saem é escolhido pelo admin na tela Usuários (tabela config_avisos). Dentro disso,
 // quem organiza com o Organizador Pro (ou é admin) escolhe por torneio (dados.avisos).
-// Mesas e tempo só vão para quem tem "Mesas" (e "Tempo") liberado, ou é admin.
+// Notificações de torneio são do Jogador Pro (o Organizador Pro inclui): só recebe quem tem o Pro em dia
+// e, para mesas e tempo, também "Mesas" (e "Tempo") liberado pelo admin. Admins recebem sempre.
 //
 // Segredos (Supabase → Edge Functions → Secrets): VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT.
 // Publicar: Edge Functions → avisar-mesas → editar, colar este arquivo e Deploy.
@@ -121,8 +122,9 @@ Deno.serve(async (req) => {
     const donoTemPro = async (dono: string | null): Promise<boolean> => {
       if (!dono) return false;
       if (idsAdmins.includes(dono)) return true;
-      const { data } = await servidor.from("assinaturas_pro").select("pro_ate").eq("user_id", dono).maybeSingle();
-      return !!data && Date.parse(data.pro_ate as string) > Date.now();
+      const { data } = await servidor.from("assinaturas_pro").select("pro_ate")
+        .eq("user_id", dono).eq("plano", "organizador").gt("pro_ate", new Date().toISOString()).maybeSingle();
+      return !!data;
     };
 
     // Escolha do torneio: só vale se quem criou tem o Organizador Pro ou é admin
@@ -149,11 +151,17 @@ Deno.serve(async (req) => {
     }
     const nomePorId = new Map(dados.jogadores.map((j) => [j.id, j.nome]));
 
-    // Permissões da tela Usuários (sem a tabela, só admins veem mesas e tempo)
+    // Quem tem Jogador Pro ou Organizador Pro em dia (sem a tabela, ninguém além dos admins)
+    const { data: assinaturas } = await servidor.from("assinaturas_pro").select("user_id")
+      .gt("pro_ate", new Date().toISOString());
+    const comPro = new Set<string>([...idsAdmins, ...(assinaturas ?? []).map((a) => a.user_id as string)]);
+
+    // Permissões da tela Usuários (sem a tabela, só admins veem mesas e tempo), e só com o Pro
     const { data: permissoes } = await servidor.from("permissoes_jogador").select("user_id, ver_mesas, ver_tempo");
     const verMesas = new Set<string>(idsAdmins);
     const verTempo = new Set<string>(idsAdmins);
     for (const p of (permissoes ?? []) as { user_id: string; ver_mesas: boolean; ver_tempo: boolean }[]) {
+      if (!comPro.has(p.user_id)) continue;
       if (p.ver_mesas) verMesas.add(p.user_id);
       if (p.ver_mesas && p.ver_tempo) verTempo.add(p.user_id);
     }
@@ -167,9 +175,9 @@ Deno.serve(async (req) => {
     };
 
     if (tipo === "finalizado") {
-      // Ranking e histórico ficam visíveis a todos os jogadores quando o torneio termina
+      // Ranking e histórico ficam visíveis a todos quando o torneio termina; o aviso vai para quem tem o Pro
       for (const j of dados.jogadores) {
-        avisar(j.nome, null, {
+        avisar(j.nome, comPro, {
           title: `🏆 ${dados.nome} terminou`,
           body: "Veja o ranking final e o histórico das rodadas.",
           url: "/?tela=torneios",

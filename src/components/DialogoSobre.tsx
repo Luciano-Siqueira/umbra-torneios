@@ -42,7 +42,8 @@ export function DialogoSobre({ aberto, onFechar }: { aberto: boolean; onFechar: 
           desempate oficial, premiação e histórico.
         </p>
         <p style={{ color: "var(--text-2)" }}>
-          Cada jogador acompanha a própria mesa, os decks e o seu desempenho. O app é gratuito para jogadores e não tem anúncios.
+          Todo jogador vê o ranking e o histórico dos torneios. Com o Jogador Pro, acompanha também a própria mesa,
+          o tempo, as notificações, os decks e o seu desempenho. O app não tem anúncios.
         </p>
 
         {podeVenderNoApp() && (

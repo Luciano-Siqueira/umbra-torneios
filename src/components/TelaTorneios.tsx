@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { statusPro } from "../core/pro";
 import { listarUsuarios } from "../core/admin";
 import { useStore } from "../core/store";
 import { Modal } from "./ui/Modal";
@@ -239,8 +240,8 @@ export function TelaTorneios({ onPedirLogin, onVincularNome }: { onPedirLogin?: 
             <span>Analytics</span>
           </button>
 
-          {/* Decks — só admin, no modo admin */}
-          {auth.isAdmin && modoView === "admin" && (
+          {/* Decks: admin no modo admin ou Jogador Pro */}
+          {((auth.isAdmin && modoView === "admin") || statusPro(auth).jogador) && (
             <button
               className="rounded-full px-3 xl:px-4 py-2 font-semibold text-sm transition active:scale-95 hidden md:flex items-center gap-1.5"
               style={{
