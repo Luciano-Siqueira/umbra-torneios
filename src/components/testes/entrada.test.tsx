@@ -119,3 +119,24 @@ describe("link de convite ou de nova senha", () => {
     await waitFor(() => expect(contas.definirSenha).toHaveBeenCalledWith("segredo1"));
   });
 });
+
+describe("atalho do ícone do app", () => {
+  afterEach(() => { cleanup(); useStore.setState({ tela: "splash" }); window.history.replaceState(null, "", "/"); });
+
+  it("com login, abre direto na tela do atalho e limpa o endereço", () => {
+    window.history.replaceState(null, "", "/?tela=decks");
+    contas.atual = conta({ session: { user: { id: "u9", email: "z@teste.local", user_metadata: { privacidade_versao: VERSAO_PRIVACIDADE } } } as unknown as AuthState["session"] });
+    useStore.setState({ tela: "splash" });
+    render(<App />);
+    expect(useStore.getState().tela).toBe("decks");
+    expect(window.location.search).toBe("");
+  });
+
+  it("sem login, fica na tela inicial", () => {
+    window.history.replaceState(null, "", "/?tela=decks");
+    contas.atual = conta({});
+    useStore.setState({ tela: "splash" });
+    render(<App />);
+    expect(useStore.getState().tela).toBe("splash");
+  });
+});

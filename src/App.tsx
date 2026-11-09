@@ -18,6 +18,7 @@ import { AvisoEnderecoNovo } from "./components/AvisoEnderecoNovo";
 import { AvisoPrivacidade } from "./components/AvisoPrivacidade";
 import { DialogoCriarSenha } from "./components/DialogoCriarSenha";
 import { precisaAceitarPrivacidade } from "./core/privacidade";
+import { telaDoAtalho, tirarAtalhoDoEndereco } from "./core/atalhos";
 
 // Telas carregadas só quando abertas
 const TelaAnalytics = lazy(() =>
@@ -136,6 +137,16 @@ function AppInner() {
   useEffect(() => {
     if (!auth.loading && auth.session && tela === "splash") irPara("torneios");
   }, [auth.loading, auth.session, tela, irPara]);
+
+  // 5) Atalho do ícone do app (/?tela=decks): abre direto naquela tela, uma vez.
+  // Sem login, a pessoa entra pela tela inicial como sempre.
+  useEffect(() => {
+    if (auth.loading) return;
+    const destino = telaDoAtalho(window.location.search);
+    tirarAtalhoDoEndereco();
+    if (destino && auth.session) irPara(destino);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.loading]);
 
   // Primeiro a senha (convite ou nova senha), depois a política; os outros avisos esperam
   const precisaSenha = !auth.loading && !!auth.session && auth.criarSenha;

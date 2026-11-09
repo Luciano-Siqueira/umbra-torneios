@@ -31,6 +31,12 @@ export default defineConfig({
         display_override: ["standalone"],
         // Reabrir o app traz a janela que já está aberta, em vez de abrir outra
         launch_handler: { client_mode: "focus-existing" },
+        // Ao segurar o ícone no celular: abre direto na tela (o app lê ?tela= em src/core/atalhos.ts)
+        shortcuts: [
+          { name: "Torneios", short_name: "Torneios", url: "/?tela=torneios", icons: [{ src: "icon-192.png", sizes: "192x192", type: "image/png" }] },
+          { name: "Decks", short_name: "Decks", url: "/?tela=decks", icons: [{ src: "icon-192.png", sizes: "192x192", type: "image/png" }] },
+          { name: "Meu desempenho", short_name: "Desempenho", url: "/?tela=analytics", icons: [{ src: "icon-192.png", sizes: "192x192", type: "image/png" }] },
+        ],
         orientation: "portrait",
         icons: [
           {
