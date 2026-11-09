@@ -29,6 +29,8 @@ export default defineConfig({
         background_color: "#0a0a0a",
         display: "standalone",
         display_override: ["standalone"],
+        // Reabrir o app traz a janela que já está aberta, em vez de abrir outra
+        launch_handler: { client_mode: "focus-existing" },
         orientation: "portrait",
         icons: [
           {
