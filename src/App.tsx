@@ -6,7 +6,7 @@ import { TelaTorneios } from "./components/TelaTorneios";
 import { TelaTorneio } from "./components/TelaTorneio";
 import { TelaLogin } from "./components/TelaLogin";
 import { TelaVincularNome } from "./components/TelaVincularNome";
-import { useAuth } from "./core/auth";
+import { atualizarPerfil, useAuth } from "./core/auth";
 import { sincronizarDecks } from "./core/atualizarDecks";
 import { BarraInferior } from "./components/ui/BarraInferior";
 import { useListaAtualizada } from "./core/useAoVivo";
@@ -137,6 +137,15 @@ function AppInner() {
   useEffect(() => {
     if (!auth.loading && auth.session && tela === "splash") irPara("torneios");
   }, [auth.loading, auth.session, tela, irPara]);
+
+  // Permissões novas (Mesas e Tempo) chegam ao voltar para o app e a cada 3 minutos com ele aberto
+  useEffect(() => {
+    if (!auth.session) return;
+    const aoVoltar = () => { if (document.visibilityState === "visible") atualizarPerfil(); };
+    document.addEventListener("visibilitychange", aoVoltar);
+    const id = window.setInterval(() => { if (document.visibilityState === "visible") atualizarPerfil(); }, 3 * 60_000);
+    return () => { document.removeEventListener("visibilitychange", aoVoltar); window.clearInterval(id); };
+  }, [auth.session?.user?.id]);
 
   // 5) Atalho do ícone do app (/?tela=decks): abre direto naquela tela, uma vez.
   // Sem login, a pessoa entra pela tela inicial como sempre.

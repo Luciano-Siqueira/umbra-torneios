@@ -14,7 +14,7 @@ import { useTimer, formatarTempo } from "../../core/useTimer";
 import { comandanteDoDeck, coresDoDeck } from "../../core/decks";
 import { CoresMana } from "../ui/SimboloMana";
 import { contar } from "../../core/formato";
-import { avisarMesas } from "../../core/notificacoes";
+import { avisarMesas, enviarAviso } from "../../core/notificacoes";
 import {
   IconeCopiar, IconeCoroa, IconeEmbaralhar, IconeHistorico, IconeMedalha, IconePausa, IconeParar,
   IconePlay, IconeReiniciar, IconeSino, IconeTrofeu,
@@ -180,6 +180,7 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
     if (ok) {
       finalizarTorneio();
       toast("Torneio finalizado!", "sucesso");
+      enviarAviso({ tipo: "finalizado", torneio_id: torneio.id }).catch(() => {});
     }
   };
 
@@ -196,6 +197,7 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
     if (ok) {
       finalizarTorneio();
       toast("Torneio encerrado", "sucesso");
+      enviarAviso({ tipo: "finalizado", torneio_id: torneio.id }).catch(() => {});
     }
   };
 

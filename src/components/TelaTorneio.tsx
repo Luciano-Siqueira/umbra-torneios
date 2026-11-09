@@ -9,6 +9,7 @@ import { partesDoTorneioVisiveis, podeEditarTorneios } from "../core/visibilidad
 import { confirmar } from "./ui/Confirm";
 import { useToast } from "./ui/Toast";
 import { AuthChip } from "./AuthChip";
+import { AvisosDoTempo } from "./AvisosDoTempo";
 import { SeloStatus } from "./ui/SeloStatus";
 import { EscritaUmbra, SimboloUmbra } from "./ui/LogoUmbra";
 import { FUNDO_DE_TELA } from "../banner-image";
@@ -251,6 +252,8 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
         {!podeEditar && verRodada.tempo && encontrarMinhaMesa([torneio], auth.nomesJogador)?.mesa && (
           <VibracaoFimDaRodada torneio={torneio} />
         )}
+        {/* Avisos de "faltam 10 minutos" e "tempo esgotado" saem do aparelho de quem organiza */}
+        {podeEditar && <AvisosDoTempo torneio={torneio} />}
         {aba === null && (
           <div className="card max-w-lg mx-auto text-center py-10 space-y-2">
             <div className="text-lg font-semibold" style={{ color: "var(--text-strong)" }}>Torneio em andamento</div>

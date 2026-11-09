@@ -2,7 +2,8 @@
 // As telas do app não têm endereço próprio, então o parâmetro é lido uma vez e tirado da barra.
 import type { Tela } from "./store";
 
-const TELAS_DE_ATALHO: Tela[] = ["torneios", "decks", "analytics"];
+// "usuarios" vem do aviso de nome aguardando aprovação; a própria tela barra quem não é admin
+const TELAS_DE_ATALHO: Tela[] = ["torneios", "decks", "analytics", "usuarios"];
 
 export function telaDoAtalho(busca: string): Tela | null {
   const tela = new URLSearchParams(busca).get("tela");

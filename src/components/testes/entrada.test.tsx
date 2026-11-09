@@ -14,6 +14,7 @@ vi.mock("../../core/auth", () => ({
   trocarNome: vi.fn(async () => {}),
   desvincularNome: vi.fn(async () => {}),
   sair: vi.fn(async () => {}),
+  atualizarPerfil: vi.fn(),
   aceitarPrivacidade: contas.aceitarPrivacidade,
   definirSenha: contas.definirSenha,
 }));

@@ -6,7 +6,8 @@ describe("atalhos do ícone do app", () => {
   it("aceita só as telas dos atalhos", () => {
     expect(telaDoAtalho("?tela=decks")).toBe("decks");
     expect(telaDoAtalho("?tela=analytics")).toBe("analytics");
-    expect(telaDoAtalho("?tela=usuarios")).toBeNull();
+    expect(telaDoAtalho("?tela=usuarios")).toBe("usuarios");
+    expect(telaDoAtalho("?tela=torneio")).toBeNull();
     expect(telaDoAtalho("?tela=qualquer")).toBeNull();
     expect(telaDoAtalho("")).toBeNull();
   });

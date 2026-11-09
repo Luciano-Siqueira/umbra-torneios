@@ -141,6 +141,15 @@ function limparPerfil() {
   });
 }
 
+// Relê papéis, nomes e permissões (Mesas e Tempo) do servidor, mesmo com o perfil já carregado.
+// Assim, o que o admin muda na tela Usuários chega ao jogador sem ele fechar o app.
+export function atualizarPerfil(): void {
+  const uid = useAuthStore.getState().session?.user?.id;
+  if (!uid || buscandoUid === uid) return;
+  perfilUid = null;
+  carregarPerfil(uid);
+}
+
 function aplicarSessao(session: Session | null) {
   if (session?.user?.id) carregarPerfil(session.user.id);
   else limparPerfil();
@@ -218,6 +227,10 @@ export async function vincularNome(nome: string): Promise<void> {
     throw error;
   }
   localStorage.removeItem(KEY_PERFIL);
+  // Avisa os admins no celular; se a função não estiver publicada, o pedido segue normal
+  if (!useAuthStore.getState().isAdmin) {
+    supabase.functions.invoke("avisar-mesas", { body: { tipo: "aprovacao", nome: nomeLimpo } }).catch(() => {});
+  }
 }
 
 // O nome antigo só sai depois que o novo foi aceito, para um erro não deixar a conta sem nome

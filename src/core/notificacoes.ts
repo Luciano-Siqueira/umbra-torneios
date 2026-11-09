@@ -66,10 +66,13 @@ export async function desligarAvisos(): Promise<EstadoAvisos> {
   return suportaAvisos() ? "desligado" : "sem-suporte";
 }
 
-// Chamado por quem organiza ao iniciar a rodada, ou pelo botão "Avisar mesas".
-// contas: quantos jogadores da rodada podem receber (nome aprovado e Mesas liberado)
-export async function avisarMesas(torneioId: string, rodada: number): Promise<{ enviados: number; contas: number }> {
-  const { data, error } = await supabase.functions.invoke("avisar-mesas", { body: { torneio_id: torneioId, rodada } });
+export type TipoAviso = "mesa" | "faltam10" | "esgotado" | "finalizado" | "aprovacao";
+
+// Pede à função avisar-mesas um aviso de qualquer tipo. contas: quantos podem receber
+export async function enviarAviso(
+  pedido: { tipo: TipoAviso; torneio_id?: string; rodada?: number; nome?: string },
+): Promise<{ enviados: number; contas: number }> {
+  const { data, error } = await supabase.functions.invoke("avisar-mesas", { body: pedido });
   if (error) {
     let motivo = "";
     try { motivo = (await (error as any).context?.json())?.erro ?? ""; } catch { /* sem corpo */ }
@@ -79,6 +82,11 @@ export async function avisarMesas(torneioId: string, rodada: number): Promise<{ 
     throw new Error(motivo || error.message);
   }
   return { enviados: Number((data as any)?.enviados ?? 0), contas: Number((data as any)?.contas ?? 0) };
+}
+
+// Chamado por quem organiza ao iniciar a rodada, ou pelo botão "Avisar mesas"
+export function avisarMesas(torneioId: string, rodada: number) {
+  return enviarAviso({ tipo: "mesa", torneio_id: torneioId, rodada });
 }
 
 export function useAvisos() {

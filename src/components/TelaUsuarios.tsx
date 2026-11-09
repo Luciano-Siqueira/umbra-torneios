@@ -10,7 +10,8 @@ import {
 } from "../core/admin";
 import { useToast } from "./ui/Toast";
 import { confirmar } from "./ui/Confirm";
-import { IconeAlvo, IconeCoroa, IconePessoa, IconeUsuarios } from "./ui/Icones";
+import { IconeAlvo, IconeCoroa, IconePessoa, IconeReiniciar, IconeSino, IconeUsuarios } from "./ui/Icones";
+import { DialogoAvisos } from "./DialogoAvisos";
 import { FUNDO_DE_TELA } from "../banner-image";
 import { AuthChip } from "./AuthChip";
 import { VERSAO_PRIVACIDADE } from "../core/privacidade";
@@ -35,6 +36,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
   const [pendentes, setPendentes] = useState<NomePendente[]>([]);
   const [permissoes, setPermissoes] = useState<Map<string, PermissaoJogador>>(new Map());
   const [faltaTabelaPermissoes, setFaltaTabelaPermissoes] = useState(false);
+  const [avisosAberto, setAvisosAberto] = useState(false);
   const [aceites, setAceites] = useState<Map<string, AceitePrivacidade>>(new Map());
   const [faltaFuncaoAceites, setFaltaFuncaoAceites] = useState(false);
 
@@ -244,7 +246,12 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
             placeholder="🔎 Buscar por email ou nome..."
             className="input flex-1 max-w-md"
           />
-          <button className="btn-ghost text-sm" onClick={carregar}>↻ Atualizar</button>
+          <button className="btn-ghost text-sm" onClick={() => setAvisosAberto(true)}>
+            <IconeSino cor="currentColor" /> Avisos
+          </button>
+          <button className="btn-ghost text-sm" onClick={carregar}>
+            <IconeReiniciar cor="currentColor" /> Atualizar
+          </button>
         </div>
 
         {pendentes.length > 0 && (
@@ -416,6 +423,8 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
       </main>
 
       {/* Modal de edição de nomes */}
+      <DialogoAvisos aberto={avisosAberto} onFechar={() => setAvisosAberto(false)} />
+
       {editando && (
         <ModalEditarNomes
           usuario={editando}
