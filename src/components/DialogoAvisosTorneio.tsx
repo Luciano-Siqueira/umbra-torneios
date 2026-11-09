@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconeCadeado, IconeCoroa, IconeSino } from "./ui/Icones";
 import { Modal } from "./ui/Modal";
 import { DialogoPro } from "./DialogoPro";
 import { useStore } from "../core/store";
-import { useAuth } from "../core/auth";
+import { atualizarPerfil, useAuth } from "../core/auth";
 import { statusPro } from "../core/pro";
 import { podeVenderNoApp } from "../core/plataforma";
 import { avisoLigadoNoTorneio, type AvisosDoTorneio, type Torneio } from "../core/types";
@@ -22,6 +22,9 @@ export function DialogoAvisosTorneio({ torneio, aberto, onFechar }: { torneio: T
   const atualizarTorneio = useStore((s) => s.atualizarTorneio);
   const [proAberto, setProAberto] = useState(false);
   const liberado = pro.organizador;
+
+  // O Pro pode ter sido dado ou comprado com o app aberto: confere de novo ao abrir
+  useEffect(() => { if (aberto) atualizarPerfil(); }, [aberto]);
 
   const alternar = (chave: keyof AvisosDoTorneio) => {
     const novo = !avisoLigadoNoTorneio(torneio, chave);

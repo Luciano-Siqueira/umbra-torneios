@@ -42,6 +42,7 @@ export function DialogoPro({ aberto, onFechar, plano }: { aberto: boolean; onFec
   useEffect(() => {
     if (!aberto) return;
     setErro("");
+    atualizarPerfil();
     lerConfigPro().then(setConfig);
   }, [aberto]);
 
