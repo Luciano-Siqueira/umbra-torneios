@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { IconeAlerta, IconeBusca, IconeCadeado as IconeCadeadoUsuarios, IconeCheck, IconeChave, IconeEnvelope, IconeLapis, IconeLixeira, IconeVoltar } from "./ui/Icones";
 import { useStore } from "../core/store";
 import { useAuth } from "../core/auth";
 import {
@@ -196,7 +197,9 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
     return (
       <div className="min-h-screen flex items-center justify-center text-fg p-6">
         <div className="text-center">
-          <div className="text-2xl mb-2">{auth.perfilErro ? "⚠️ Erro ao carregar seu perfil" : "🔒 Acesso restrito"}</div>
+          <div className="text-2xl mb-2">{auth.perfilErro
+            ? <><IconeAlerta cor="currentColor" /> Erro ao carregar seu perfil</>
+            : <><IconeCadeadoUsuarios cor="currentColor" /> Acesso restrito</>}</div>
           <div className="text-sm text-fg-dim mb-4">{auth.perfilErro || "Essa página é só para administradores."}</div>
           <button className="btn-primary" onClick={voltar}>Voltar</button>
         </div>
@@ -215,7 +218,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
       style={FUNDO_DE_TELA}
     >
       <div className="px-4 md:px-8 py-4 flex items-center gap-3">
-        <button className="btn-ghost hidden md:block" onClick={voltar}>← Voltar</button>
+        <button className="btn-ghost hidden md:block" onClick={voltar}><IconeVoltar cor="currentColor" /> Voltar</button>
         <h1 className="text-xl md:text-3xl font-bold flex items-center gap-2 min-w-0" style={{ color: "var(--text-strong)" }}>
           <IconeUsuarios tamanho={28} /> Gerenciar Usuários
         </h1>
@@ -239,13 +242,16 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
         />
 
         <div className="flex gap-2 items-center">
+          <span className="relative flex-1 max-w-md">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"><IconeBusca /></span>
           <input
             type="search"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            placeholder="🔎 Buscar por email ou nome..."
-            className="input flex-1 max-w-md"
+            placeholder="Buscar por email ou nome..."
+            className="input w-full !pl-9"
           />
+          </span>
           <button className="btn-ghost text-sm" onClick={() => setAvisosAberto(true)}>
             <IconeSino cor="currentColor" /> Avisos
           </button>
@@ -277,25 +283,25 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
 
         {totSemTorneio > 0 && (
           <div className="text-xs" style={{ color: "var(--warn)" }}>
-            ⚠ {totSemTorneio} {totSemTorneio === 1 ? "usuário tem" : "usuários têm"} nome que não aparece em nenhum torneio.
-            Se a pessoa joga com outro nome, ela não verá a própria mesa nem o desempenho. Corrija no botão ✎.
+            <IconeAlerta cor="currentColor" /> {totSemTorneio} {totSemTorneio === 1 ? "usuário tem" : "usuários têm"} nome que não aparece em nenhum torneio.
+            Se a pessoa joga com outro nome, ela não verá a própria mesa nem o desempenho. Corrija no botão de editar (lápis).
           </div>
         )}
 
         {faltaFuncaoAceites && (
           <div className="text-xs" style={{ color: "var(--warn)" }}>
-            ⚠ Para ver quem aceitou a política de privacidade, rode o arquivo supabase/aceites_privacidade.sql no Supabase.
+            <IconeAlerta cor="currentColor" /> Para ver quem aceitou a política de privacidade, rode o arquivo supabase/aceites_privacidade.sql no Supabase.
           </div>
         )}
         {!faltaFuncaoAceites && usuarios.length > 0 && (
           <div className="text-xs" style={{ color: "var(--text-2)" }}>
-            🔒 {usuarios.filter((u) => aceites.get(u.user_id)?.versao === VERSAO_PRIVACIDADE).length} de {usuarios.length} aceitaram a política de privacidade.
+            <IconeCadeadoUsuarios cor="currentColor" /> {usuarios.filter((u) => aceites.get(u.user_id)?.versao === VERSAO_PRIVACIDADE).length} de {usuarios.length} aceitaram a política de privacidade.
           </div>
         )}
 
         {faltaTabelaPermissoes && (
           <div className="text-xs" style={{ color: "var(--warn)" }}>
-            ⚠ Para liberar mesas e tempo aos jogadores, rode o arquivo supabase/permissoes_jogador.sql no Supabase.
+            <IconeAlerta cor="currentColor" /> Para liberar mesas e tempo aos jogadores, rode o arquivo supabase/permissoes_jogador.sql no Supabase.
           </div>
         )}
 
@@ -345,7 +351,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                                     style={nomeNoTorneio(n)
                                       ? { background: "rgba(110,231,183,0.1)", color: "var(--good)", border: "1px solid rgba(110,231,183,0.25)" }
                                       : { background: "rgba(252,211,77,0.1)", color: "var(--warn)", border: "1px solid rgba(252,211,77,0.3)" }}>
-                                {nomeNoTorneio(n) ? n : `⚠ ${n}`}
+                                {nomeNoTorneio(n) ? n : <><IconeAlerta cor="currentColor" /> {n}</>}
                               </span>
                             ))}
                           </div>
@@ -353,7 +359,7 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                       </td>
                       <td className="py-2 px-2 text-center">
                         <div className="flex items-center justify-center gap-1.5" title="Exige sua senha">
-                          <span className="text-xs">🔒</span>
+                          <IconeCadeadoUsuarios tamanho={13} />
                           <ToggleButton
                             ativo={u.eh_admin}
                             corAtivo="var(--brand-1)"
@@ -398,19 +404,19 @@ export function TelaUsuarios({ onPedirLogin, onVincularNome }: Props = {}) {
                             cor="#c9a648"
                             onClick={() => setEditando(u)}
                             disabled={salvando === u.user_id}
-                          >✎</IconBtn>
+                          ><IconeLapis tamanho={15} cor="currentColor" /></IconBtn>
                           <IconBtn
                             titulo="Enviar reset de senha"
                             cor="#c4c4c4"
                             onClick={() => resetarSenha(u)}
                             disabled={salvando === u.user_id}
-                          >🔑</IconBtn>
+                          ><IconeChave tamanho={15} cor="currentColor" /></IconBtn>
                           <IconBtn
                             titulo="Excluir usuário"
                             cor="#f87171"
                             onClick={() => excluirUsuario(u)}
                             disabled={salvando === u.user_id || u.user_id === auth.session?.user?.id}
-                          >🗑</IconBtn>
+                          ><IconeLixeira tamanho={15} cor="currentColor" /></IconBtn>
                         </div>
                       </td>
                     </tr>
@@ -492,7 +498,7 @@ function ModalSenhaAdmin({ usuario, onFechar, onConfirmar }: {
         onSubmit={confirmarSenha}
       >
         <div className="text-[10px] font-bold tracking-[0.3em]" style={{ color: "var(--brand-1)" }}>
-          🔒 {usuario.eh_admin ? "REMOVER ADMIN" : "TORNAR ADMIN"}
+          <IconeCadeadoUsuarios cor="currentColor" /> {usuario.eh_admin ? "REMOVER ADMINISTRADOR" : "TORNAR ADMINISTRADOR"}
         </div>
         <div className="text-sm mt-1 mb-4 truncate" style={{ color: "var(--text-label)" }}>
           {usuario.email}
@@ -628,16 +634,16 @@ function ModalEditarNomes({ usuario, onFechar, onAtualizado, toast }: {
                     />
                     <button onClick={() => salvarRenomeio(n)} disabled={salvando}
                             className="text-xs px-2 py-1 rounded font-semibold"
-                            style={{ background: "var(--good)", color: "var(--page-1)" }}>✓</button>
+                            style={{ background: "var(--good)", color: "var(--page-1)" }}><IconeCheck cor="currentColor" /></button>
                     <button onClick={() => setRenomeando(null)}
                             className="text-xs px-2 py-1 rounded" style={{ color: "var(--text-2)" }}>×</button>
                   </>
                 ) : (
                   <>
-                    <span className="flex-1 text-sm font-medium" style={{ color: "var(--good)" }}>👤 {n}</span>
+                    <span className="flex-1 text-sm font-medium" style={{ color: "var(--good)" }}><IconePessoa cor="currentColor" /> {n}</span>
                     <button onClick={() => { setRenomeando(n); setValorRenomeio(n); }}
                             className="text-xs px-2 py-1 rounded hover:bg-white/5" style={{ color: "var(--brand-1)" }}
-                            title="Renomear">✎</button>
+                            title="Renomear"><IconeLapis cor="currentColor" /></button>
                     <button onClick={() => remover(n)}
                             className="text-xs px-2 py-1 rounded hover:bg-red-500/10" style={{ color: "var(--critical)" }}
                             title="Remover">×</button>
@@ -717,7 +723,7 @@ function CartaoConvite({ onConvidado }: { onConvidado: (email: string, aviso?: s
       aria-label="Convidar pessoa"
       onSubmit={(ev) => { ev.preventDefault(); convidar(); }}
     >
-      <div className="text-sm font-bold" style={{ color: "var(--brand-1)" }}>✉ Convidar pessoa</div>
+      <div className="text-sm font-bold" style={{ color: "var(--brand-1)" }}><IconeEnvelope cor="currentColor" /> Convidar pessoa</div>
       <div className="text-xs text-fg-dim">
         A pessoa recebe um e-mail, cria a senha e já entra. Se informar o nome de jogador, ele entra aprovado.
       </div>
@@ -752,13 +758,13 @@ function SeloPrivacidade({ aceite, semDados }: { aceite?: AceitePrivacidade; sem
   if (semDados) return <span className="text-[11px] text-fg-muted">—</span>;
   const quando = aceite?.aceita_em ? new Date(aceite.aceita_em).toLocaleDateString("pt-BR") : "";
   const [texto, cor, titulo] = aceite?.versao === VERSAO_PRIVACIDADE
-    ? ["✓ Aceitou", "var(--good)", `Aceitou em ${quando}`]
+    ? ["Aceitou", "var(--good)", `Aceitou em ${quando}`]
     : aceite?.versao
       ? ["Versão antiga", "var(--warn)", `Aceitou a versão de ${aceite.versao}; vai ver a nova ao entrar`]
       : ["Pendente", "var(--warn)", "Ainda não aceitou; vai ver o aviso ao entrar"];
   return (
     <span className="text-[11px] whitespace-nowrap" style={{ color: cor }} title={titulo}>
-      {texto}
+      {aceite?.versao === VERSAO_PRIVACIDADE && <IconeCheck cor="currentColor" />} {texto}
       {aceite?.versao === VERSAO_PRIVACIDADE && quando && (
         <span className="block text-[10px] text-fg-dim">{quando}</span>
       )}

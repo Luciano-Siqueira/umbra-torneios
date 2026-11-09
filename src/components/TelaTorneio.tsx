@@ -253,7 +253,7 @@ export function TelaTorneio({ onPedirLogin, onVincularNome }: { onPedirLogin?: (
         {!podeEditar && verRodada.tempo && encontrarMinhaMesa([torneio], auth.nomesJogador)?.mesa && (
           <VibracaoFimDaRodada torneio={torneio} />
         )}
-        {/* Avisos de "faltam 10 minutos" e "tempo esgotado" saem do aparelho de quem organiza */}
+        {/* Avisos de "tempo extra" e "último turno" saem do aparelho de quem organiza */}
         {podeEditar && <AvisosDoTempo torneio={torneio} />}
         {aba === null && (
           <div className="card max-w-lg mx-auto text-center py-10 space-y-2">

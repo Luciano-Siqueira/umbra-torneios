@@ -8,7 +8,7 @@ function RelogioRodada({ torneio }: { torneio: Torneio }) {
   const fase = !c.iniciado
     ? "Aguardando o início do tempo"
     : c.restante === 0
-      ? "Tempo esgotado"
+      ? "Último turno: 1 para cada jogador"
       : c.pausado || !c.rodando
         ? "Tempo pausado"
         : c.emExtra

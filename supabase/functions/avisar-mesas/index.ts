@@ -1,8 +1,8 @@
 // Função do Supabase (Edge Function) que manda os avisos (notificações) do Umbra Torneios.
 // Tipos ("tipo" no pedido):
 //   mesa       — a mesa de cada jogador quando a rodada começa (padrão)
-//   faltam10   — faltam 10 minutos para o fim da rodada
-//   esgotado   — o tempo da rodada acabou
+//   extra        — o tempo normal acabou: começa o tempo extra
+//   ultimo_turno — o tempo extra acabou: falta 1 turno para cada jogador
 //   finalizado — o torneio terminou: ver o ranking
 //   aprovacao  — aos admins: um nome de jogador aguarda aprovação
 // Quais tipos saem é escolhido pelo admin na tela Usuários (tabela config_avisos).
@@ -29,11 +29,11 @@ function juntarNomes(nomes: string[]): string {
   return `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`;
 }
 
-type Tipo = "mesa" | "faltam10" | "esgotado" | "finalizado" | "aprovacao";
-const TIPOS: Tipo[] = ["mesa", "faltam10", "esgotado", "finalizado", "aprovacao"];
+type Tipo = "mesa" | "extra" | "ultimo_turno" | "finalizado" | "aprovacao";
+const TIPOS: Tipo[] = ["mesa", "extra", "ultimo_turno", "finalizado", "aprovacao"];
 type Jogador = { id: number; nome: string };
 type Mesa = { numero: number; jogadoresIds: number[]; finalizada?: boolean };
-type Dados = { nome: string; rodadaAtual: number; jogadores: Jogador[]; mesas: Mesa[]; finalizado?: boolean };
+type Dados = { nome: string; rodadaAtual: number; tempoExtraMin?: number; jogadores: Jogador[]; mesas: Mesa[]; finalizado?: boolean };
 type Mensagem = { title: string; body: string; url: string; tag: string };
 
 Deno.serve(async (req) => {
@@ -174,17 +174,18 @@ Deno.serve(async (req) => {
               url: "/?tela=torneios",
               tag: `mesa-${torneioId}-${rodada}`,
             });
-          } else if (tipo === "faltam10") {
+          } else if (tipo === "extra") {
+            const minutos = dados.tempoExtraMin ? ` de ${dados.tempoExtraMin} minutos` : "";
             avisar(nome, verTempo, {
-              title: `⏰ Faltam 10 minutos · Rodada ${rodada}`,
-              body: `${dados.nome}: a rodada termina em 10 minutos (Mesa ${mesa.numero}).`,
+              title: `⏳ Tempo extra · Rodada ${rodada}`,
+              body: `${dados.nome}: o tempo normal acabou. Começou o tempo extra${minutos} (Mesa ${mesa.numero}).`,
               url: "/?tela=torneios",
               tag: `tempo-${torneioId}-${rodada}`,
             });
           } else {
             avisar(nome, verTempo, {
-              title: `🔔 Tempo esgotado · Rodada ${rodada}`,
-              body: `${dados.nome}: o tempo acabou. Encerrem as partidas (Mesa ${mesa.numero}).`,
+              title: `🔔 Último turno · Rodada ${rodada}`,
+              body: `${dados.nome}: o tempo extra acabou. Falta 1 turno para cada jogador (Mesa ${mesa.numero}).`,
               url: "/?tela=torneios",
               tag: `tempo-${torneioId}-${rodada}`,
             });

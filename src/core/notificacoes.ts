@@ -66,7 +66,7 @@ export async function desligarAvisos(): Promise<EstadoAvisos> {
   return suportaAvisos() ? "desligado" : "sem-suporte";
 }
 
-export type TipoAviso = "mesa" | "faltam10" | "esgotado" | "finalizado" | "aprovacao";
+export type TipoAviso = "mesa" | "extra" | "ultimo_turno" | "finalizado" | "aprovacao";
 
 // Pede à função avisar-mesas um aviso de qualquer tipo. contas: quantos podem receber
 export async function enviarAviso(

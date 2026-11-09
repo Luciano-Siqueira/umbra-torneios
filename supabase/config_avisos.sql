@@ -1,5 +1,5 @@
 -- Quais avisos (notificações) o Umbra Torneios envia, escolhidos pelo admin na tela Usuários,
--- e o registro dos avisos já enviados, para "faltam 10 minutos" e afins não chegarem repetidos.
+-- e o registro dos avisos já enviados, para "tempo extra" e afins não chegarem repetidos.
 -- Rode uma vez no SQL Editor do Supabase. Pode rodar de novo.
 
 begin;
@@ -8,12 +8,17 @@ begin;
 create table if not exists public.config_avisos (
   id int primary key default 1 check (id = 1),
   mesa boolean not null default true,        -- a mesa de cada jogador quando a rodada começa
-  faltam10 boolean not null default true,    -- faltam 10 minutos para o fim da rodada
-  esgotado boolean not null default true,    -- tempo da rodada esgotado
+  extra boolean not null default true,         -- começou o tempo extra
+  ultimo_turno boolean not null default true,  -- tempo extra acabou: 1 turno para cada jogador
   finalizado boolean not null default true,  -- torneio finalizado: ver o ranking
   aprovacao boolean not null default true,   -- aos admins: nome de jogador aguardando aprovação
   atualizado_em timestamptz not null default now()
 );
+-- Quem já rodou a versão antiga (faltam 10 minutos / tempo esgotado) passa para os avisos novos
+alter table public.config_avisos add column if not exists extra boolean not null default true;
+alter table public.config_avisos add column if not exists ultimo_turno boolean not null default true;
+alter table public.config_avisos drop column if exists faltam10;
+alter table public.config_avisos drop column if exists esgotado;
 insert into public.config_avisos (id) values (1) on conflict do nothing;
 
 alter table public.config_avisos enable row level security;

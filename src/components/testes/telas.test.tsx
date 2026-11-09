@@ -1375,7 +1375,7 @@ describe("escolha dos avisos na tela Usuários", () => {
       const json = (corpo: unknown) => new Response(JSON.stringify(corpo), { status: 200, headers: { "content-type": "application/json" } });
       if (url.includes("config_avisos")) {
         if (init?.method === "PATCH") { mudancas.push(JSON.parse(String(init.body))); return json([]); }
-        return json({ mesa: true, faltam10: true, esgotado: false, finalizado: true, aprovacao: true });
+        return json({ mesa: true, extra: true, ultimo_turno: false, finalizado: true, aprovacao: true });
       }
       return json([]);
     };
@@ -1383,12 +1383,12 @@ describe("escolha dos avisos na tela Usuários", () => {
     abrir(<TelaUsuarios />);
     fireEvent.click(await screen.findByRole("button", { name: /Avisos/ }));
 
-    const esgotado = await screen.findByRole("switch", { name: "Tempo esgotado" });
+    const esgotado = await screen.findByRole("switch", { name: "Último turno" });
     await waitFor(() => expect(esgotado.getAttribute("aria-checked")).toBe("false"));
-    expect(screen.getByRole("switch", { name: "Faltam 10 minutos" }).getAttribute("aria-checked")).toBe("true");
+    expect(screen.getByRole("switch", { name: "Tempo extra" }).getAttribute("aria-checked")).toBe("true");
 
     fireEvent.click(esgotado);
-    await waitFor(() => expect(mudancas[0]).toMatchObject({ esgotado: true }));
+    await waitFor(() => expect(mudancas[0]).toMatchObject({ ultimo_turno: true }));
     expect(esgotado.getAttribute("aria-checked")).toBe("true");
   });
 });

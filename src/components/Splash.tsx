@@ -1,3 +1,4 @@
+import { version as versao } from "../../package.json";
 import { useEffect, useState } from "react";
 import { IconeAnalytics, IconeCadeado, IconeCoroa, IconeDado, IconeEspadas, IconeHistorico, IconeTrofeu } from "./ui/Icones";
 import { useStore } from "../core/store";
@@ -205,7 +206,7 @@ export function Splash(_props: { onPedirLogin?: () => void; onVincularNome?: () 
           animation: "fadeInUp 0.5s ease-out 1.8s forwards",
         }}
       >
-        v2.0 · {new Date().getFullYear()}
+        v{versao} · {new Date().getFullYear()}
       </div>
 
       <TelaLogin

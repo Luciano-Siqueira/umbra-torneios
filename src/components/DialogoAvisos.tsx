@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
+import { IconeSino } from "./ui/Icones";
 import { CONFIG_AVISOS_PADRAO, lerConfigAvisos, salvarConfigAvisos, type ConfigAvisos } from "../core/admin";
 import { Modal } from "./ui/Modal";
 import { useToast } from "./ui/Toast";
 
 const TIPOS: { chave: keyof ConfigAvisos; titulo: string; descricao: string }[] = [
   { chave: "mesa", titulo: "Mesa da rodada", descricao: "Quando a rodada começa, cada jogador recebe a mesa e com quem joga." },
-  { chave: "faltam10", titulo: "Faltam 10 minutos", descricao: "Aos 10 minutos do fim da rodada, para quem ainda está jogando." },
-  { chave: "esgotado", titulo: "Tempo esgotado", descricao: "Quando o tempo da rodada acaba, para quem ainda está jogando." },
+  { chave: "extra", titulo: "Tempo extra", descricao: "Quando o tempo normal acaba e começa o tempo extra, para quem ainda está jogando." },
+  { chave: "ultimo_turno", titulo: "Último turno", descricao: "Quando o tempo extra acaba: falta 1 turno para cada jogador. Só para quem ainda está jogando." },
   { chave: "finalizado", titulo: "Torneio finalizado", descricao: "Ao finalizar, todos os jogadores recebem o convite para ver o ranking." },
   { chave: "aprovacao", titulo: "Nome aguardando aprovação", descricao: "Os administradores são avisados quando alguém vincula um nome." },
 ];
@@ -47,7 +48,7 @@ export function DialogoAvisos({ aberto, onFechar }: { aberto: boolean; onFechar:
   };
 
   return (
-    <Modal open={aberto} onClose={onFechar} title="🔔 Avisos no celular" fecharAoClicarFora>
+    <Modal open={aberto} onClose={onFechar} title={<span className="inline-flex items-center gap-2"><IconeSino tamanho={20} /> Avisos no celular</span>} fecharAoClicarFora>
       <div className="space-y-3 text-sm">
         <p style={{ color: "var(--text-2)" }}>
           Escolha quais avisos o app manda. Vale para todos os torneios. Só recebe quem ligou os avisos no aparelho.
