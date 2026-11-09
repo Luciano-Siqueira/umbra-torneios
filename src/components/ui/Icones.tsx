@@ -106,3 +106,25 @@ export const IconeMoeda = criar(<>
   <circle cx="12" cy="12" r="9" />
   <circle cx="12" cy="12" r="5" />
 </>);
+
+// Ações dos botões (tempo, mesas e sorteios). Em botão colorido, use cor="currentColor"
+export const IconePlay = criar(<path d="M7 4.5v15l12-7.5z" />);
+export const IconePausa = criar(<path d="M8 5v14M16 5v14" />);
+export const IconeParar = criar(<rect x="6" y="6" width="12" height="12" rx="2" />);
+export const IconeReiniciar = criar(<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.5M3.5 3.5v5h5" />);
+export const IconeEmbaralhar = criar(<path d="M16 3.5h4.5V8M3.5 20.5 20.5 3.5M20.5 16v4.5H16M14.5 14.5l6 6M3.5 3.5l5 5" />);
+export const IconeSino = criar(<path d="M6 9a6 6 0 0 1 12 0c0 6.5 2.5 8 2.5 8h-17S6 15.5 6 9M10 20.5a2.2 2.2 0 0 0 4 0" />);
+export const IconeCopiar = criar(<>
+  <rect x="9" y="9" width="11.5" height="11.5" rx="2" />
+  <path d="M15 9V5.5a2 2 0 0 0-2-2H5.5a2 2 0 0 0-2 2V13a2 2 0 0 0 2 2H9" />
+</>);
+export const IconeSeta = criar(<path d="M4.5 12h15M13.5 6l6 6-6 6" />);
+export const IconeRoleta = criar(<>
+  <circle cx="12" cy="12" r="8.5" />
+  <circle cx="12" cy="12" r="2" />
+  <path d="M12 3.5V10M12 14v6.5M3.5 12H10M14 12h6.5M6 6l4.6 4.6M13.4 13.4 18 18" />
+</>);
+export const IconePato = criar(<>
+  <circle cx="15.5" cy="7.5" r="3" />
+  <path d="M18.5 7.2h3l-2.6 1.8M13 10.3C12 11.4 10 12 8 11.6L3 10.5c0 5 3.3 9 8.5 9h2c3.4 0 6-2.4 6-5.4 0-1.6-.8-3-2-3.9" />
+</>);

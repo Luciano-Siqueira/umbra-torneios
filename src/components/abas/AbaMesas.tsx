@@ -15,6 +15,10 @@ import { comandanteDoDeck, coresDoDeck } from "../../core/decks";
 import { CoresMana } from "../ui/SimboloMana";
 import { contar } from "../../core/formato";
 import { avisarMesas } from "../../core/notificacoes";
+import {
+  IconeCopiar, IconeCoroa, IconeEmbaralhar, IconeHistorico, IconeMedalha, IconePausa, IconeParar,
+  IconePlay, IconeReiniciar, IconeSino, IconeTrofeu,
+} from "../ui/Icones";
 
 export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: {
   torneio: Torneio;
@@ -233,7 +237,7 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
             />
 
             <div className="relative text-center">
-              <div className="text-6xl md:text-7xl mb-3">♛</div>
+              <div className="mb-3 flex justify-center"><IconeCoroa tamanho={64} /></div>
               <div
                 className="inline-block px-4 py-1 rounded-full text-[11px] font-bold tracking-[0.3em] mb-4"
                 style={{
@@ -293,9 +297,9 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
               </div>
               <div className="flex flex-wrap justify-center gap-2">
                 {[
-                  { label: "⭐ Ranking final", key: "ranking" as const },
-                  ...(podeEditar ? [{ label: "♛ Premiação", key: "premiacao" as const }] : []),
-                  { label: "◷ Histórico", key: "historico" as const },
+                  { label: "Ranking final", icone: <IconeTrofeu cor="currentColor" />, key: "ranking" as const },
+                  ...(podeEditar ? [{ label: "Premiação", icone: <IconeMedalha cor="currentColor" />, key: "premiacao" as const }] : []),
+                  { label: "Histórico", icone: <IconeHistorico cor="currentColor" />, key: "historico" as const },
                 ].map((atalho) => (
                   <button
                     key={atalho.key}
@@ -308,7 +312,7 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
                       color: "var(--text-strong)",
                     }}
                   >
-                    {atalho.label}
+                    {atalho.icone} {atalho.label}
                   </button>
                 ))}
               </div>
@@ -321,7 +325,7 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
               <>
                 <div className="text-fg-dim text-sm">Finalize o torneio quando quiser.</div>
                 <button className="btn-primary text-lg font-black" onClick={finalizar}>
-                  ♛ Finalizar torneio
+                  <IconeCoroa cor="currentColor" /> Finalizar torneio
                 </button>
               </>
             ) : (
@@ -342,7 +346,7 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
                 onClick={iniciar}
                 disabled={!podeIniciar}
               >
-                ▶ Iniciar rodada {torneio.rodadaAtual + 1}
+                <IconePlay cor="currentColor" /> Iniciar rodada {torneio.rodadaAtual + 1}
               </button>
             ) : (
               <div className="text-fg-dim text-sm">Aguardando o organizador iniciar a rodada.</div>
@@ -378,14 +382,14 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
         {podeEditar && (
           <div className="flex flex-wrap gap-2 justify-center">
             {!timer.rodando ? (
-              <button className="btn-success" onClick={timer.iniciar}>▶ Iniciar</button>
+              <button className="btn-success" onClick={timer.iniciar}><IconePlay cor="currentColor" /> Iniciar</button>
             ) : timer.pausado ? (
-              <button className="btn-warning" onClick={timer.iniciar}>▶ Retomar</button>
+              <button className="btn-warning" onClick={timer.iniciar}><IconePlay cor="currentColor" /> Retomar</button>
             ) : (
-              <button className="btn-warning" onClick={timer.pausar}>❚❚ Pausar</button>
+              <button className="btn-warning" onClick={timer.pausar}><IconePausa cor="currentColor" /> Pausar</button>
             )}
-            <button className="btn-danger" onClick={timer.parar}>■ Parar</button>
-            <button className="btn-ghost" onClick={timer.resetar}>↺ Reset</button>
+            <button className="btn-danger" onClick={timer.parar}><IconeParar cor="currentColor" /> Parar</button>
+            <button className="btn-ghost" onClick={timer.resetar}><IconeReiniciar cor="currentColor" /> Reset</button>
           </div>
         )}
       </div>
@@ -394,32 +398,32 @@ export function AbaMesas({ torneio, podeEditar, verTempo = true, onIrParaAba }: 
       <div className="flex flex-wrap gap-2 justify-end">
         {podeEditar && nenhumaFinalizada && (
           <button className="btn-warning" onClick={resortear} title="Refaz o pareamento desta rodada">
-            🔀 Resortear mesas
+            <IconeEmbaralhar cor="currentColor" /> Resortear mesas
           </button>
         )}
         {podeEditar && torneio.rodadaAtual === 1 && !torneio.finalizado && (
           <button className="btn-ghost" onClick={voltarInicio} title="Só na rodada 1: apaga as mesas e os resultados dela">
-            ⟲ Voltar ao início
+            <IconeReiniciar cor="currentColor" /> Voltar ao início
           </button>
         )}
         {podeEditar && !torneio.finalizado && (
           <button className="btn-ghost" onClick={avisarDeNovo} disabled={avisando} title="Manda de novo a mesa de cada jogador para o celular">
-            {avisando ? "Avisando..." : "🔔 Avisar mesas"}
+            <IconeSino cor="currentColor" /> {avisando ? "Avisando..." : "Avisar mesas"}
           </button>
         )}
         {podeEditar && (
           <button className="btn-info" onClick={copiarWhatsApp}>
-            📋 Copiar (WhatsApp)
+            <IconeCopiar cor="currentColor" /> Copiar (WhatsApp)
           </button>
         )}
         {podeEditar && rodadaConcluida && torneio.rodadaAtual < torneio.qtdRodadas && (
           <button className="btn-success" onClick={iniciar} disabled={!podeIniciar}>
-            ▶ Nova rodada ({torneio.rodadaAtual + 1}/{torneio.qtdRodadas})
+            <IconePlay cor="currentColor" /> Nova rodada ({torneio.rodadaAtual + 1}/{torneio.qtdRodadas})
           </button>
         )}
         {podeEditar && podeFinalizar && (
           <button className="btn-primary font-black" onClick={finalizar}>
-            ♛ Finalizar torneio
+            <IconeCoroa cor="currentColor" /> Finalizar torneio
           </button>
         )}
         {botaoEncerrarAntes}

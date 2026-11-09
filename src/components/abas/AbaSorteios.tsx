@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { IconePato, IconePlay, IconeReiniciar, IconeRoleta, IconeSeta, IconeUsuarios } from "../ui/Icones";
 import { ajustarSelecaoPorDrop } from "../../core/sorteios";
 import type { Torneio } from "../../core/types";
 import { SorteioRoda, type RodaHandle } from "../sorteios/SorteioRoda";
@@ -76,11 +77,11 @@ export function AbaSorteios({ torneio }: { torneio: Torneio }) {
         <button
           onClick={() => setModo("roda")}
           className={`${modo === "roda" ? "btn-primary" : "btn-ghost"} w-56`}
-        >◈ Roleta</button>
+        ><IconeRoleta cor="currentColor" /> Roleta</button>
         <button
           onClick={() => setModo("patinhos")}
           className={`${modo === "patinhos" ? "btn-primary" : "btn-ghost"} w-56`}
-        >🦆 Corrida de Patinhos</button>
+        ><IconePato cor="currentColor" /> Corrida de Patinhos</button>
 
         <div className="flex-1" />
 
@@ -88,28 +89,28 @@ export function AbaSorteios({ torneio }: { torneio: Torneio }) {
           className="btn-ghost text-sm"
           onClick={() => setExpandido((v) => !v)}
         >
-          👥 {usados.length}/{nomes.length}
+          <IconeUsuarios cor="currentColor" /> {usados.length}/{nomes.length}
         </button>
 
         {modo === "roda" ? (
           <>
             <button className="btn-success" onClick={() => rodaRef.current?.girar()}>
-              ◈ Girar
+              <IconeRoleta cor="currentColor" /> Girar
             </button>
             <button className="btn-ghost" onClick={() => rodaRef.current?.resetar()}>
-              ↺ Resetar
+              <IconeReiniciar cor="currentColor" /> Resetar
             </button>
           </>
         ) : (
           <>
             <button className="btn-success" onClick={() => patinhosRef.current?.iniciar()}>
-              ▶ Largar
+              <IconePlay cor="currentColor" /> Largar
             </button>
             <button className="btn-warning" onClick={() => patinhosRef.current?.proximaCorrida()}>
-              → Próxima
+              <IconeSeta cor="currentColor" /> Próxima
             </button>
             <button className="btn-ghost" onClick={() => patinhosRef.current?.resetar()}>
-              ↺ Resetar
+              <IconeReiniciar cor="currentColor" /> Resetar
             </button>
           </>
         )}
