@@ -13,7 +13,8 @@ self.addEventListener("push", (evento) => {
     self.registration.showNotification(titulo, {
       body: dados.body || "",
       icon: "/icon-192.png",
-      badge: "/icon-192.png",
+      // Ícone pequeno da barra de status (Android): só o contorno conta, então é branco sobre transparente
+      badge: "/badge-96.png",
       tag: dados.tag, // o mesmo aviso não se repete na bandeja
       renotify: true,
       data: { url: dados.url || "/" },
